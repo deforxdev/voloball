@@ -5,18 +5,18 @@ on:
       runner:
         description: macOS runner pool
         type: choice
-        default: macos-26
-        options: [macos-26, macos-15]
+        default: macos-15-intel
+        options: [macos-15-intel, macos-26, macos-15]
   push:
     branches: [ios]
 permissions:
   contents: read
 concurrency:
-  group: ios-${{ github.ref }}-${{ inputs.runner || 'macos-26' }}
+  group: ios-${{ github.ref }}-${{ inputs.runner || 'macos-15-intel' }}
   cancel-in-progress: true
 jobs:
   build:
-    runs-on: ${{ inputs.runner || 'macos-26' }}
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
     timeout-minutes: 45
     env:
       GODOT_VERSION: 4.7.1
@@ -118,6 +118,7 @@ jobs:
           xcodebuild -project build/ios/voloball.xcodeproj -scheme voloball \
             -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/Simulator \
+            ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES EXCLUDED_ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' \
             DEVELOPMENT_TEAM='' build 2>&1 | tee build/simulator-build.log
           python3 tools/test_ios_startup.py 2>&1 | tee build/ios-startup.log

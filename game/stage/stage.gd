@@ -696,7 +696,15 @@ static func resolve(id: String) -> String:
 
 const DEMO_HOME: = "grass"
 static func home() -> String:
-	return DEMO_HOME if LaunchGate.is_demo() else "nationals"
+	var mobile: bool = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview")
+	var preferred: String = DEMO_HOME if LaunchGate.is_demo() or mobile else "nationals"
+	if ResourceLoader.exists(String(STAGES[preferred].get("venue", ""))):
+		return preferred
+	# Recovered projects can omit a venue. Never choose a missing default scene.
+	for fallback in ["grass", "school", "void"]:
+		if STAGES.has(fallback) and ResourceLoader.exists(String(STAGES[fallback].get("venue", ""))):
+			return fallback
+	return preferred
 
 
 

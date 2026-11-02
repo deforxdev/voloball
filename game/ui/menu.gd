@@ -768,7 +768,7 @@ func _ready() -> void :
 
 	if "--onboard" in LaunchGate.dev_args():
 		_offer_tutorial.call_deferred(true)
-	elif LaunchGate.dev_args().is_empty() and not Net.active\
+	elif not MobileControls.enabled() and LaunchGate.dev_args().is_empty() and not Net.active\
 	and not GameConfig.tutorial_seen:
 		_offer_tutorial.call_deferred()
 	if "--menu-quick" in LaunchGate.dev_args():
@@ -784,13 +784,14 @@ func _ready() -> void :
 
 
 
-	if LaunchGate.dev_args().is_empty() and not Net.active:
+	if not MobileControls.enabled() and LaunchGate.dev_args().is_empty() and not Net.active:
 		_prewarm_local_faces.call_deferred()
 
 
-	PracticeCourt.preload_scene()
-	_practice_prewarm = LaunchGate.dev_args().is_empty()\
-	or LaunchGate.dev_args().has("--practice-prewarm")
+	if not MobileControls.enabled():
+		PracticeCourt.preload_scene()
+	_practice_prewarm = not MobileControls.enabled() and (LaunchGate.dev_args().is_empty()\
+	or LaunchGate.dev_args().has("--practice-prewarm"))
 	_always_court = BootLoader.enabled() or LaunchGate.dev_args().has("--always-court")
 	_adopt_parked_court()
 
@@ -3692,6 +3693,8 @@ func _populate_local() -> void :
 
 var _faces_warmed: = false
 func _prewarm_local_faces() -> void :
+	if MobileControls.enabled():
+		return
 	if _faces_warmed:
 		return
 	_faces_warmed = true

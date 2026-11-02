@@ -31,6 +31,8 @@ var screen: LoadingScreen = null
 var _from_title: = false
 
 static func enabled() -> bool:
+	if MobileControls.enabled():
+		return false
 	var a: = LaunchGate.dev_args()
 	return a.is_empty() or a.has("--boot-loader")
 

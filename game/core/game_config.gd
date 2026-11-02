@@ -557,6 +557,9 @@ func slow_time(rate: float, duration: float) -> void :
 			Engine.time_scale = 1.0)
 
 func goto_scene(path: String) -> void :
+	if MobileControls.enabled():
+		get_tree().paused = false
+		MobileControls.release_all()
 	if _scene_pending != "":
 		return
 	var tree: = Engine.get_main_loop() as SceneTree
@@ -600,6 +603,9 @@ func _do_scene_change(path: String) -> void :
 
 
 func goto_packed(ps: PackedScene) -> void :
+	if MobileControls.enabled():
+		get_tree().paused = false
+		MobileControls.release_all()
 	var tree: = Engine.get_main_loop() as SceneTree
 	if tree == null or ps == null:
 		return

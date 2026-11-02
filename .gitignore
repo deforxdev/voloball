@@ -14,6 +14,8 @@ export_credentials.cfg
 .env
 .env.*
 *.log
+__pycache__/
+*.pyc
 *.tmp
 *.bak
 *.p12

@@ -101,6 +101,16 @@ jobs:
           PY
           (cd build/package && zip -qry ../VOLOBALL-iPhone-SideStore.ipa Payload)
           unzip -t build/VOLOBALL-iPhone-SideStore.ipa
+      - name: Build and test iOS startup and Settings Back
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project build/ios/voloball.xcodeproj -scheme voloball \
+            -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/Simulator \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' \
+            DEVELOPMENT_TEAM='' build 2>&1 | tee build/simulator-build.log
+          python3 tools/test_ios_startup.py 2>&1 | tee build/ios-startup.log
       - name: Upload iPhone IPA
         uses: actions/upload-artifact@v4
         with:
@@ -114,6 +124,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-logs
-          path: build/*.log
+          path: |
+            build/*.log
+            build/ios-startup-*.png
+            build/ios-startup-results.json
           if-no-files-found: ignore
           retention-days: 7

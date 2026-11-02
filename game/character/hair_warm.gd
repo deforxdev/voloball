@@ -144,6 +144,8 @@ static func prefit(style: int, flip: bool) -> void :
 static var _warming: = {}
 
 static func warm_all(flip: bool) -> void :
+	if MobileControls.enabled():
+		return
 	if not warm_on or _warming.has(flip):
 		return
 	_warming[flip] = true

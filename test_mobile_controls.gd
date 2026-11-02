@@ -14,6 +14,8 @@ func _ready() -> void:
 
 func run() -> void:
 	check(MobileControls.enabled(), "mobile preview enables touch input")
+	check(ResourceLoader.exists(String(Stage.info(Stage.home()).venue)), "mobile default arena is present in the recovered project")
+	check(not BootLoader.enabled(), "mobile startup does not warm the desktop locker")
 	player = load("res://game/player/player.tscn").instantiate()
 	add_child(player)
 	var ball: Ball = load("res://game/ball/ball.tscn").instantiate()

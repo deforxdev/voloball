@@ -44,6 +44,9 @@ func _ready() -> void:
 	add_child(_surface)
 	get_tree().root.size_changed.connect(_rebuild_layout)
 	_rebuild_layout()
+	if OS.get_environment("VOLOBALL_BOOT_SMOKE") == "1":
+		var smoke: Node = (load("res://game/mobile/mobile_boot_smoke.gd") as GDScript).new()
+		get_tree().root.add_child.call_deferred(smoke)
 
 func _process(_delta: float) -> void:
 	var scene := get_tree().current_scene
@@ -51,9 +54,9 @@ func _process(_delta: float) -> void:
 	_player = game.get("player") if game != null else null
 	if _player == null:
 		_player = GameConfig._active_power_player()
-	var freeplay := scene != null and bool(scene.get("_freeplay"))
+	var freeplay: bool = scene != null and scene.get("_freeplay") == true
 	_has_player = _player != null and (not GameConfig.menu_open or GameConfig.menu_practice or freeplay)
-	var blocked := GameConfig.menu_open and not GameConfig.menu_practice and not freeplay
+	var blocked: bool = GameConfig.menu_open and not GameConfig.menu_practice and not freeplay
 	var focus := get_viewport().gui_get_focus_owner()
 	blocked = blocked or focus is LineEdit or focus is TextEdit
 	if game != null:
@@ -63,7 +66,7 @@ func _process(_delta: float) -> void:
 		for child in game.get_children():
 			if child is ServeMinigame:
 				blocked = true
-	var playing := _has_player and not blocked
+	var playing: bool = _has_player and not blocked
 	if _playing and not playing:
 		release_all()
 	_playing = playing
@@ -75,7 +78,7 @@ func game_scene() -> Node:
 	var scene := get_tree().current_scene
 	if scene != null and GameConfig.menu_practice:
 		var court: Node = scene.get("_practice_court")
-		if court != null and bool(court.get("active")):
+		if court != null and court.get("active") == true:
 			var main: Node = court.get("main")
 			if main != null:
 				return main

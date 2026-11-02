@@ -34,6 +34,7 @@ CursorTrail="*res://game/ui/cursor_trail.gd"
 VoteKickUI="*res://game/ui/votekick_ui.gd"
 Net="*res://game/net/net.gd"
 Achievements="*res://game/core/achievements.gd"
+MobileControls="*res://game/mobile/mobile_controls.gd"
 
 [debug]
 
@@ -41,11 +42,12 @@ file_logging/enable_file_logging=true
 
 [display]
 
-window/size/viewport_width=1920
-window/size/viewport_height=1080
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/stretch/scale=1.4
+window/stretch/scale=1.0
+window/handheld/orientation=0
 window/vsync/vsync_mode=0
 
 [editor_overrides]
@@ -240,6 +242,11 @@ back_pass={
 ]
 }
 
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
+pointing/emulate_touch_from_mouse=false
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://game/translations/translations.en.translation", "res://game/translations/translations.uk.translation")
@@ -252,8 +259,10 @@ common/physics_interpolation=true
 
 [rendering]
 
-rendering_device/driver="d3d12"
+renderer/rendering_method.mobile="mobile"
+rendering_device/driver="metal"
 rendering_device/driver.windows="d3d12"
+rendering_device/driver.ios="metal"
 textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(1, 0.84, 0.24, 1)
 

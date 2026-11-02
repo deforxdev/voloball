@@ -69,7 +69,10 @@ func _input(event: InputEvent) -> void :
 		return
 	var clicked: bool = false
 	var key_go: bool = false
-	if event is InputEventMouseButton and event.pressed\
+	if event is InputEventScreenTouch and event.pressed:
+		clicked = true
+	elif event is InputEventMouseButton and event.pressed\
+	and (not MobileControls.enabled() or event.device != -1)\
 	and event.button_index == MOUSE_BUTTON_LEFT:
 		clicked = true
 	elif event is InputEventKey and event.pressed and not event.echo\

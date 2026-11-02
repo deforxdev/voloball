@@ -170,6 +170,8 @@ func set_exclude_kbm(value: bool) -> void :
 
 
 func _is_gamepad() -> bool:
+	if MobileControls.enabled() and _dev.device < 0:
+		return true
 	if _dev.device >= 0:
 		return true
 	if _dev.device == DeviceInput.KBM:
@@ -876,6 +878,9 @@ func _over_ui(rig: CameraRig) -> bool:
 	return vp != null and vp.gui_get_hovered_control() != null
 
 func follow_cursor(rig: CameraRig, enabled: bool) -> void :
+	if MobileControls.enabled():
+		_release_cursor()
+		return
 	if not enabled or rig == null:
 		_release_cursor()
 		return

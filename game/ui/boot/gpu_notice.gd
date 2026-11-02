@@ -28,6 +28,9 @@ var _cont: Button = null
 var _left: = false
 
 func _ready() -> void :
+	if OS.has_feature("mobile"):
+		GameConfig.goto_scene(NEXT_SCENE)
+		return
 
 
 

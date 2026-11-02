@@ -199,6 +199,8 @@ static func _arm_boot(count: int) -> void :
 
 
 static func decide_safe_boot() -> bool:
+	if OS.has_feature("mobile"):
+		return false
 	if is_harness():
 		return false
 	var fails: = _boot_fail_count()

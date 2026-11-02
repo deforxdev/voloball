@@ -1138,6 +1138,8 @@ func _unhandled_input(event: InputEvent) -> void :
 		pressed = event.pressed
 	elif event is InputEventMouseButton:
 		pressed = event.pressed
+	elif event is InputEventScreenTouch:
+		pressed = event.pressed
 	if not pressed:
 		return
 	get_viewport().set_input_as_handled()
@@ -1146,7 +1148,7 @@ func _unhandled_input(event: InputEvent) -> void :
 func _is_press(event: InputEvent) -> bool:
 	if event is InputEventKey:
 		return event.pressed and not event.echo
-	if event is InputEventJoypadButton or event is InputEventMouseButton:
+	if event is InputEventJoypadButton or event is InputEventMouseButton or event is InputEventScreenTouch:
 		return event.pressed
 	return false
 

@@ -57,6 +57,8 @@ func is_merged() -> bool:
 
 
 func _global() -> bool:
+	if MobileControls.enabled():
+		return false
 	return device == MERGED and exclude_pads.is_empty() and not exclude_kbm
 
 
@@ -141,7 +143,8 @@ func _device_strength(action: String) -> float:
 		evs = InputMap.action_get_events(action)
 	else:
 		return 0.0
-	var best: = 0.0
+	var best: = MobileControls.action_strength(action) \
+		if device < 0 and not exclude_kbm else 0.0
 	for e in evs:
 		best = maxf(best, _resolve_event(e))
 	return best
@@ -179,6 +182,8 @@ func _pad_event_strength(e: InputEvent, pad: int) -> float:
 	return 0.0
 
 func _kbm_event_strength(e: InputEvent) -> float:
+	if MobileControls.enabled() and e is InputEventMouseButton:
+		return 0.0
 	if e is InputEventKey:
 		var k: = e as InputEventKey
 		if k.physical_keycode != 0:

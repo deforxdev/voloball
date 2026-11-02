@@ -100,11 +100,17 @@ func _ready() -> void :
 	_ensure_voice_bus()
 	_ensure_announcer_bus()
 	_load_settings()
+	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+		apply_quality(QUALITY_LOW)
+		resolution_3d = 75
+		max_fps = 60
+		aim_assist = true
+		set_assist = true
 	apply_language()
 	apply_pad_focus()
 	set_process(false)
 
-	if OS.get_environment("NO_BAR") != "1":
+	if OS.get_environment("NO_BAR") != "1" and not MobileControls.enabled():
 		_build_power_bar()
 		get_tree().process_frame.connect(_update_power_bar)
 
@@ -1503,6 +1509,9 @@ func _update_power_bar() -> void :
 
 
 func apply_display() -> void :
+	if OS.has_feature("mobile"):
+		DisplayServer.screen_set_keep_on(true)
+		return
 
 
 

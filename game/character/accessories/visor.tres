@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://c1e62c82kdo4o" path="res://game/character/accessories/visor.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "visor"
+display_name = "visor"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = PackedColorArray(0.15, 0.22, 0.45, 1)
+locked_colors = null
+no_outline = null
+spin_parts = null
+flap_bones = null

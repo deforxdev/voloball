@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" uid="uid://dtym7hbx61nyn" path="res://game/court/slate_sky.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/top_color = Color(0.3, 0.31, 0.34, 1)
+shader_parameter/horizon_color = Color(0.4, 0.41, 0.44, 1)

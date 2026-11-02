@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3 uid="uid://c5pjwltq4o2kd"]
+
+[ext_resource type="PackedScene" uid="uid://djk5ftmlyggsw" path="res://game/character/accessories/roundglasses.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "roundglasses"
+display_name = "round glasses"
+mesh = ExtResource("1")
+price = 1000
+start_colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
+locked_colors = null
+no_outline = PackedInt32Array(1)
+spin_parts = null
+flap_bones = null

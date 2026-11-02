@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://k0mfqiokyhis"]
+
+[ext_resource type="Shader" uid="uid://gfrat77mnif5" path="res://game/court/dream_sky.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/top_color = Color(0.62, 0.76, 0.91, 1)
+shader_parameter/mid_color = Color(0.8, 0.88, 0.96, 1)
+shader_parameter/horizon_color = Color(0.92, 0.95, 0.98, 1)
+shader_parameter/glow_color = Color(0.9, 0.95, 1, 1)
+shader_parameter/glow_amount = 0.0
+shader_parameter/glow_falloff = 3.5
+shader_parameter/star_density = 60.0
+shader_parameter/star_brightness = 0.0
+shader_parameter/star_size = 0.02
+shader_parameter/star_twinkle_speed = 0.3
+shader_parameter/galaxy_amount = 0.0
+shader_parameter/galaxy_color = Color(0.4, 0.62, 1, 1)

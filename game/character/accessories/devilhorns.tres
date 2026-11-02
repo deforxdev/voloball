@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://dpek2j6pvlpa7" path="res://game/character/accessories/devilhorns.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "devilhorns"
+display_name = "devil horns"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = PackedColorArray(0.8, 0.1, 0.12, 1)
+locked_colors = null
+no_outline = null
+spin_parts = null
+flap_bones = null

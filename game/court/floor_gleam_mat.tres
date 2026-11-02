@@ -1,0 +1,40 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cy2vfxfdo8djf"]
+
+[ext_resource type="Shader" uid="uid://b26vdaahme0mj" path="res://game/court/floor_gleam.gdshader" id="1"]
+
+[resource]
+render_priority = -1
+next_pass = null
+shader = ExtResource("1")
+shader_parameter/intensity = 0.9
+shader_parameter/fresnel_power = 1.6
+shader_parameter/blur = 0.8
+shader_parameter/floor_y = 0.0
+shader_parameter/compat_floor_ref = Color(0.8, 0.6, 0.4, 1)
+shader_parameter/window_color = Color(1, 0.94, 0.82, 1)
+shader_parameter/window_amt = 0.0
+shader_parameter/wall_x = 36.5
+shader_parameter/win_y0 = 9.77
+shader_parameter/win_y1 = 12.06
+shader_parameter/win_z0 = -39.45
+shader_parameter/win_z1 = 24.99
+shader_parameter/win_pitch = 4.535
+shader_parameter/win_w = 3.11
+shader_parameter/win_group = 3
+shader_parameter/win_group_pitch = 17.42
+shader_parameter/panel_color = Color(1, 0.97, 0.9, 1)
+shader_parameter/panel_amt = 0.45
+shader_parameter/panel_soft = 1.4
+shader_parameter/ceil_y = 16.29
+shader_parameter/mirror_squash = 0.12
+shader_parameter/base_visible = 0.5
+shader_parameter/panel_origin = Vector2(-30.91, -23.41)
+shader_parameter/panel_pitch = Vector2(8.91, 6.13)
+shader_parameter/panel_size = Vector2(1.72, 0.56)
+shader_parameter/panel_extent = Vector2(64.09, 49.6)
+shader_parameter/parallax = 0.0
+shader_parameter/rest_eye = Vector3(0, 12, 0)
+shader_parameter/panel_mode = 1
+shader_parameter/streak_width = 0.55
+shader_parameter/streak_length = 1.3
+shader_parameter/streak_grazing = 2.5

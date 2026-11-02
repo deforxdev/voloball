@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bc02dgmh5tlks" path="res://game/character/accessories/crown.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "crown"
+display_name = "crown"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = null
+locked_colors = null
+no_outline = null
+fit_to_hair = true
+spin_parts = null
+flap_bones = null

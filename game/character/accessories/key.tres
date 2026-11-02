@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bu81kj8ghqhpt" path="res://game/character/accessories/key.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "key"
+display_name = "key"
+mesh = ExtResource("1")
+category = "extra"
+mount = "chest"
+price = 1000
+start_colors = PackedColorArray(0.96, 0.76, 0.22, 1, 0.96, 0.76, 0.22, 1, 0.96, 0.76, 0.22, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 3.0
+jiggle_swing = 0.35
+jiggle_gravity = 0.0
+spin_parts = null
+flap_bones = null
+portrait = "upper"
+worn_on_back = true

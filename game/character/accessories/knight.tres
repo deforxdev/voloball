@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bqead0y2ulgvu" path="res://game/character/accessories/knight.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "knight"
+display_name = "knight"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = null
+locked_colors = null
+no_outline = null
+hair_mode = "full_covered"
+spin_parts = null
+flap_bones = null

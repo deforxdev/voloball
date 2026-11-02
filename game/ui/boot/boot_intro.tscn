@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://c8nkp1ptcl73i" path="res://game/ui/boot/boot_intro.gd" id="1"]
+
+[node name="BootIntro" type="Control" unique_id=622537420]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="BgRect" type="ColorRect" parent="." unique_id=1331898739]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.02, 0.03, 1)
+
+[node name="Splash" type="VideoStreamPlayer" parent="." unique_id=334351050]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+expand = true
+
+[node name="FadeOutOverlay" type="ColorRect" parent="." unique_id=371092801]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)

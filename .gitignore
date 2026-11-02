@@ -1,0 +1,25 @@
+# Local editor state and generated caches.
+/.godot/editor/
+/.godot/shader_cache/
+/.godot/exported/
+/.godot/scene_groups_cache.cfg
+
+# Recovered imports and UID mappings are required by this Windows baseline.
+# Keep .godot/imported/, .godot/uid_cache.bin, .assets/ and .autoconverted/.
+
+/build/
+/builds/
+/exports/
+export_credentials.cfg
+.env
+.env.*
+*.log
+*.tmp
+*.bak
+*.p12
+*.pfx
+*.mobileprovision
+*.keystore
+*.jks
+.DS_Store
+Thumbs.db

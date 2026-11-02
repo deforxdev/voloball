@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3 uid="uid://d0mouseear01x"]
+
+[ext_resource type="PackedScene" uid="uid://1f8qrbeuu3rh" path="res://game/character/accessories/mouseear.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "mouseear"
+display_name = "mouse ears"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = PackedColorArray(0.09, 0.09, 0.11, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 1.4
+jiggle_damping = 0.7
+jiggle_swing = 0.8
+jiggle_gravity = 0.2
+spin_parts = null
+flap_bones = null

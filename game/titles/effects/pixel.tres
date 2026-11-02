@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TitleEffect" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://b3rp4bbdu5aqa" path="res://game/titles/title_effect.gd" id="1"]
+[ext_resource type="Shader" uid="uid://ftwfgs66hhsc" path="res://game/titles/effects/pixel.gdshader" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "pixel"
+label = "8bit"
+order = 18
+shader = ExtResource("2")
+font_path = "res://game/fonts/PublicPixel/PublicPixel.ttf"
+font_scale = 0.667
+font_crisp = true
+font_lift = 0.09
+hz = 12.0
+suit_fg = "10230c"
+suit_bg = "7be06aff"

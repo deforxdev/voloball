@@ -1,0 +1,650 @@
+{
+ "categories": [
+  {
+   "name": "controls",
+   "groups": [
+    {
+     "title": "",
+     "sections": [
+      {
+       "sid": "0.2",
+       "title": "controls",
+       "body": [
+        "the following inputs update according to your active profiles binds!"
+       ],
+       "controls": true,
+       "image": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "the basics",
+   "groups": [
+    {
+     "title": "the basics of volleyball",
+     "sections": [
+      {
+       "sid": "1.1",
+       "title": "what is volleyball?",
+       "body": [
+        "volleyball is a team sport, where traditionally, two teams of six players are split by a net, and try to get the ball to hit the ground on the opponent's side of the court."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "1.2",
+       "title": "three touches",
+       "body": [
+        "each team is allowed a maximum of three touches before they must return the ball over the net. something important to note, a block does not count as a touch.",
+        "the reason volleyball is so team based, is because one player cannot hit the ball twice in a row. there are many more rules, but these are the only ones that will apply to you in this game.",
+        "the only exception is a one on one, where you're allowed to touch the ball yourself three times, since there's nobody else on your side."
+       ],
+       "image": ""
+      }
+     ]
+    },
+    {
+     "title": "what is just volleyball?",
+     "sections": [
+      {
+       "sid": "2.1",
+       "title": "arcade volleyball",
+       "body": [
+        "just volleyball is an arcade styled volleyball video game, it takes the core foundations of volleyball and turns it into a fast paced gaming experience.",
+        "instead of just six on six, you can play a one on one, two on two, three on three, four on four, five on five, all with the same levels of intensity as a six on six."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "2.2",
+       "title": "getting good",
+       "body": [
+        "in order to become good at this game, there's a couple of core mechanics you want to understand, and some more advanced mechanics you might want to take advantage of."
+       ],
+       "image": ""
+      }
+     ]
+    },
+    {
+     "title": "just volleyball default rules",
+     "sections": [
+      {
+       "sid": "3.1",
+       "title": "scoring",
+       "body": [
+        "by default, a sets are best of 3, and are played to 7 points, and you switch sides of the court after every set. in the case where both teams tie just before the end of a set, a duece occurs. in a duece, the match wil not end until either team gets two points consecutively!",
+        "in custom lobbies, the host can change all of this, and even turn on modifiers to mix things up!"
+       ],
+       "image": ""
+      },
+      {
+       "sid": "3.2",
+       "title": "serving rules",
+       "body": [
+        "you have 15 seconds to serve, and you have to do it from the serve zone behind the back line! when doing a jump serve, you are allowed to toss it past the back line, and jump before you step a foot inside the court. when your team wins the serve back, everyone rotates one spot.",
+        "keep in mind, you can't spike, tip, or block a serve, you have to receive it.."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "3.3",
+       "title": "faults",
+       "body": [],
+       "table": [
+        [
+         "fault",
+         "what happened"
+        ],
+        [
+         "serve foul",
+         "the serve timer expired, or you didn't make it across the net"
+        ],
+        [
+         "foot fault",
+         "you served from the wrong spot, or jumped from inside the court"
+        ],
+        [
+         "line fault",
+         "you went too far onto the other team's side"
+        ],
+        [
+         "outside the antenna",
+         "the ball went outside the antenna"
+        ],
+        [
+         "illegal attack on serve",
+         "you spiked, tipped, or blocked a serve"
+        ],
+        [
+         "four touches",
+         "your team touched the ball more than three times"
+        ]
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "the screen",
+   "groups": [
+    {
+     "title": "the cursor system",
+     "sections": [
+      {
+       "sid": "4.1",
+       "title": "your cursor",
+       "body": [
+        "in this game, every touch is influenced by where your cursor is. if you don't take time to understand this core concept, you will be constantly asking yourself \"what?\" or, \"how did that happen..\""
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "4.2",
+       "title": "what it means",
+       "body": [
+        "so, what does this really mean? it means receiving, attacking, blocking, is all influenced by your cursor. receiving and attacking about 100%, blocking however, is a bit more variable.",
+        "to understand how the cursor impacts every aspect of gameplay, please read every section."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "reading the screen",
+     "sections": [
+      {
+       "sid": "5.1",
+       "title": "the ball",
+       "body": [
+        "the ring under the ball goes from green to red as it gets closer to the floor, and the marker on the floor shows you exactly where it's going to land.",
+        "if you see an x under the ball, it means you've already had your touch, and you can't touch it again."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "5.2",
+       "title": "the reach marker",
+       "body": [
+        "the arrows on the ball communicate various things, so iti's important to pay attention to them"
+       ],
+       "table": [
+        [
+         "color",
+         "what it means"
+        ],
+        [
+         "blue",
+         "ball is actionable"
+        ],
+        [
+         "yellow",
+         "your action is queued"
+        ],
+        [
+         "green",
+         "action succeeded"
+        ],
+        [
+         "grey",
+         "you pressed too early"
+        ],
+        [
+         "shaking red",
+         "action interrupted"
+        ],
+        [
+         "red",
+         "action failed"
+        ]
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "5.3",
+       "title": "spiked balls",
+       "body": [
+        "right after a ball gets spiked, it will glow blue for a moment. while it's blue, nobody can hit it in the air, but you can still receive it, or block it."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "moving",
+   "groups": [
+    {
+     "title": "movement",
+     "sections": [
+      {
+       "sid": "8.1",
+       "title": "moving around",
+       "body": [
+        "movement in just volleyball is simple, but it has a bit of quirks you should be aware of.",
+        "your standard movement is {kb:move_forward}{kb:move_left}{kb:move_back}{kb:move_right}, or {pad:move} on controller, and this is good enough to get you from point a to point b, if you're not in any rush."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "8.2",
+       "title": "strafing",
+       "body": [
+        "sometimes you might need to stop on a dime, and instantly cancel momentum. by pressing {kb:strafe} or {pad:strafe} you can enter strafe, which will kill any horizontal momentum you have and allow you to easily pivot.",
+        "by strafing, your player also always faces where your cursor is pointing. this is most ideal for keeping yourself facing towards the action. we will get into the specifics of that individually in each section."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "8.3",
+       "title": "sprinting",
+       "body": [
+        "by double tapping a movement key on the keyboard, or pressing {pad:sprint} on the controller, you can sprint, but you have to use it sparingly, as it will drain your stamina quickly."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "8.4",
+       "title": "bumping into people",
+       "body": [
+        "players can knock each other over, if you land on someone's head, they'll fall to the floor for a moment. keep this in mind when you're going up right next to your teammates."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    },
+    {
+     "title": "jumping",
+     "sections": [
+      {
+       "sid": "9.1",
+       "title": "the jump",
+       "body": [
+        "you can't fight in the air if you can't jump. to jump you can tap the button for low jumps, but for high jumps, you have to charge the jump input {kb:jump} or {pad:jump} and release when you have sufficient power.",
+        "do keep in mind, you can't hold a jump charge forever, it will start to decay after a time."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "9.2",
+       "title": "bam jump",
+       "body": [
+        "if you really want to take flight, you can perform a bam jump by releasing when your jump meter flashes white after charging."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "9.3",
+       "title": "tilting",
+       "body": [
+        "while in the air, you can tilt your character in certain directions, pay attention to this, because it will influence other aspects of the game.",
+        "tilting forward will hit the ball faster and flatter, tilting back will hit it softer and higher, and tilting to the side will curve it. keep in mind, tilting doesn't affect your sets."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    },
+    {
+     "title": "stamina",
+     "sections": [
+      {
+       "sid": "15.1",
+       "title": "the stamina bar",
+       "body": [
+        "in this game, you have a stamina bar, and only two actions affect it, those being your dive, and your sprint."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "15.2",
+       "title": "burn out",
+       "body": [
+        "if you run out of stamina, your character enters a \"burn out\" state. the fastest way to recover is to remain stationary, however stamina will replenish over time regardless.",
+        "if you are in burn out, and you end up on the floor, you will remain there until your stamina is about a third of the way back."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "receiving",
+   "groups": [
+    {
+     "title": "receiving",
+     "sections": [
+      {
+       "sid": "10.1",
+       "title": "positioning",
+       "body": [
+        "this is the core of volleyball, a good or bad bump will make or break a play.",
+        "receiving is all about positioning over everything, you must read the court, understand where attackers prefer to hit, and put yourself in the best place possible 24/7."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "10.2",
+       "title": "the receive",
+       "body": [
+        "when receiving, you want to be still, specifically when you see a jump floater.",
+        "you don't need to perfectly time your input, you can actually just stand in the proper position and hold {kb:contact} or {pad:contact}, and of course, aim your cursor where you want the touch to go."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "10.3",
+       "title": "diving",
+       "body": [
+        "by pressing {kb:dive} or {pad:dive}, you can dive towards the ball, in cases where your positioning is off, and you won't be able to make it in time.",
+        "it's important to note, your dive automatically goes to where the ball will end up, meaning you don't need to aim where you dive, not with your mouse, nor with your movement inputs. all you need to do is press the input, and make sure your cursor is placed where you want the ball to end up."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "setting",
+   "groups": [
+    {
+     "title": "setting",
+     "sections": [
+      {
+       "sid": "11.1",
+       "title": "the set",
+       "body": [
+        "by pressing {kb:set} or {pad:set}, you can set the ball! you have a bit more control over the ball's tempo and speed, compared to receiving. the setting system is quite contextual, so please pay attention.",
+        "by simply tapping the set, you will do a high, slow toss that lands right where your cursor is. you can aim on yourself, or anywhere on the court."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "11.2",
+       "title": "high sets and quick sets",
+       "body": [
+        "to do a high set, you have to aim the cursor right on your character, and charge the set button.",
+        "to do a quick set, you can charge the set button and aim anywhere that's not near your character."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "11.3",
+       "title": "jump sets",
+       "body": [
+        "a good setter keeps the opposing team confused, you can press {kb:set} or {pad:set} mid air to jump set, allowing you to switch up the tempo, and sync up with your attackers.",
+        "understanding how to maneuver this system will prevent you from being confused."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "attacking",
+   "groups": [
+    {
+     "title": "attacking",
+     "sections": [
+      {
+       "sid": "12.1",
+       "title": "the spike",
+       "body": [
+        "attacking is typically the third touch, to spike, you must be in the air first. you can charge {kb:contact} or {pad:contact} to charge your spike, and release it once you have sufficient power. when you release, you need to make sure you are aiming on the other side of the net with your cursor, or you'll spike it straight into your own court.",
+        "a simple tap of {kb:contact} or {pad:contact} will only do a soft lob. so no, sitting near the net and spamming your input does not work."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "12.2",
+       "title": "power",
+       "body": [
+        "charging your spike alone won't give you full power. to really let it rip, you want to hit the ball right at the top of your jump, that's perfect timing, and it gives you full power no matter how long you charged.",
+        "running towards where you're aiming before you jump will also make your spike hit harder, and spiking on your team's third touch gives you a little bonus too."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "12.3",
+       "title": "curve",
+       "body": [
+        "by tilting your character mid air, left or right, you can add curve to your spike."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "12.4",
+       "title": "against the block",
+       "body": [
+        "attacking can be more than just trying to make the ball hit the floor, you can attempt to break a block, if you notice someone's blocking at a bad angle, or you can try to force a wipe, if you are slightly elevated above the block.",
+        "you can also force a rebound by simply tapping the attack input against a block, but this only works if they're late. if their block is on time, the ball will just die off their hands, and a perfect block will always win. regardless, once you understand these simple things, your attacking options expand."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "12.6",
+       "title": "some advice",
+       "body": [
+        "it's better to read the court and find the best position to spike, rather than just letting it rip. maybe hitting it straight down the line is good, or maybe a cross shot. take advantage of the moment."
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "blocking",
+   "groups": [
+    {
+     "title": "blocking",
+     "sections": [
+      {
+       "sid": "13.1",
+       "title": "the block",
+       "body": [
+        "like attacking, you must first be in the air, and then when the moment is right you can press {kb:block} or {pad:block} to hold your block up.",
+        "once you've thrown your hands up, you can readjust them once, left or right mid air, by pressing the left or right movement inputs."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "13.2",
+       "title": "timing",
+       "body": [
+        "you don't want to throw up your hands too early, nor too late, because that determines the influence you get on the ball.",
+        "just like everything else, on a stuff or perfect block, the ball will go where your cursor is. the later your block is, the more the ball will scatter away from your cursor, meaning you don't have complete control of where the ball is going to end up."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "13.3",
+       "title": "facing",
+       "body": [
+        "make sure you're facing the hitter before you jump. if your block is late, or you're turned away, a strong spike can break right through it and knock you over."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "13.4",
+       "title": "mind games",
+       "body": [
+        "some advice, just like attacking, a \"good\" block doesn't just mean you're stuffing out the spiker. a good block shuts down attacker options, blocks line shots, forces cross shots. battles at the net are mind games."
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "serving",
+   "groups": [
+    {
+     "title": "serving",
+     "sections": [
+      {
+       "sid": "14.1",
+       "title": "the toss",
+       "body": [
+        "serving is one of the most important parts of just volleyball, and volleyball as a whole, and also one of the most tricky parts. when you serve, it's just you against the entire opposing team.",
+        "to serve, you must first toss the ball upwards, you can control how high your toss will go by charging the toss input, {kb:contact} or {pad:contact}. by aiming on yourself, you can toss it straight up, by aiming it away from you, you can toss it horizontally."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "14.2",
+       "title": "the serves",
+       "body": [
+        "you have a couple of different serves you can choose from."
+       ],
+       "table": [
+        [
+         "serve",
+         "what it's for"
+        ],
+        [
+         "standard serve",
+         "just for getting it over"
+        ],
+        [
+         "jump serve",
+         "the most power, but a lot of risk"
+        ],
+        [
+         "jump floater",
+         "catching people off guard, or disrupting formations"
+        ]
+       ]
+      },
+      {
+       "sid": "14.3",
+       "title": "standard serve",
+       "body": [
+        "stand in place, toss the ball above you, then aim your cursor to the other side, and simply bump it over.",
+        "if you do a light toss, you can get away with keeping your cursor aimed on the opposing side the entire time."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "14.4",
+       "title": "jump serve",
+       "body": [
+        "you're going to want to stand in the very back of the serving area, toss it forward at the highest charge, and then time your approach. you need to jump before reaching the playable area, jumping inside of it will count as a fault.",
+        "with perfect timing and a good approach, the ball should be reaching your contact point as you reach the apex of your jump, and then you send it over."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "14.5",
+       "title": "jump floater",
+       "body": [
+        "it's just like a standard serve, except when hitting the ball, you must be in the air, and tilting backwards. your spike power charge will influence how shaky the ball is."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "everything else",
+   "groups": [
+    {
+     "title": "personalization",
+     "sections": [
+      {
+       "sid": "6.1",
+       "title": "make it yours",
+       "body": [
+        "you can customize several aspects of your character! build your face how you want, set your height and build, and as you play matches and earn xp and coins, you can purchase more accessories, and even display titles to go under your username!",
+        "there are so many different combinations you can make, so please check it out."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    },
+    {
+     "title": "communications",
+     "sections": [
+      {
+       "sid": "7.1",
+       "title": "chat and quick chat",
+       "body": [
+        "during online matches, you can use text chat to communicate. however, this game is quite frantic, so you can also use quick chats on {kb:callout_1} {kb:callout_2} {kb:callout_3} {kb:callout_4} {kb:callout_5} {kb:callout_6} {kb:callout_7} on the keyboard, or on the dpad of a controller to communicate your needs or express yourself. you can change them, give each one a second key, or take them off in your profile's controls.",
+        "remember, you have to be nice during online play, or bad things might happen."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    },
+    {
+     "title": "settings and cameras",
+     "sections": [
+      {
+       "sid": "16.1",
+       "title": "cameras",
+       "body": [
+        "you can switch between cameras by pressing {kb:camera_toggle} or {pad:camera_toggle}, and zoom in or out by pressing {kb:camera_zoom} or {pad:camera_zoom}.",
+        "the default camera follows you around, but you can also try out the broadcast camera if you want to feel like you're watching it on tv."
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      },
+      {
+       "sid": "16.2",
+       "title": "helpful settings",
+       "body": [
+        "there are a few settings that can make the game a bit easier for you."
+       ],
+       "table": [
+        [
+         "setting",
+         "what it does"
+        ],
+        [
+         "aim assist",
+         "your aim drifts towards a good target"
+        ],
+        [
+         "set assist",
+         "your sets always go to the hitting spot by the net"
+        ],
+        [
+         "sprint toggle",
+         "tap to sprint, instead of holding"
+        ],
+        [
+         "reach marker",
+         "turns the arrows on the ball on or off"
+        ]
+       ]
+      },
+      {
+       "sid": "16.3",
+       "title": "aiming on a controller",
+       "body": [
+        "on a controller, you aim with the right stick, and your aim will stay wherever you leave it. you can press {pad:aim_recenter} to snap it right back under you."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "closing",
+     "sections": [
+      {
+       "sid": "17.1",
+       "title": "go try it!",
+       "body": [
+        "this should be more than enough to enhance your gameplay if you've been feeling stuck. try going into freeplay and attempt something you've learned!"
+       ],
+       "image": "res://game/ui/how_to_shots/placeholder.png"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

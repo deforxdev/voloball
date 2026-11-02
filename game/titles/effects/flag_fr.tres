@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TitleEffect" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://b3rp4bbdu5aqa" path="res://game/titles/title_effect.gd" id="1"]
+[ext_resource type="Shader" uid="uid://g46gbhp7qqnc" path="res://game/titles/effects/flag.gdshader" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "flag_fr"
+label = "france flag"
+order = 12
+price = 0
+shader = ExtResource("2")
+art_path = "res://game/titles/art/flags/fr.png"
+hz = 0.0
+suit_fg = "ffffff"
+suit_ol = "232b3b"
+suit_th = 6

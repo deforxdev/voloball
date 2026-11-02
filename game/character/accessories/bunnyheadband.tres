@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://ike5c55ca4kn" path="res://game/character/accessories/bunnyheadband.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "bunnyheadband"
+display_name = "bunny headband"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = PackedColorArray(0.98, 0.58, 0.7, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 1.35
+jiggle_damping = 1.1
+jiggle_swing = 0.8
+jiggle_gravity = 0.0
+spin_parts = null
+flap_bones = null

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TitleEffect" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://b3rp4bbdu5aqa" path="res://game/titles/title_effect.gd" id="1"]
+[ext_resource type="Shader" uid="uid://bgthhug33k8wp" path="res://game/titles/effects/cutesy.gdshader" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "cutesy"
+label = "cutesy"
+order = 24
+price = 700
+shader = ExtResource("2")
+art_path = "res://game/titles/art/bow.png"
+ends = true
+ends_knob = 2
+hz = 15.0
+accent = "hearts"
+suit_fg = "ffffff"
+suit_bg = "ff7ab8ff"
+suit_ol = "d6397f"
+suit_th = 5

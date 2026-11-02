@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Shader" uid="uid://ctcv32j6o47dy" path="res://game/fx/barred_marker.gdshader" id="1"]
+
+[sub_resource type="ShaderMaterial" id="material"]
+render_priority = 14
+next_pass = null
+shader = ExtResource("1")
+
+[sub_resource type="PlaneMesh" id="mesh"]
+material = SubResource("material")
+
+[node name="BarredMarker" type="Node3D" unique_id=269548784]
+visible = false
+
+[node name="Mark" type="MeshInstance3D" parent="." unique_id=567054496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 0)
+cast_shadow = 0
+mesh = SubResource("mesh")

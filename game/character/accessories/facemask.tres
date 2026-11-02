@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bynhg77qjdv6e" path="res://game/character/accessories/facemask.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "facemask"
+display_name = "face mask"
+mesh = ExtResource("1")
+hides_mouth = true
+price = 1000
+start_colors = PackedColorArray(0.62, 0.8, 0.92, 1)
+locked_colors = null
+no_outline = null
+spin_parts = null
+flap_bones = null

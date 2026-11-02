@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://cpo0ac4yn45o" path="res://game/character/accessories/batwings.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "batwings"
+display_name = "bat wings"
+mesh = ExtResource("1")
+category = "extra"
+mount = "chest"
+price = 1000
+start_colors = PackedColorArray(0.624, 0.384, 0.749, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 1.6
+jiggle_damping = 1.2
+jiggle_swing = 0.7
+jiggle_gravity = 0.0
+spin_parts = null
+flap_bones = PackedStringArray("tail_wing0.l", "tail_wing0.r")
+flap_speed = 0.8
+flap_angle = 18.0
+portrait = "upper"
+worn_on_back = true

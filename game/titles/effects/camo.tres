@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="TitleEffect" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://b3rp4bbdu5aqa" path="res://game/titles/title_effect.gd" id="1"]
+[ext_resource type="Shader" uid="uid://j7l8cy87capr" path="res://game/titles/effects/camo.gdshader" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "camo"
+label = "camo"
+order = 3
+price = 200
+shader = ExtResource("2")
+art_path = "res://game/titles/art/camo.png"
+hz = 0.0
+accent = "second color"
+accent_default = Color(0.4196, 0.2902, 0.1686, 1)
+suit_fg = "f3f1d7"
+suit_bg = "5c7a3aff"
+suit_ol = "23301a"
+suit_th = 5

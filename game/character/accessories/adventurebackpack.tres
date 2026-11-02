@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3 uid="uid://dqk55gp8qdlhb"]
+
+[ext_resource type="PackedScene" uid="uid://u6lkme0aqknt" path="res://game/character/accessories/adventurebackpack.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "adventurebackpack"
+display_name = "adventure backpack"
+mesh = ExtResource("1")
+category = "extra"
+mount = "chest"
+price = 1000
+start_colors = PackedColorArray(0.3404, 0.79442, 0.92, 1, 0.066000015, 0.52880013, 0.6, 1, 0.238, 0.2492, 0.35, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 1.8
+jiggle_damping = 1.4
+jiggle_swing = 0.6
+jiggle_gravity = 0.4
+spin_parts = null
+flap_bones = null
+portrait = "upper"
+worn_on_back = true

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://dvt0nfq4e15r" path="res://game/character/accessories/nose_bandage.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "nose_bandage"
+display_name = "nose bandage"
+mesh = ExtResource("1")
+category = "extra"
+price = 1000
+start_colors = PackedColorArray(0.94, 0.75, 0.56, 1, 0.98, 0.89, 0.78, 1)
+locked_colors = null
+no_outline = PackedInt32Array(0, 1)
+spin_parts = null
+flap_bones = null

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AccessoryItem" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://usta7mwrka2d" path="res://game/character/accessories/antennae.blend" id="1"]
+[ext_resource type="Script" uid="uid://c1rhe1l732pov" path="res://game/character/accessory_item.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "antennae"
+display_name = "antennae"
+mesh = ExtResource("1")
+category = "head"
+price = 1000
+start_colors = PackedColorArray(0.55, 0.94, 0.35, 1)
+locked_colors = null
+no_outline = null
+jiggle_stiffness = 0.9
+jiggle_damping = 0.45
+jiggle_gravity = 0.15
+spin_parts = null
+flap_bones = null

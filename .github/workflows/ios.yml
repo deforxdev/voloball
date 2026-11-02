@@ -1,0 +1,102 @@
+name: iPhone IPA for SideStore
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios]
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      GODOT_VERSION: 4.7.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot and export templates
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot-ci
+            ~/Library/Application Support/Godot/export_templates/4.7.1.stable
+          key: godot-4.7.1-ios-v1
+      - name: Install official Godot and iOS templates
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/godot-ci"
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          curl --fail --location --retry 3 "$base/Godot_v${GODOT_VERSION}-stable_macos.universal.zip" -o /tmp/godot.zip
+          ditto -x -k /tmp/godot.zip "$HOME/godot-ci"
+          curl --fail --location --retry 3 "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o /tmp/templates.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          target = Path.home() / 'Library/Application Support/Godot/export_templates/4.7.1.stable'
+          target.mkdir(parents=True, exist_ok=True)
+          with ZipFile('/tmp/templates.zip') as archive:
+              for name in ('ios.zip', 'version.txt'):
+                  (target / name).write_bytes(archive.read('templates/' + name))
+          PY
+      - name: Restore portable assets
+        run: python3 tools/prepare_mobile_assets.py .
+      - name: Import for mobile and export Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot="$HOME/godot-ci/Godot.app/Contents/MacOS/Godot"
+          mkdir -p build/ios
+          "$godot" --headless --path . --editor --import 2>&1 | tee build/import.log
+          "$godot" --headless --path . --export-release iOS build/ios/voloball.ipa 2>&1 | tee build/export.log
+          test -d build/ios/voloball.xcodeproj
+      - name: Build iPhone app without Apple signing credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project build/ios/voloball.xcodeproj -scheme voloball \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' \
+            DEVELOPMENT_TEAM='' build 2>&1 | tee build/xcodebuild.log
+      - name: Package and validate SideStore IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/DerivedData/Build/Products/Release-iphoneos/voloball.app"
+          test -d "$app"
+          mkdir -p build/package/Payload
+          cp -R "$app" build/package/Payload/
+          python3 - <<'PY'
+          import plistlib, pathlib, subprocess
+          app = pathlib.Path('build/package/Payload/voloball.app')
+          info = plistlib.loads((app / 'Info.plist').read_bytes())
+          assert info['CFBundleIdentifier'] == 'com.deforxdev.voloball'
+          binary = app / info['CFBundleExecutable']
+          assert binary.is_file()
+          archs = subprocess.check_output(['lipo', '-archs', str(binary)], text=True)
+          assert 'arm64' in archs
+          assert list(app.rglob('*.pck')), 'Game data is missing'
+          print('Validated iPhone arm64 app:', info['CFBundleIdentifier'])
+          PY
+          (cd build/package && zip -qry ../VOLOBALL-iPhone-SideStore.ipa Payload)
+          unzip -t build/VOLOBALL-iPhone-SideStore.ipa
+      - name: Upload iPhone IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VOLOBALL-iPhone-SideStore
+          path: build/VOLOBALL-iPhone-SideStore.ipa
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: build/*.log
+          if-no-files-found: ignore
+          retention-days: 7

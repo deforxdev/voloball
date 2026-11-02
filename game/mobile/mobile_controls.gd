@@ -46,17 +46,21 @@ func _ready() -> void:
 	_rebuild_layout()
 
 func _process(_delta: float) -> void:
-	_player = GameConfig._active_power_player()
-	_has_player = _player != null
 	var scene := get_tree().current_scene
-	var blocked := GameConfig.menu_open and not GameConfig.menu_practice
+	var game := game_scene()
+	_player = game.get("player") if game != null else null
+	if _player == null:
+		_player = GameConfig._active_power_player()
+	var freeplay := scene != null and bool(scene.get("_freeplay"))
+	_has_player = _player != null and (not GameConfig.menu_open or GameConfig.menu_practice or freeplay)
+	var blocked := GameConfig.menu_open and not GameConfig.menu_practice and not freeplay
 	var focus := get_viewport().gui_get_focus_owner()
 	blocked = blocked or focus is LineEdit or focus is TextEdit
-	if scene != null:
-		var hud: Node = scene.get("hud")
+	if game != null:
+		var hud: Node = game.get("hud")
 		if hud != null and hud.has_method("pause_is_open"):
 			blocked = blocked or hud.pause_is_open()
-		for child in scene.get_children():
+		for child in game.get_children():
 			if child is ServeMinigame:
 				blocked = true
 	var playing := _has_player and not blocked
@@ -66,6 +70,22 @@ func _process(_delta: float) -> void:
 	if get_viewport().get_visible_rect().size != _layout_size:
 		_rebuild_layout()
 	_surface.queue_redraw()
+
+func game_scene() -> Node:
+	var scene := get_tree().current_scene
+	if scene != null and GameConfig.menu_practice:
+		var court: Node = scene.get("_practice_court")
+		if court != null and bool(court.get("active")):
+			var main: Node = court.get("main")
+			if main != null:
+				return main
+	return scene
+
+func action_label(action: String) -> String:
+	const LABELS := {"move": "РУХ", "@mouse": "ПРИЦІЛ", "contact": "УДАР", "jump": "СТРИБОК",
+		"set": "ПАС", "dive": "НИРОК", "block": "БЛОК", "serve": "ПОДАЧА", "ball_spawn": "М'ЯЧ",
+		"strafe": "СТІЙКА", "sprint": "БІГ", "camera_toggle": "КАМЕРА"}
+	return LABELS.get(action, action)
 
 func _rebuild_layout() -> void:
 	release_all()
@@ -142,7 +162,7 @@ func touch_begin(index: int, at: Vector2) -> bool:
 		elif action == "pause":
 			_key_pulse(KEY_ESCAPE)
 		elif action == "camera":
-			var scene := get_tree().current_scene
+			var scene := game_scene()
 			var rig: Node = scene.get("camera_rig") if scene != null else null
 			if rig != null and rig.has_method("apply_camera_toggle"):
 				rig.apply_camera_toggle()

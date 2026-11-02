@@ -11032,7 +11032,8 @@ func _physics_process(delta: float) -> void :
 				player.serve_charge_ui = true
 				ball.global_position = player.serve_cradle_point()
 				hud.set_serve_prompt(
-					"hold lmb to charge the toss, release to throw, tap strafe to cancel the charge")
+					"Утримуй УДАР і відпусти для підкидання; СТІЙКА — скасувати" if MobileControls.enabled()
+					else "hold lmb to charge the toss, release to throw, tap strafe to cancel the charge")
 				var up: = Ball.serve_toss_up(player.hold_power())
 
 

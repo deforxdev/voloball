@@ -1,6 +1,8 @@
 extends Node
 
 var failures := 0
+var _freeplay := false
+var player: Player
 
 func check(ok: bool, message: String) -> void:
 	print("PASS: " if ok else "FAIL: ", message)
@@ -12,12 +14,21 @@ func _ready() -> void:
 
 func run() -> void:
 	check(MobileControls.enabled(), "mobile preview enables touch input")
-	var player: Player = load("res://game/player/player.tscn").instantiate()
+	player = load("res://game/player/player.tscn").instantiate()
 	add_child(player)
 	var ball: Ball = load("res://game/ball/ball.tscn").instantiate()
 	add_child(ball)
 	player.ball = ball
 	await get_tree().process_frame
+	var was_menu_open: bool = GameConfig.menu_open
+	GameConfig.menu_open = true
+	_freeplay = true
+	MobileControls._process(0.0)
+	check(MobileControls._playing, "touch controls stay visible in menu freeplay")
+	_freeplay = false
+	MobileControls._process(0.0)
+	check(not MobileControls._playing, "touch controls hide while browsing the main menu")
+	GameConfig.menu_open = was_menu_open
 	MobileControls._player = player
 	MobileControls._playing = true
 	MobileControls._has_player = true

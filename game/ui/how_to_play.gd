@@ -1203,6 +1203,8 @@ const MOVE_ACTIONS: = ["move_forward", "move_left", "move_back", "move_right"]
 
 
 static func keys_for(action: String) -> String:
+	if MobileControls.enabled():
+		return MobileControls.action_label(action)
 	if action == "move":
 		return _keys_for_all(MOVE_ACTIONS)
 	if action == "@mouse":

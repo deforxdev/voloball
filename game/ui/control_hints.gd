@@ -326,6 +326,9 @@ func _tick_flash(delta: float) -> void :
 
 
 func refresh(p: Player, serving: bool) -> void :
+	if MobileControls.enabled():
+		visible = false
+		return
 	if p == null:
 		return
 	var action_text: = "touch"

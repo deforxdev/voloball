@@ -16,6 +16,10 @@ jobs:
       GODOT_VERSION: 4.7.1
     steps:
       - uses: actions/checkout@v4
+      - name: Select Xcode 26 for Godot 4.7 templates
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+          xcodebuild -version
       - name: Cache Godot and export templates
         id: godot-cache
         uses: actions/cache@v4

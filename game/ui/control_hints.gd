@@ -158,6 +158,8 @@ func set_practice(on: bool) -> void :
 		_set_row_action("BallSpawn", "serve" if on else "ball_spawn")
 
 func enabled() -> bool:
+	if MobileControls.enabled():
+		return false
 	if _profile != null:
 		return _profile.show_control_hints
 	return GameConfig.show_control_hints

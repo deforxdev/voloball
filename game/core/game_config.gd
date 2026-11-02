@@ -104,6 +104,7 @@ func _ready() -> void :
 		apply_quality(QUALITY_LOW)
 		resolution_3d = 75
 		max_fps = 60
+		msaa = 0
 		aim_assist = true
 		set_assist = true
 	apply_language()
@@ -1511,6 +1512,7 @@ func _update_power_bar() -> void :
 func apply_display() -> void :
 	if OS.has_feature("mobile"):
 		DisplayServer.screen_set_keep_on(true)
+		apply_frame_cap()
 		return
 
 

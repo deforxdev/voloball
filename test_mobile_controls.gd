@@ -89,5 +89,8 @@ func run() -> void:
 	minigame._input(touch)
 	check(minigame.phase == 2, "second touch finishes minigame")
 	check(InputCollector.new()._is_gamepad(), "touch uses adaptive stick aiming")
+	var hints := ControlHints.new()
+	check(not hints.enabled(), "desktop keyboard hints stay hidden behind touch buttons")
+	hints.free()
 	print("MOBILE REGRESSION COMPLETE: failures=", failures)
 	get_tree().quit(failures)

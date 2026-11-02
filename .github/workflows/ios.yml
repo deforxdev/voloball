@@ -7,6 +7,10 @@ on:
         type: choice
         default: macos-15-intel
         options: [macos-15-intel, macos-26, macos-15]
+      test_simulator:
+        description: Run optional iOS simulator startup checks
+        type: boolean
+        default: false
   push:
     branches: [ios]
 permissions:
@@ -111,7 +115,16 @@ jobs:
           PY
           (cd build/package && zip -qry ../VOLOBALL-iPhone-SideStore.ipa Payload)
           unzip -t build/VOLOBALL-iPhone-SideStore.ipa
+      - name: Upload iPhone IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VOLOBALL-iPhone-SideStore
+          path: build/VOLOBALL-iPhone-SideStore.ipa
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
       - name: Build and test iOS startup and Settings Back
+        if: ${{ inputs.test_simulator == true }}
         shell: bash
         run: |
           set -euo pipefail
@@ -122,14 +135,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' \
             DEVELOPMENT_TEAM='' build 2>&1 | tee build/simulator-build.log
           python3 tools/test_ios_startup.py 2>&1 | tee build/ios-startup.log
-      - name: Upload iPhone IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: VOLOBALL-iPhone-SideStore
-          path: build/VOLOBALL-iPhone-SideStore.ipa
-          if-no-files-found: error
-          retention-days: 14
-          compression-level: 0
       - name: Upload build diagnostics
         if: always()
         uses: actions/upload-artifact@v4

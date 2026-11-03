@@ -1,0 +1,109 @@
+name: Verify exported iPhone game in Simulator
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: SideStore IPA artifact from this repository
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ios-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: macos-15-intel
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /tools/test_ios_startup.py
+            /export_presets.cfg
+            /app_icon.png
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/godot-ci
+            ~/Library/Application Support/Godot/export_templates/4.7.1.stable
+          key: godot-4.7.1-ios-v1
+          fail-on-cache-miss: true
+      - name: Read game data from the actual device IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IPA_ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          mkdir -p build/ios simulator-project
+          python3 - <<'PY'
+          import os, urllib.request, urllib.error, io, zipfile, hashlib, pathlib, plistlib
+          artifact = os.environ['IPA_ARTIFACT_ID']
+          assert artifact.isdigit()
+          request = urllib.request.Request('https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + artifact + '/zip', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          try:
+              response = urllib.request.build_opener(NoRedirect).open(request)
+          except urllib.error.HTTPError as redirect:
+              if redirect.code != 302: raise
+              response = urllib.request.urlopen(redirect.headers['Location'])
+          with response:
+              archive = response.read()
+          with zipfile.ZipFile(io.BytesIO(archive)) as wrapper:
+              ipa = wrapper.read(next(n for n in wrapper.namelist() if n.endswith('.ipa')))
+          with zipfile.ZipFile(io.BytesIO(ipa)) as package:
+              info = plistlib.loads(package.read(next(n for n in package.namelist() if n.endswith('.app/Info.plist'))))
+              assert info['CFBundleIdentifier'] == 'com.deforxdev.voloball'
+              pck = package.read(next(n for n in package.namelist() if n.endswith('.pck')))
+          pathlib.Path('build/device-game.pck').write_bytes(pck)
+          pathlib.Path('build/ios-verified-package.json').write_text(__import__('json').dumps({'version': info['CFBundleShortVersionString'], 'build': info['CFBundleVersion'], 'pck_sha256': hashlib.sha256(pck).hexdigest(), 'artifact_id': artifact}, indent=2))
+          print('Testing device game data:', info['CFBundleShortVersionString'], hashlib.sha256(pck).hexdigest())
+          PY
+      - name: Create a simulator wrapper for the unchanged game pack
+        run: |
+          cp app_icon.png export_presets.cfg simulator-project/
+          cat > simulator-project/project.godot <<'EOF'
+          config_version=5
+          [application]
+          config/name="VOLOBALL"
+          run/main_scene="res://blank.tscn"
+          [rendering]
+          renderer/rendering_method="gl_compatibility"
+          renderer/rendering_method.mobile="gl_compatibility"
+          EOF
+          cat > simulator-project/blank.tscn <<'EOF'
+          [gd_scene format=3]
+          [node name="Blank" type="Node"]
+          EOF
+          godot="$HOME/godot-ci/Godot.app/Contents/MacOS/Godot"
+          "$godot" --headless --path simulator-project --editor --import > build/wrapper-import.log 2>&1
+          "$godot" --headless --path simulator-project --export-release iOS "$PWD/build/ios/voloball.ipa" > build/wrapper-export.log 2>&1
+          cp build/device-game.pck build/ios/voloball.pck
+          cmp build/device-game.pck build/ios/voloball.pck
+      - name: Build native simulator app
+        run: |
+          set -o pipefail
+          xcodebuild -project build/ios/voloball.xcodeproj -scheme voloball \
+            -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/Simulator ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES EXCLUDED_ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' DEVELOPMENT_TEAM='' build 2>&1 | tee build/simulator-build.log
+          cmp build/device-game.pck build/Simulator/Build/Products/Release-iphonesimulator/voloball.app/voloball.pck
+      - name: Run native LAN host and match twice
+        run: |
+          set -o pipefail
+          python3 tools/test_ios_startup.py 2>&1 | tee build/ios-startup.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-exported-game-verification
+          path: |
+            build/*.log
+            build/ios-*.json
+            build/ios-*.png
+            build/ios-native-*
+          if-no-files-found: error
+          retention-days: 7

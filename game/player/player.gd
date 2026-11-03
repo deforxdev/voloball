@@ -2129,6 +2129,8 @@ func _dress_reflection() -> void :
 		(h as MeshInstance3D).material_override = hm
 
 func _ensure_reflection() -> void :
+	if MobileControls.enabled():
+		return
 	if _reflect_root != null or not enable_reflection:
 		return
 	_reflect_root = Node3D.new()

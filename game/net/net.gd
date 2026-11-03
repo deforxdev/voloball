@@ -3581,7 +3581,7 @@ func _s_start(roster: Array, seed: int, stage_id: = "", quick: = false,
 
 
 var pending_start: Array = []
-const _MATCH_START_SCENES: = ["res://game/mobile/mobile_menu.tscn", "res://game/ui/menu.tscn", "res://game/main/main.tscn",
+const _MATCH_START_SCENES: = ["res://game/mobile/mobile_match_loader.tscn", "res://game/mobile/mobile_menu.tscn", "res://game/ui/menu.tscn", "res://game/main/main.tscn",
 	"res://game/net/lobby.tscn"]
 
 func _pull_into_match() -> void :

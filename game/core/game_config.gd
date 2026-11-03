@@ -102,11 +102,12 @@ func _ready() -> void :
 	_load_settings()
 	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
 		apply_quality(QUALITY_LOW)
-		resolution_3d = mini(resolution_3d, 75)
-		max_fps = 30 if max_fps == 30 else 60
+		resolution_3d = mini(resolution_3d, 60)
+		max_fps = 30
 		msaa = 0
 		root_ui_aa = false
 		crowd_enabled = false
+		contour_outline = false
 		aim_assist = true
 		set_assist = true
 	apply_language()
@@ -560,6 +561,9 @@ func slow_time(rate: float, duration: float) -> void :
 
 func goto_scene(path: String) -> void :
 	if MobileControls.enabled():
+		if path == "res://game/main/main.tscn":
+			MobileDiagnostics.record("match_requested")
+			path = "res://game/mobile/mobile_match_loader.tscn"
 		if path == "res://game/ui/menu.tscn":
 			path = "res://game/mobile/mobile_menu.tscn"
 		get_tree().paused = false
@@ -1689,6 +1693,8 @@ const BODY_STENCIL_IDS: = 6
 const BALL_STENCIL: = 7
 
 func stencil_mark_body(root: Node, ref: = SHADOW_STENCIL) -> void :
+	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+		return
 	if root == null:
 		return
 	for n in root.find_children("*", "GeometryInstance3D", true, false):
@@ -1709,6 +1715,8 @@ func stencil_mark_body(root: Node, ref: = SHADOW_STENCIL) -> void :
 			bm.stencil_reference = ref
 
 func stencil_shadow(mat: BaseMaterial3D) -> void :
+	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+		return
 	if mat == null:
 		return
 	mat.stencil_mode = BaseMaterial3D.STENCIL_MODE_CUSTOM

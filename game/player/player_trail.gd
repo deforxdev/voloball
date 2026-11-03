@@ -17,6 +17,11 @@ const RISE: = 0.08
 var color: = Color(0.85, 0.95, 1.0): set = _set_color
 
 func _ready() -> void :
+	if MobileControls.enabled():
+		emitting = false
+		visible = false
+		set_process(false)
+		return
 	super._ready()
 	length_seconds = LIFE
 
@@ -40,6 +45,8 @@ func _ready() -> void :
 var _active: = false
 
 func set_active(on: bool) -> void :
+	if MobileControls.enabled():
+		return
 	if on == _active:
 		return
 	_active = on
@@ -86,6 +93,8 @@ func set_boost(t: float) -> void :
 var _boost: = 0.0
 
 func _set_color(value: Color) -> void :
+	if MobileControls.enabled():
+		return
 	color = value
 
 	var head: = value.lerp(Color(1.0, 1.0, 1.0), _boost * 0.7)

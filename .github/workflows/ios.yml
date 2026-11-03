@@ -84,6 +84,8 @@ jobs:
           grep -q 'MOBILE REGRESSION COMPLETE: failures=0' build/touch-tests.log
           VOLOBALL_BOOT_SMOKE=1 "$godot" --headless --path . --quit-after 360 -- --mobile-preview --drive-role boot_ci 2>&1 | tee build/menu-tests.log
           grep -q 'MOBILE BOOT SMOKE PASSED' build/menu-tests.log
+          VOLOBALL_BOOT_SMOKE=match "$godot" --headless --path . --quit-after 1000 -- --mobile-preview --drive-role match_ci 2>&1 | tee build/match-tests.log
+          grep -q 'MOBILE MATCH SMOKE PASSED' build/match-tests.log
           "$godot" --headless --path . --export-release iOS build/ios/voloball.ipa 2>&1 | tee build/export.log
           test -d build/ios/voloball.xcodeproj
       - name: Build iPhone app without Apple signing credentials

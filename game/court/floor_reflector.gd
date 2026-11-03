@@ -32,6 +32,9 @@ var live: = true
 
 func setup(source_cam: Camera3D) -> void :
 	_src = source_cam
+	if MobileControls.enabled():
+		set_process(false)
+		return
 
 	source_cam.cull_mask &= ~ REFLECT_MASK
 	_vp = SubViewport.new()
@@ -52,7 +55,7 @@ func setup(source_cam: Camera3D) -> void :
 	_cam.current = true
 
 func texture() -> Texture2D:
-	return _vp.get_texture()
+	return _vp.get_texture() if _vp != null else null
 
 
 

@@ -260,6 +260,9 @@ common/physics_interpolation=true
 [rendering]
 
 renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.ios="gl_compatibility"
+renderer/rendering_method.android="gl_compatibility"
+gl_compatibility/driver.ios="opengl3"
 rendering_device/driver="metal"
 rendering_device/driver.windows="d3d12"
 rendering_device/driver.ios="metal"

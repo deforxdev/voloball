@@ -22,7 +22,7 @@ static func unique_floor(court: Node3D) -> ShaderMaterial:
 	var floor_mesh: MeshInstance3D = court.get_node("CourtFloor")
 	floor_mesh.mesh = floor_mesh.mesh.duplicate(true)
 	var mat: = ShaderMaterial.new()
-	mat.shader = FLOOR_SHADER
+	mat.shader = load("res://game/mobile/mobile_floor.gdshader") if MobileControls.enabled() else FLOOR_SHADER
 	(floor_mesh.mesh as BoxMesh).material = mat
 	return mat
 

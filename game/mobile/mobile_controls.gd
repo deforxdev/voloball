@@ -44,7 +44,7 @@ func _ready() -> void:
 	add_child(_surface)
 	get_tree().root.size_changed.connect(_rebuild_layout)
 	_rebuild_layout()
-	if OS.get_environment("VOLOBALL_BOOT_SMOKE") == "1":
+	if OS.get_environment("VOLOBALL_BOOT_SMOKE") in ["1", "match"]:
 		var smoke: Node = (load("res://game/mobile/mobile_boot_smoke.gd") as GDScript).new()
 		get_tree().root.add_child.call_deferred(smoke)
 

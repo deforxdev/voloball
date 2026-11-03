@@ -73,6 +73,9 @@ static func ensure(parent: Node, floor_y: = 0.0) -> ShadowSun:
 	return s
 
 func _ready() -> void :
+	if MobileControls.enabled():
+		set_process(false)
+		return
 	_sun = DirectionalLight3D.new()
 	_sun.name = "Sun"
 	_sun.rotation_degrees = Vector3(SUN_PITCH, SUN_YAW, 0.0)

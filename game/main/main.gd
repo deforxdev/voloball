@@ -708,6 +708,7 @@ var _net_shot: = false
 var _shot_count: = 0
 
 func _ready() -> void :
+	MobileDiagnostics.record("main_ready_entered")
 
 	_practice_dress = PracticeMode.active()
 
@@ -815,6 +816,7 @@ func _ready() -> void :
 	reflector.floor_mats = [_floor_mat]
 	_reflector = reflector
 	_apply_stage_tracked()
+	MobileDiagnostics.record("match_stage_created")
 
 
 	if _stage_shell != null:
@@ -842,6 +844,7 @@ func _ready() -> void :
 		_spawn_teams()
 	else:
 		_spawn_teams_net()
+	MobileDiagnostics.record("match_players_created")
 	if _net_role != NetRole.CLIENT:
 		TeamBot.ensure_team_jump_servers(_bots)
 
@@ -1115,6 +1118,7 @@ func _ready() -> void :
 		hud.loading_cover.art = false
 	hud.set_loading(1.0)
 	_park_ball()
+	MobileDiagnostics.record("main_ready_completed")
 
 
 

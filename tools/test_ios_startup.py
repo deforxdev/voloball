@@ -13,7 +13,8 @@ candidates = [(runtime, d) for runtime, group in devices.items() if ".iOS-" in r
               for d in group if "iPhone" in d["name"] and d.get("isAvailable", True)]
 if not candidates:
     raise RuntimeError("No iPhone Simulator is installed")
-_, device = sorted(candidates, key=lambda pair: pair[0], reverse=True)[0]
+preferred = [pair for pair in candidates if "iOS-18-" in pair[0]]
+_, device = sorted(preferred or candidates, key=lambda pair: pair[0])[0]
 udid = device["udid"]
 print("Testing iOS startup on", device["name"], udid, flush=True)
 if device["state"] != "Booted":
@@ -23,13 +24,13 @@ bundle = "com.deforxdev.voloball"
 app = "build/Simulator/Build/Products/Release-iphonesimulator/voloball.app"
 subprocess.run(["xcrun", "simctl", "install", udid, app], check=True)
 data = Path(command("xcrun", "simctl", "get_app_container", udid, bundle, "data"))
-environment = dict(os.environ, SIMCTL_CHILD_VOLOBALL_BOOT_SMOKE="1")
+environment = dict(os.environ, SIMCTL_CHILD_VOLOBALL_BOOT_SMOKE="match")
 previous = None
 results = []
 for attempt in (1, 2):
     for stale in data.rglob("mobile-smoke.json"):
         stale.unlink()
-    # Godot supports the Compatibility renderer on Simulator; device IPA keeps Metal.
+    # Exercise the same Compatibility pipeline shipped on physical phones.
     subprocess.run(["xcrun", "simctl", "launch", udid, bundle,
                     "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"],
                    env=environment, check=True)

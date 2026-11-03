@@ -66,6 +66,9 @@ func _build() -> void:
 	_players = _label("", 20)
 	_start = _button(_body, "Почати матч", _start_match)
 	_button(_body, "Вийти з кімнати", func(): Net.leave())
+	_button(_body, "Скопіювати журнал запуску", func():
+		DisplayServer.clipboard_set(MobileDiagnostics.read_log())
+		_status.text = "Журнал скопійовано — його можна вставити в повідомлення.")
 	var settings := HBoxContainer.new()
 	_body.add_child(settings)
 	_button(settings, "Економний режим · 30 FPS", func(): _quality(30, 60))

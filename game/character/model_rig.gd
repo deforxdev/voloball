@@ -1319,7 +1319,8 @@ func _ensure_face_vp() -> void :
 	if _face_vp != null:
 		return
 	_face_vp = SubViewport.new()
-	_face_vp.size = Vector2i(FACE_TEXTURE_SIZE, FACE_TEXTURE_SIZE)
+	var scale_factor := 0.25 if MobileControls.enabled() else 1.0
+	_face_vp.size = Vector2i.ONE * int(FACE_TEXTURE_SIZE * scale_factor)
 	_face_vp.transparent_bg = true
 	_face_vp.disable_3d = true
 
@@ -1331,7 +1332,8 @@ func _ensure_face_vp() -> void :
 	_face_vp.add_child(_face_canvas)
 
 
-	_face_canvas.position = Vector2(FACE_PADDING, FACE_PADDING)
+	_face_canvas.scale = Vector2.ONE * scale_factor
+	_face_canvas.position = Vector2(FACE_PADDING, FACE_PADDING) * scale_factor
 	_face_canvas.size = Vector2(FACE_CANVAS, FACE_CANVAS)
 
 
@@ -5533,6 +5535,8 @@ func _find_anim(node: Node) -> AnimationPlayer:
 	return null
 
 func _ink(meshes: Array, width: float, front_part: = false, want_highlight: = true) -> void :
+	if MobileControls.enabled():
+		return
 
 
 
@@ -5783,6 +5787,8 @@ func set_flash(color: Color, amount: float) -> void :
 
 
 static func body_shader() -> Shader:
+	if MobileControls.enabled():
+		return load("res://game/mobile/mobile_body.gdshader") as Shader
 	return WII if GameConfig.style_is(GameConfig.ArtStyle.WII) else TOON
 
 
@@ -5864,7 +5870,7 @@ func mark_head_group() -> void :
 
 func _hair_material(color: Color) -> ShaderMaterial:
 	var mat: = ShaderMaterial.new()
-	mat.shader = stencil_shader(WII if GameConfig.style_is(GameConfig.ArtStyle.WII) else TOON_HAIR, 
+	mat.shader = body_shader() if MobileControls.enabled() else stencil_shader(WII if GameConfig.style_is(GameConfig.ArtStyle.WII) else TOON_HAIR,
 		head_stencil_id())
 	mat.set_shader_parameter("albedo", color)
 	return mat
@@ -5978,6 +5984,8 @@ var stencil_id: = 1
 
 static var _stencil_variants: = {}
 static func stencil_shader(base: Shader, id: int) -> Shader:
+	if MobileControls.enabled():
+		return base
 	if base == null or id <= 1:
 		return base
 	var key: = [base, id]
@@ -6413,7 +6421,7 @@ func _build_number_patch(meshes: Array) -> void :
 				mi.set_surface_override_material(s2, _number_mat)
 			continue
 		_number_vp = SubViewport.new()
-		_number_vp.size = Vector2i(256, 256)
+		_number_vp.size = Vector2i(128, 128) if MobileControls.enabled() else Vector2i(256, 256)
 		_number_vp.transparent_bg = true
 		_number_vp.disable_3d = true
 
@@ -6432,11 +6440,11 @@ func _build_number_patch(meshes: Array) -> void :
 
 		if ResourceLoader.exists(NUMBER_FONT):
 			_number_text.add_theme_font_override("font", load(NUMBER_FONT))
-		_number_text.add_theme_font_size_override("font_size", 128)
+		_number_text.add_theme_font_size_override("font_size", 64 if MobileControls.enabled() else 128)
 		_number_text.add_theme_color_override("font_color", Color.WHITE)
 		_number_vp.add_child(_number_text)
 		_number_mat = ShaderMaterial.new()
-		_number_mat.shader = stencil_shader(TOON_NUMBER, stencil_id)
+		_number_mat.shader = load("res://game/mobile/mobile_number.gdshader") if MobileControls.enabled() else stencil_shader(TOON_NUMBER, stencil_id)
 		_number_mat.set_shader_parameter("number_tex", _number_vp.get_texture())
 		for s in mi.mesh.get_surface_count():
 			mi.set_surface_override_material(s, _number_mat)

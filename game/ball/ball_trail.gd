@@ -20,6 +20,11 @@ const ALPHA: = 0.9
 var color: = Color(0.3, 0.6, 1.0): set = _set_color
 
 func _ready() -> void :
+	if MobileControls.enabled():
+		emitting = false
+		visible = false
+		set_process(false)
+		return
 	super._ready()
 	length_seconds = LIFE
 
@@ -50,6 +55,8 @@ var _active: = true
 var _fade: = 1.0
 
 func set_active(on: bool) -> void :
+	if MobileControls.enabled():
+		return
 	if on:
 		if _active and _fade >= 1.0:
 			return
@@ -105,6 +112,8 @@ func _set_color(value: Color) -> void :
 
 
 func _apply_ramp(mul: float) -> void :
+	if MobileControls.enabled():
+		return
 	var grad: = Gradient.new()
 	grad.set_color(0, Color(color.r, color.g, color.b, ALPHA * mul))
 	grad.set_color(1, Color(color.r, color.g, color.b, 0.0))

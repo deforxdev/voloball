@@ -14,6 +14,11 @@ var trail_color: = Color(1.0, 0.97, 0.88)
 var alpha: = 0.7
 
 func _ready() -> void :
+	if MobileControls.enabled():
+		emitting = false
+		visible = false
+		set_process(false)
+		return
 	super._ready()
 	length_seconds = life
 
@@ -40,6 +45,8 @@ func _ready() -> void :
 var _active: = false
 
 func set_active(on: bool) -> void :
+	if MobileControls.enabled():
+		return
 	if on == _active:
 		return
 	_active = on

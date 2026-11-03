@@ -2559,6 +2559,8 @@ func hide_countdown() -> void :
 	$Countdown.visible = false
 
 func grab_dissolve() -> void :
+	if MobileControls.enabled():
+		return
 
 
 	var img: = get_viewport().get_texture().get_image()

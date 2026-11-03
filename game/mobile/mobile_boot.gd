@@ -2,7 +2,7 @@ extends Control
 
 # Phone startup deliberately avoids the desktop title parade, first-run locker
 # and eager portrait/court preparation. Existing profiles and settings are kept.
-const MENU := "res://game/mobile/mobile_menu.tscn"
+@export var destination := "res://game/mobile/mobile_menu.tscn"
 const LOAD_TIMEOUT_MS := 60000
 var _started := 0
 var _opening := false
@@ -11,6 +11,7 @@ var _progress: ProgressBar
 var _retry: Button
 
 func _ready() -> void:
+	MobileDiagnostics.record("loader_ready: " + destination)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().paused = false
 	Engine.time_scale = 1.0
@@ -49,18 +50,27 @@ func _build() -> void:
 	_retry.custom_minimum_size.y = 64
 	_retry.pressed.connect(start_loading)
 	column.add_child(_retry)
+	if destination.ends_with("main.tscn"):
+		var back := Button.new()
+		back.text = "Назад до меню"
+		back.custom_minimum_size.y = 64
+		back.pressed.connect(func():
+			Net.leave()
+			GameConfig.goto_scene("res://game/ui/menu.tscn"))
+		column.add_child(back)
 
 func start_loading() -> void:
 	_started = Time.get_ticks_msec()
 	_opening = false
 	_retry.hide()
-	_status.text = "Завантаження меню…"
+	_status.text = "Завантаження матчу…" if destination.ends_with("main.tscn") else "Завантаження меню…"
 	_progress.value = 0
 	set_process(true)
-	print("[mobile boot] loading menu; profile is preserved")
-	var state := ResourceLoader.load_threaded_get_status(MENU)
+	print("[mobile boot] loading " + destination + "; profile is preserved")
+	MobileDiagnostics.record("resource_loading: " + destination)
+	var state := ResourceLoader.load_threaded_get_status(destination)
 	if state == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE or state == ResourceLoader.THREAD_LOAD_FAILED:
-		var error := ResourceLoader.load_threaded_request(MENU, "PackedScene")
+		var error := ResourceLoader.load_threaded_request(destination, "PackedScene")
 		if error != OK:
 			_fail("Не вдалося почати завантаження (%d)" % error)
 
@@ -68,16 +78,16 @@ func _process(_delta: float) -> void:
 	if _opening:
 		return
 	var progress: Array = []
-	var state := ResourceLoader.load_threaded_get_status(MENU, progress)
+	var state := ResourceLoader.load_threaded_get_status(destination, progress)
 	if not progress.is_empty():
 		_progress.value = float(progress[0]) * 100.0
 	if state == ResourceLoader.THREAD_LOAD_LOADED:
-		var scene := ResourceLoader.load_threaded_get(MENU) as PackedScene
+		var scene := ResourceLoader.load_threaded_get(destination) as PackedScene
 		if scene == null:
 			_fail("Не вдалося відкрити меню")
 			return
 		_opening = true
-		_status.text = "Відкриваю меню…"
+		_status.text = "Відкриваю матч…" if destination.ends_with("main.tscn") else "Відкриваю меню…"
 		_progress.value = 100
 		_open_menu.call_deferred(scene)
 	elif state == ResourceLoader.THREAD_LOAD_FAILED or state == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
@@ -86,6 +96,7 @@ func _process(_delta: float) -> void:
 		_fail("Завантаження триває надто довго")
 
 func _open_menu(scene: PackedScene) -> void:
+	MobileDiagnostics.record("scene_instantiating: " + destination)
 	print("[mobile boot] menu resources loaded")
 	GameConfig.goto_packed(scene)
 

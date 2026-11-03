@@ -107,6 +107,17 @@ const DREAM_SKY_MAT: = preload("res://game/court/dream_sky.tres")
 const SHIELD_BLUE: = Color(0.25, 0.6, 1.0)
 
 const STAGES: = {
+	"mobile": {
+		"title": "Mobile Court", "demo": true,
+		"venue": "res://game/mobile/mobile_arena.tscn",
+		"surface": "court", "reflect": false, "crowd": false,
+		"use_sky_color": true, "sky_color": Color(0.16, 0.25, 0.32),
+		"anime_sky": false, "fog": false, "bloom": false,
+		"floor_color": Color(0.24, 0.48, 0.66),
+		"lines": Color.WHITE, "tape": Color.WHITE,
+		"cord": Color(0.04, 0.04, 0.04),
+		"pole": Color(0.9, 0.3, 0.18), "pad": Color(0.9, 0.3, 0.18),
+	},
 	"nationals": {
 		"reverb": {"room": 0.9, "damp": 0.5, "wet": 0.19, "predelay": 35.0, "hipass": 0.2}, 
 		"title": "Nationals Arena", 
@@ -697,7 +708,7 @@ static func resolve(id: String) -> String:
 const DEMO_HOME: = "grass"
 static func home() -> String:
 	var mobile: bool = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview")
-	var preferred: String = DEMO_HOME if LaunchGate.is_demo() or mobile else "nationals"
+	var preferred: String = "mobile" if mobile else DEMO_HOME if LaunchGate.is_demo() else "nationals"
 	if ResourceLoader.exists(String(STAGES[preferred].get("venue", ""))):
 		return preferred
 	# Recovered projects can omit a venue. Never choose a missing default scene.

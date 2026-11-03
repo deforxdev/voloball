@@ -256,6 +256,10 @@ func _ready() -> void :
 
 
 	mesh.mesh = mesh.mesh.duplicate(true)
+	if MobileControls.enabled():
+		var mobile_mat := ShaderMaterial.new()
+		mobile_mat.shader = load("res://game/mobile/mobile_ball.gdshader")
+		(mesh.mesh as PrimitiveMesh).material = mobile_mat
 	outline.mesh = outline.mesh.duplicate(true)
 
 	GameConfig.compat_dim(shadow.get_active_material(0) as BaseMaterial3D)

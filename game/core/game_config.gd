@@ -102,9 +102,11 @@ func _ready() -> void :
 	_load_settings()
 	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
 		apply_quality(QUALITY_LOW)
-		resolution_3d = 75
-		max_fps = 60
+		resolution_3d = mini(resolution_3d, 75)
+		max_fps = 30 if max_fps == 30 else 60
 		msaa = 0
+		root_ui_aa = false
+		crowd_enabled = false
 		aim_assist = true
 		set_assist = true
 	apply_language()
@@ -558,6 +560,8 @@ func slow_time(rate: float, duration: float) -> void :
 
 func goto_scene(path: String) -> void :
 	if MobileControls.enabled():
+		if path == "res://game/ui/menu.tscn":
+			path = "res://game/mobile/mobile_menu.tscn"
 		get_tree().paused = false
 		MobileControls.release_all()
 	if _scene_pending != "":

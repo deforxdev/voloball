@@ -1,7 +1,7 @@
 extends Node
 
 # Activated only by the CI simulator environment, never during normal play.
-const MENU := "res://game/ui/menu.tscn"
+const MENU := "res://game/mobile/mobile_menu.tscn"
 var _phase := 0
 var _frames := 0
 var _started := 0
@@ -22,30 +22,30 @@ func _process(_delta: float) -> void:
 		return
 	_frames += 1
 	if _phase == 0 and _frames >= 60:
-		if menu.player == null or menu._arena_nodes.is_empty():
-			_fail("menu did not build a player and arena")
+		if menu._address == null or menu._name == null:
+			_fail("LAN menu controls are missing")
 			return
-		menu._open_settings(SettingsPanel.Scope.SYSTEM)
+		menu._quality(30, 60)
 		_phase = 1
 		_frames = 0
 		_write("settings_opened")
 	elif _phase == 1 and _frames >= 30:
-		if not menu._settings.is_visible_in_tree():
-			_fail("settings did not open")
+		if GameConfig.max_fps != 30 or GameConfig.resolution_3d != 60:
+			_fail("economy settings did not apply")
 			return
-		menu._settings_back()
+		menu._quality(60, 75)
 		_phase = 2
 		_frames = 0
 		_write("settings_back")
 	elif _phase == 2 and _frames >= 120:
-		if menu._settings.is_visible_in_tree() or get_tree().paused:
-			_fail("settings back did not restore an active menu")
+		if get_tree().paused or GameConfig.max_fps != 60:
+			_fail("settings did not preserve an active menu")
 			return
-		if GameConfig.onboarding_active or menu._practice_prewarm:
+		if GameConfig.onboarding_active:
 			_fail("desktop startup prewarming is active on mobile")
 			return
 		_write("passed")
-		print("MOBILE BOOT SMOKE PASSED: menu -> settings -> back")
+		print("MOBILE BOOT SMOKE PASSED: lightweight LAN menu and quality settings")
 		set_process(false)
 
 func _write(phase: String, error := "") -> void:

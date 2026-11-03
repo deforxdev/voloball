@@ -323,6 +323,8 @@ func _seen() -> bool:
 	return true
 
 func _build_runner(cfg: CharacterConfig = null) -> void :
+	if MobileControls.enabled():
+		return
 	if _vp != null:
 		_vp.queue_free()
 	_vp = SubViewport.new()
@@ -401,7 +403,7 @@ func _process(delta: float) -> void :
 		_pc.set_process(seen)
 	if not seen:
 		return
-	if art and _vp == null:
+	if art and _vp == null and not MobileControls.enabled():
 		_build_runner()
 	_t += delta
 	var sz: = size

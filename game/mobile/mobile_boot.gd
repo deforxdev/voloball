@@ -2,7 +2,7 @@ extends Control
 
 # Phone startup deliberately avoids the desktop title parade, first-run locker
 # and eager portrait/court preparation. Existing profiles and settings are kept.
-const MENU := "res://game/ui/menu.tscn"
+const MENU := "res://game/mobile/mobile_menu.tscn"
 const LOAD_TIMEOUT_MS := 60000
 var _started := 0
 var _opening := false

@@ -73,6 +73,8 @@ static var _head_cache: = {}
 
 static func head_cached(cfg_data: Dictionary, host: Node = null, 
 		preset: = "head") -> ImageTexture:
+	if MobileControls.enabled():
+		return null
 	if cfg_data.is_empty():
 		return null
 	var key: = hash([cfg_data, preset])

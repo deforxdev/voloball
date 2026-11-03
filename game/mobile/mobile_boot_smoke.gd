@@ -26,7 +26,7 @@ func _process(_delta: float) -> void:
 		return
 	_frames += 1
 	if _phase == 0 and _frames >= 60:
-		if menu._body == null:
+		if menu.get("_card_local") == null:
 			_fail("mobile menu controls are missing")
 			return
 		menu._quality(30, 60)
@@ -55,10 +55,24 @@ func _process(_delta: float) -> void:
 func _match_smoke(scene: Node) -> void:
 	if scene == null or not scene.is_node_ready():
 		return
+	if _phase in [0, 3] and scene.scene_file_path != MENU:
+		return
+	if _phase in [1, 4] and scene.scene_file_path != MobileRender.MATCH:
+		return
 	_frames += 1
+	if _phase == 0 and scene.scene_file_path == MENU and _frames == 20 and DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
+		get_viewport().get_texture().get_image().save_png("user://mobile-desktop-menu-" + RenderingServer.get_current_rendering_method() + ".png")
 	if _phase == 0 and scene.scene_file_path == MENU and _frames >= 30:
 		_phase = 1
 		_frames = 0
+		scene._start_solo_practice()
+		scene._spawn_practice_ball()
+		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3(0, 5.2, 0)):
+			_fail("G did not spawn at twice the old height")
+			return
+		if DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
+			get_viewport().get_texture().get_image().save_png("user://mobile-menu-freeplay-" + RenderingServer.get_current_rendering_method() + ".png")
+		scene._exit_freeplay()
 		_write("match_requested")
 		scene._offline()
 	elif _phase == 1 and scene.scene_file_path == MobileRender.MATCH:
@@ -69,7 +83,7 @@ func _match_smoke(scene: Node) -> void:
 		_frames = 0
 		_write("match_running")
 	elif _phase == 2 and scene.get("_did_intro") == true and _frames > (60 if OS.has_feature("ios") else 450):
-		if scene.scene_file_path != MobileRender.MATCH or GameConfig.stage != "mobile":
+		if scene.scene_file_path != MobileRender.MATCH or GameConfig.stage != "grass":
 			_fail("mobile match did not stay active")
 			return
 		for particles in scene.find_children("*", "GPUParticles3D", true, false):

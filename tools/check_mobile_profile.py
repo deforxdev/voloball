@@ -25,3 +25,12 @@ for name in ('mobile_main', 'mobile_player', 'mobile_ball', 'mobile_court'):
     assert 'res://game/court/net.gdshader' not in scene
     assert 'res://game/player/player.tscn' not in scene
 print('MOBILE PROFILE CHECK PASSED: isolated startup/scenes/settings; iOS Metal, Android GLES')
+
+menu = (root / "game/mobile/mobile_menu.tscn").read_text(encoding="utf-8")
+assert "res://game/ui/menu.gd" in menu
+venue = (root / "game/mobile/mobile_grass.tscn").read_text(encoding="utf-8")
+assert "GrassField" not in venue
+
+for name in ("mobile_body", "mobile_ball", "mobile_ball_cel"):
+    shader = (root / "game/mobile" / (name + ".gdshader")).read_text(encoding="utf-8")
+    assert not re.search(r"^stencil_mode", shader, re.MULTILINE)

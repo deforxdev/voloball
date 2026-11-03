@@ -19,7 +19,7 @@ signal closed(reason: String)
 signal request_menu
 signal rebuild_wanted
 
-const MAIN_SCENE: = "res://game/main/main.tscn"
+static var MAIN_SCENE: String = MobileRender.MATCH if MobileRender.enabled() else "res://game/main/main.tscn"
 
 
 

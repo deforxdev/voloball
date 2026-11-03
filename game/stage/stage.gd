@@ -648,6 +648,8 @@ const STAGES: = {
 
 
 static func ids(with_variants: = true) -> Array:
+	if MobileRender.enabled():
+		return ["grass"]
 	var out: = []
 	for id in STAGES:
 		if not _listed(id):
@@ -708,7 +710,7 @@ static func resolve(id: String) -> String:
 const DEMO_HOME: = "grass"
 static func home() -> String:
 	var mobile: bool = MobileRender.enabled()
-	var preferred: String = "mobile" if mobile else DEMO_HOME if LaunchGate.is_demo() else "nationals"
+	var preferred: String = "grass" if mobile else DEMO_HOME if LaunchGate.is_demo() else "nationals"
 	if ResourceLoader.exists(String(STAGES[preferred].get("venue", ""))):
 		return preferred
 	# Recovered projects can omit a venue. Never choose a missing default scene.
@@ -724,6 +726,10 @@ static func saved_pick(id: String) -> String:
 	return id if id in ids() else home()
 
 static func info(id: String) -> Dictionary:
+	if MobileRender.enabled() and id == "grass":
+		var mobile_stage: Dictionary = STAGES["grass"].duplicate(true)
+		mobile_stage.merge({"venue": "res://game/mobile/mobile_grass.tscn", "fog": false, "anime_sky": false, "force_wall": false, "use_sky_color": true, "sky_color": Color(0.55, 0.76, 0.95), "sun": 0.0}, true)
+		return mobile_stage
 	var d: Dictionary = STAGES.get(id, STAGES[home()])
 	if d.has("base") and STAGES.has(d["base"]):
 

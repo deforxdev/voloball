@@ -1,6 +1,7 @@
 class_name MobileRender
 extends RefCounted
 
+const MENU := "res://game/mobile/mobile_menu.tscn"
 const MATCH := "res://game/mobile/mobile_main.tscn"
 const PLAYER := "res://game/mobile/mobile_player.tscn"
 

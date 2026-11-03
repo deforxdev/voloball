@@ -429,6 +429,11 @@ var _drill_overlay: Control = null
 var _drill_return_stage: = ""
 
 func _ready() -> void :
+	if MobileRender.enabled():
+		MobileRender.apply()
+		GameConfig.stage = "grass"
+		GameConfig.freeplay_stage = "grass"
+		_freeplay_stage = "grass"
 
 	set_meta(GameConfig.STAGE_WORLD, true)
 	GameConfig.tod_live = false
@@ -511,8 +516,11 @@ func _ready() -> void :
 	if fps_at >= 0 and fps_at + 1 < LaunchGate.dev_args().size():
 		_freeplay_stage = String(LaunchGate.dev_args()[fps_at + 1])
 	_build_arena()
+	MobileDiagnostics.record("menu_arena_ready")
 	_build_player()
+	MobileDiagnostics.record("menu_player_ready")
 	_build_ui()
+	MobileDiagnostics.record("mobile_menu_ready")
 	_drill_progress.load_local()
 
 	if GameConfig.lobby_notice != "":
@@ -2956,6 +2964,18 @@ func _group(v: VBoxContainer, text: String) -> void :
 
 
 
+func _quality(fps: int, resolution: int) -> void:
+	GameConfig.max_fps = fps
+	GameConfig.resolution_3d = resolution
+	MobileRender.apply()
+	GameConfig.apply_render_scale()
+	GameConfig.apply_frame_cap()
+	GameConfig.save_settings()
+
+func _offline() -> void:
+	GameConfig.stage = "grass"
+	_go_to_match(1)
+
 func _build_home() -> void :
 
 
@@ -2963,6 +2983,29 @@ func _build_home() -> void :
 	var v: = _box(_home)
 
 	v.add_theme_constant_override("separation", 9)
+	if MobileRender.enabled():
+		var phone_options := HBoxContainer.new()
+		_root.add_child(phone_options)
+		phone_options.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		phone_options.offset_left = -170
+		phone_options.offset_right = 70
+		phone_options.offset_top = -47
+		phone_options.offset_bottom = -9
+		phone_options.z_index = 30
+		for option in ["30 FPS", "60 FPS", "Журнал"]:
+			var button := Button.new()
+			button.text = option
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.custom_minimum_size.y = 36
+			UiStyle.style_button(button, "tertiary", 14)
+			phone_options.add_child(button)
+			if option == "Журнал":
+				button.pressed.connect(func():
+					DisplayServer.clipboard_set(MobileDiagnostics.read_log())
+					_flash_notice("Журнал скопійовано"))
+			else:
+				var fps: int = 30 if option == "30 FPS" else 60
+				button.pressed.connect(func(): _quality(fps, 60 if fps == 30 else 75))
 	var online_card: = _card_btn("massiveMultiplayer", "online", 
 		MenuCopy.sub("online"), "primary", _open_online)
 	var local_card: = _card_btn("singleplayer", "local", 
@@ -3352,6 +3395,9 @@ func _back_btn(on_press: Callable, text_in: = "back") -> Button:
 
 
 func _open_online() -> void :
+	if MobileRender.enabled():
+		_flash_notice("Онлайн ще не підключений")
+		return
 	if not OnlineTerms.require(_open_online):
 		return
 	_show(_online)
@@ -3376,7 +3422,7 @@ func _build_online() -> void :
 
 
 func _open_local() -> void :
-	if LaunchGate.public_beta():
+	if MobileRender.enabled() or LaunchGate.public_beta():
 		_open_local_standard()
 	else:
 		_show(_local_choose)
@@ -4490,6 +4536,10 @@ func _try_freeplay() -> void :
 
 
 func _start_solo_practice(enter: = true) -> void :
+	if MobileRender.enabled():
+		_enter_freeplay()
+		_spawn_practice_ball()
+		return
 	_practice_solo = true
 	_keep_menu_config()
 	Net.practice = true
@@ -7875,7 +7925,7 @@ func _spawn_practice_ball() -> void :
 	ball.vel = Vector3.ZERO
 	ball.curve = 0.0
 	ball.stop_float()
-	ball.global_position = player.global_position + Vector3(0.0, 2.6, 0.0)
+	ball.global_position = player.global_position + Vector3(0.0, 5.2, 0.0)
 	ball.reset_physics_interpolation()
 
 func _despawn_my_ball(announce: = true) -> void :
@@ -8606,6 +8656,9 @@ func _drive_reform(delta: float) -> void :
 
 
 func _start_party(then: = Callable()) -> void :
+	if MobileRender.enabled():
+		_flash_notice("Online is not connected yet")
+		return
 	if not OnlineTerms.require(_start_party.bind(then)):
 		return
 

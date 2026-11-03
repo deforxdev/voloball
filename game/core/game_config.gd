@@ -35,7 +35,7 @@ var capture_wanted: = false
 var capture_wanted_ms: = -1000000
 
 func capture_mouse(on: bool) -> void :
-	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+	if MobileRender.enabled():
 		capture_wanted = false
 		return
 	capture_wanted = on
@@ -1689,7 +1689,7 @@ const BODY_STENCIL_IDS: = 6
 const BALL_STENCIL: = 7
 
 func stencil_mark_body(root: Node, ref: = SHADOW_STENCIL) -> void :
-	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+	if MobileRender.enabled():
 		return
 	if root == null:
 		return
@@ -1711,7 +1711,7 @@ func stencil_mark_body(root: Node, ref: = SHADOW_STENCIL) -> void :
 			bm.stencil_reference = ref
 
 func stencil_shadow(mat: BaseMaterial3D) -> void :
-	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+	if MobileRender.enabled():
 		return
 	if mat == null:
 		return

@@ -66,3 +66,21 @@ held during process shutdown; no script or shader error occurs during gameplay.
 Android 0.2.0 uses the mobile branch's test signing key, different from Android
 0.1.4, so installing it over that older APK is unsupported. Preserve local data
 before removing any existing installation.
+
+## 0.2.1 — desktop appearance on phones
+
+The phone menu now instantiates the same `game/ui/menu.gd` UI as Windows, with
+its player preview and familiar play/locker/shop/profile controls. Phone FPS/log
+shortcuts sit in the footer. Mobile renderer, resolution limits and FX budgets
+remain active. Solo practice uses the menu's existing freeplay court, avoiding
+an additional embedded 12-player desktop practice viewport on a phone.
+
+Mobile Grass uses the original PC landscape, tree cards, hills, textures and
+court colors. The grass-clump generator and secondary sky environment are omitted;
+the sky uses the original blue color. Body cel shading and volleyball panel
+shading share the desktop shader logic with stencil writes removed. No reflection,
+secondary hair simulation or desktop contour passes are re-enabled.
+
+G and the phone's ball button now release the ball 5.2m above the player instead
+of 2.6m, both in menu freeplay and match practice. The same change is applied to
+the independent Windows branch and covered by the ball regression test.

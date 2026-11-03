@@ -715,7 +715,7 @@ func _dress_model() -> void :
 			if mat is BaseMaterial3D:
 				var src: BaseMaterial3D = mat
 				var cel: = ShaderMaterial.new()
-				cel.shader = load("res://game/ball/ball_cel.gdshader")
+				cel.shader = load("res://game/mobile/mobile_ball_cel.gdshader") if MobileRender.enabled() else load("res://game/ball/ball_cel.gdshader")
 				if tuned != null:
 					for p in ["key_dir", "band_edge", "shade", "band_softness"]:
 						var v: Variant = tuned.get_shader_parameter(p)

@@ -27,7 +27,7 @@ bundle = 'com.deforxdev.voloball'
 app = 'build/Simulator/Build/Products/Release-iphonesimulator/voloball.app'
 subprocess.run(['xcrun', 'simctl', 'install', udid, app], check=True)
 data = Path(command('xcrun', 'simctl', 'get_app_container', udid, bundle, 'data'))
-environment = dict(os.environ, SIMCTL_CHILD_VOLOBALL_BOOT_SMOKE='match')
+environment = dict(os.environ, SIMCTL_CHILD_VOLOBALL_BOOT_SMOKE=os.environ.get('VOLOBALL_IOS_SMOKE_MODE', 'match'))
 previous = None
 results = []
 for attempt in (1, 2):

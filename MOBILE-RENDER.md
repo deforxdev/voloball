@@ -84,3 +84,24 @@ secondary hair simulation or desktop contour passes are re-enabled.
 G and the phone's ball button now release the ball 5.2m above the player instead
 of 2.6m, both in menu freeplay and match practice. The same change is applied to
 the independent Windows branch and covered by the ball regression test.
+
+## 0.2.2 — iPhone launcher crash recovery
+
+The user reported an exit at loading the menu in 0.2.1. That build loaded the
+entire desktop menu script, all hidden desktop pages and a live 3D world before
+showing the menu. No physical-device crash report is available to establish the
+exact native cause.
+
+The iPhone launcher now uses `phone_menu.gd`, a small Control-only scene with a
+baked PNG of the same court/avatar and PC-style 2D cards. It does not load the
+desktop Menu, HUD, locker scene or player scene, and disables root 3D rendering
+until leaving the menu. The match stays 3D and keeps its grass court and 5.2m G
+spawn. Local matches and practice load only after tapping their buttons. Locker,
+shop and online tabs are temporarily disabled; profile naming, settings, journal,
+local play and practice work through lightweight pages. Practice uses two bodies
+without allocating the desktop interactive court-size pads.
+
+Android push builds are disabled. This iteration builds only the iPhone IPA.
+Native simulator verification can now run the 2D menu/settings path separately
+from the software-rendered 3D match, including two launches and saved profile
+persistence. Physical iPhone validation still follows installation of the IPA.

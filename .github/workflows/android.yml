@@ -1,8 +1,6 @@
 name: Android mobile APK
 on:
   workflow_dispatch:
-  push:
-    branches: [mobile]
 permissions:
   contents: read
 concurrency:

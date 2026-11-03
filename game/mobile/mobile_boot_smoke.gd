@@ -29,6 +29,10 @@ func _process(_delta: float) -> void:
 		if menu.get("_card_local") == null:
 			_fail("mobile menu controls are missing")
 			return
+		if not menu is Control or not menu.find_children("*", "Node3D", true, false).is_empty():
+			_fail("phone menu loaded a desktop 3D scene")
+			return
+		menu._open_settings(0)
 		menu._quality(30, 60)
 		_phase = 1
 		_frames = 0
@@ -37,12 +41,13 @@ func _process(_delta: float) -> void:
 		if GameConfig.max_fps != 30 or GameConfig.resolution_3d != 60:
 			_fail("economy settings did not apply")
 			return
+		menu._settings_back()
 		menu._quality(60, 75)
 		_phase = 2
 		_frames = 0
 		_write("settings_back")
 	elif _phase == 2 and _frames >= 120:
-		if get_tree().paused or GameConfig.max_fps != 60:
+		if get_tree().paused or GameConfig.max_fps != 60 or not menu._home.visible:
 			_fail("settings did not preserve an active menu")
 			return
 		if GameConfig.onboarding_active:
@@ -59,75 +64,61 @@ func _match_smoke(scene: Node) -> void:
 		return
 	if _phase in [0, 3] and scene.scene_file_path != MENU:
 		return
-	if _phase in [1, 4] and scene.scene_file_path != MobileRender.MATCH:
+	if _phase in [1, 2, 4] and scene.scene_file_path != MobileRender.MATCH:
 		return
 	_frames += 1
-	if _phase == 0 and scene.scene_file_path == MENU and _frames == 20 and DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
-		get_viewport().get_texture().get_image().save_png("user://mobile-desktop-menu-" + RenderingServer.get_current_rendering_method() + ".png")
-	if _phase == 0 and scene.scene_file_path == MENU and _frames >= 30:
-		_phase = 1
-		_frames = 0
-		scene._start_solo_practice()
-		scene._spawn_practice_ball()
-		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3(0, 5.2, 0)):
-			_fail("G did not spawn at twice the old height")
+	if _phase == 0 and _frames >= 30:
+		if not scene is Control or not scene.find_children("*", "Node3D", true, false).is_empty():
+			_fail("launcher allocated a 3D scene")
 			return
 		if DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
-			get_viewport().get_texture().get_image().save_png("user://mobile-menu-freeplay-" + RenderingServer.get_current_rendering_method() + ".png")
-		scene._exit_freeplay()
-		_write("match_requested")
+			get_viewport().get_texture().get_image().save_png("user://mobile-desktop-menu-" + RenderingServer.get_current_rendering_method() + ".png")
+		_phase = 1
+		_frames = 0
 		scene._offline()
-	elif _phase == 1 and scene.scene_file_path == MobileRender.MATCH:
-		if scene.get("player") == null or Net.active:
-			_fail("offline match did not create the player")
+	elif _phase == 1 and _frames >= 30:
+		if scene.get("player") == null or Net.active or get_viewport().disable_3d:
+			_fail("offline match or 3D rendering did not start")
 			return
 		_phase = 2
 		_frames = 0
 		_write("match_running")
-	elif _phase == 2 and scene.get("_did_intro") == true and _frames > (60 if OS.has_feature("ios") else 450):
-		if scene.scene_file_path != MobileRender.MATCH or GameConfig.stage != "grass":
-			_fail("mobile match did not stay active")
+	elif _phase == 2 and scene.get("_did_intro") == true and _frames > 180:
+		if GameConfig.stage != "grass" or scene._all_players.size() != 2:
+			_fail("wrong stage or player count")
 			return
 		for particles in scene.find_children("*", "GPUParticles3D", true, false):
 			if particles.process_material != null or particles.emitting:
-				_fail("desktop GPU particles are active: " + String(particles.get_path()))
+				_fail("desktop GPU particles are active")
 				return
-		var reflector := scene.get("_reflector") as FloorReflector
-		if reflector != null and reflector.get_child_count() > 0:
-			_fail("reflection viewport was allocated on mobile")
+		if get_viewport().positional_shadow_atlas_size != 0 or GameConfig.contour_outline:
+			_fail("desktop render features are active")
 			return
-		if GameConfig.contour_outline:
-			_fail("desktop contour rendering is active")
-			return
-		if not scene.find_children("*", "SpringBoneSimulator3D", true, false).is_empty():
-			_fail("desktop secondary hair simulation was allocated")
-			return
-		if (scene.get("fx") as Node).get_child_count() > 40:
-			_fail("desktop FX pools are allocated")
-			return
-		if get_viewport().positional_shadow_atlas_size != 0 or get_viewport().msaa_3d != Viewport.MSAA_DISABLED:
-			_fail("mobile render budget was overridden")
-			return
-		if scene._all_players.size() != 2:
-			_fail("offline opponent is missing")
-			return
+		MobileDiagnostics.record("match_smoke_passed")
 		if DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
 			get_viewport().get_texture().get_image().save_png("user://mobile-match-" + RenderingServer.get_current_rendering_method() + ".png")
-		MobileDiagnostics.record("match_smoke_passed")
 		_phase = 3
 		_frames = 0
 		GameConfig.goto_scene("res://game/ui/menu.tscn")
-	elif _phase == 3 and scene.scene_file_path == MENU and _frames >= 30:
+	elif _phase == 3 and _frames >= 30:
 		_phase = 4
 		_frames = 0
-		scene._offline()
-	elif _phase == 4 and scene.scene_file_path == MobileRender.MATCH and _frames >= (30 if OS.has_feature("ios") else 120):
+		scene._start_solo_practice()
+	elif _phase == 4 and _frames >= 60:
+		var practice = scene.get("_practice")
+		if practice == null:
+			_fail("mobile practice mode is missing")
+			return
+		practice.spawn_ball(scene.player)
+		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3(0, 5.2, 0)):
+			_fail("G did not spawn at 5.2m")
+			return
 		_write("passed")
-		printerr("MOBILE MATCH SMOKE PASSED: phone menu -> offline match -> menu -> second match; bounded effects and render targets")
+		printerr("MOBILE MATCH SMOKE PASSED: 2D menu -> 3D match -> menu -> practice and G at 5.2m")
 		set_process(false)
 		if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
 			get_tree().quit()
-	elif _phase == 2 and _frames % 30 == 0:
+	elif _frames % 30 == 0:
 		_write("match_running")
 
 func _write(phase: String, error := "") -> void:

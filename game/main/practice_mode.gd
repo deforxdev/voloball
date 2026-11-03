@@ -87,6 +87,9 @@ func setup(m: Node) -> void :
 	main._replay_enabled = false
 	if main._net_role != main.NetRole.CLIENT:
 		rally.ball_dead.connect(_on_ball_dead)
+	if MobileRender.enabled():
+		_size_applied = court_size()
+		return
 	pads = FreeplayPads.new()
 	main.add_child(pads)
 	var colors: = {PAD_STAMINA: STAMINA_COLOR, PAD_HINTS: HINTS_COLOR, 

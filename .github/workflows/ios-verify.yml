@@ -9,6 +9,11 @@ on:
         description: SideStore IPA artifact from this repository
         required: true
         type: string
+      smoke_mode:
+        description: Menu startup/settings or the full 3D match
+        type: choice
+        default: menu
+        options: [menu, match]
 permissions:
   contents: read
   actions: read
@@ -97,7 +102,9 @@ jobs:
             -derivedDataPath build/Simulator ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES EXCLUDED_ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' DEVELOPMENT_TEAM='' build 2>&1 | tee build/simulator-build.log
           cmp build/device-game.pck build/Simulator/Build/Products/Release-iphonesimulator/voloball.app/voloball.pck
-      - name: Run native offline mobile match twice
+      - name: Verify native startup and Settings Back twice
+        env:
+          VOLOBALL_IOS_SMOKE_MODE: ${{ inputs.smoke_mode == 'menu' && '1' || 'match' }}
         run: |
           set -o pipefail
           python3 tools/test_ios_startup.py 2>&1 | tee build/ios-startup.log

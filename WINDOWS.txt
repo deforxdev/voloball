@@ -1,4 +1,4 @@
-VOLOBALL 0.1.5 — Windows x64
+VOLOBALL 0.1.6 — Windows x64
 
 Розпакуй ZIP повністю та запусти VOLOBALL-Windows.exe.
 Godot встановлювати не потрібно.

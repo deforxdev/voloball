@@ -53,7 +53,7 @@ jobs:
           assert struct.unpack_from('<H',data,pe+4)[0] == 0x8664
           assert b'GDPC' in data, 'Embedded game pack is missing'
           assert b'game/ui/menu.tscn' in data
-          with ZipFile('build/VOLOBALL-Windows-0.1.5.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
+          with ZipFile('build/VOLOBALL-Windows-0.1.6.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
               archive.write(path,path.name)
               archive.write('WINDOWS.txt','WINDOWS.txt')
           print('Windows x64 EXE validated:',len(data),'bytes',hashlib.sha256(data).hexdigest())
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: VOLOBALL-Windows
-          path: build/VOLOBALL-Windows-0.1.5.zip
+          path: build/VOLOBALL-Windows-0.1.6.zip
           compression-level: 0
           if-no-files-found: error
           retention-days: 14

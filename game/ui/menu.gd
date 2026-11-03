@@ -7875,7 +7875,7 @@ func _spawn_practice_ball() -> void :
 	ball.vel = Vector3.ZERO
 	ball.curve = 0.0
 	ball.stop_float()
-	ball.global_position = player.global_position + Vector3(0.0, 2.6, 0.0)
+	ball.global_position = player.global_position + Vector3(0.0, 5.2, 0.0)
 	ball.reset_physics_interpolation()
 
 func _despawn_my_ball(announce: = true) -> void :

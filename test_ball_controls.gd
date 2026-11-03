@@ -62,7 +62,7 @@ func run():
 		input.serve_pressed = false
 		practice._call_ball()
 		input.call_pressed = false
-		check(m.ball.global_position.is_equal_approx(m.player.global_position + Vector3(0, 2.6, 0)), "G spawns above player, cycle %d" % cycle)
+		check(m.ball.global_position.is_equal_approx(m.player.global_position + Vector3(0, 5.2, 0)), "G spawns above player, cycle %d" % cycle)
 		check(not m.ball.frozen and m._phase == m.Phase.LIVE and m._rally.serve_done, "G releases playable ball")
 		input.serve_pressed = true
 		practice._call_ball()

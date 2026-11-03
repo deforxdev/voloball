@@ -533,7 +533,7 @@ func spawn_ball(holder: Player) -> void :
 	main._rally.serve_received = true
 	main.ball.serve_assist = false
 	main.ball.serve_held = false
-	main.ball.toss(holder.global_position + Vector3(0.0, 2.6, 0.0), 0.0)
+	main.ball.toss(holder.global_position + Vector3(0.0, 5.2, 0.0), 0.0)
 
 func give_ball(holder: Player) -> void :
 	main._close_serve_minigame()

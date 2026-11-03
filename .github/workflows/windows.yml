@@ -1,12 +1,12 @@
-name: Windows LAN build
+name: Windows desktop build
 on:
   workflow_dispatch:
   push:
-    branches: [windows-lan]
+    branches: [windows-desktop]
 permissions:
   contents: read
 concurrency:
-  group: windows-lan-${{ github.ref }}
+  group: windows-desktop-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -40,34 +40,34 @@ jobs:
           "$godot" --headless --path . --editor --import > build/import.log 2>&1
           "$godot" --headless --path . --scene res://test_ball_controls.tscn --quit-after 360 > build/ball-tests.log 2>&1
           grep -q 'BALL REGRESSION COMPLETE: failures=0' build/ball-tests.log
-          "$godot" --headless --path . --export-release 'Windows LAN' build/VOLOBALL-Windows-LAN.exe > build/export.log 2>&1
+          "$godot" --headless --path . --export-release 'Windows' build/VOLOBALL-Windows.exe > build/export.log 2>&1
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile, ZIP_DEFLATED
           import struct, hashlib
-          path=Path('build/VOLOBALL-Windows-LAN.exe')
+          path=Path('build/VOLOBALL-Windows.exe')
           data=path.read_bytes()
           assert data[:2] == b'MZ'
           pe=struct.unpack_from('<I',data,0x3c)[0]
           assert data[pe:pe+4] == b'PE\0\0'
           assert struct.unpack_from('<H',data,pe+4)[0] == 0x8664
           assert b'GDPC' in data, 'Embedded game pack is missing'
-          assert b'game/mobile/mobile_menu.tscn' in data
-          with ZipFile('build/VOLOBALL-Windows-LAN-0.1.4.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
+          assert b'game/ui/menu.tscn' in data
+          with ZipFile('build/VOLOBALL-Windows-0.1.5.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
               archive.write(path,path.name)
-              archive.write('WINDOWS-LAN.txt','WINDOWS-LAN.txt')
+              archive.write('WINDOWS.txt','WINDOWS.txt')
           print('Windows x64 EXE validated:',len(data),'bytes',hashlib.sha256(data).hexdigest())
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: VOLOBALL-Windows-LAN
-          path: build/VOLOBALL-Windows-LAN-0.1.4.zip
+          name: VOLOBALL-Windows
+          path: build/VOLOBALL-Windows-0.1.5.zip
           compression-level: 0
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: windows-lan-build-logs
+          name: windows-build-logs
           path: build/*.log
           retention-days: 7

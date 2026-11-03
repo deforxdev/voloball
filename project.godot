@@ -10,11 +10,11 @@ config_version=5
 
 [application]
 
-config/name="VOLOBALL LAN"
+config/name="VOLOBALL"
 config/use_custom_user_dir=true
-config/custom_user_dir_name="VOLOBALL-Windows-LAN"
-config/lan_desktop=true
-run/main_scene="res://game/mobile/mobile_boot.tscn"
+config/custom_user_dir_name="VOLOBALL-Windows"
+config/desktop_build=true
+run/main_scene="res://game/ui/menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/bg_color=Color(1, 0.84, 0.24, 1)
 boot_splash/show_image=false
@@ -38,7 +38,7 @@ VoteKickUI="*res://game/ui/votekick_ui.gd"
 Net="*res://game/net/net.gd"
 Achievements="*res://game/core/achievements.gd"
 MobileControls="*res://game/mobile/mobile_controls.gd"
-WindowsLANSmoke="*res://game/pc/lan_smoke.gd"
+DesktopSmoke="*res://game/pc/desktop_smoke.gd"
 
 [debug]
 

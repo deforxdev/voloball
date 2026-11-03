@@ -1,25 +1,11 @@
-# VOLOBALL — Windows LAN
+# VOLOBALL — Windows desktop
 
-Гілка `windows-lan` містить Windows x64-збірку для гри двох ПК в одній Wi-Fi мережі. Базова Windows-версія залишається в `windows`, мобільна — в `ios`.
+Windows x64 build with the original desktop menu and keyboard/mouse controls.
+Mobile-only UI and rendering remain restricted to mobile platforms.
+No new LAN menu or server setup.
 
-## Гра по Wi-Fi
+CI: `.github/workflows/windows.yml`, branch `windows-desktop`.
+Exports an embedded-PCK executable with the Windows preset.
+`tools/prepare_mobile_assets.py` restores recovered portable assets before import.
 
-1. Розпакувати ZIP на обох ПК і запустити `VOLOBALL-Windows-LAN.exe`.
-2. Підключити обидва ПК до однієї Wi-Fi мережі або одного роутера.
-3. Перший гравець натискає «Створити кімнату» й передає IP з меню другому.
-4. Другий вводить IP і натискає «Підключитися».
-5. Коли обидва з’явилися у списку, хост натискає «Почати матч».
-
-ENet використовує UDP 28960 і слухає всі локальні інтерфейси. За запитом Windows треба дозволити грі доступ до приватної мережі. Гостьовий Wi-Fi з ізоляцією клієнтів може блокувати з’єднання. Зовнішній сервер не потрібен. Хост має залишатися у грі.
-
-На ПК діють звичайні клавіатура й миша; мобільні сенсорні кнопки вимкнені. Використовується Compatibility для сумісності з ширшим набором ПК. Збереження цього варіанта окремі: `%APPDATA%\VOLOBALL-Windows-LAN`.
-
-## Збірка
-
-GitHub Actions `Windows LAN build` відновлює відсутні Blender-ресурси з наявних GLB, імпортує проєкт у Godot 4.7.1 і збирає офіційний Windows x64 Release. Дані гри вбудовані в EXE: користувачу не потрібен Godot чи окремий PCK.
-
-`WINDOWS-LAN.txt` додається до ZIP з інструкцією запуску.
-
-## Перевірка
-
-`test_ball_controls.tscn` перевіряє керування м’ячем. Автозавантаження `WindowsLANSmoke` працює лише при явно заданому тестовому середовищі `VOLOBALL_LAN_SMOKE=host` або `client`: запускає кімнату/підключення через звичайне меню, перевіряє двох гравців у справжньому матчі та отримання пакетів керування/стану. Для клієнта адресу можна задати через `VOLOBALL_LAN_SMOKE_ADDRESS`. У звичайному запуску перевірка вимкнена.
+Optional exported-build verification: set `VOLOBALL_DESKTOP_SMOKE=1`; the game captures the desktop menu, starts a local match and returns to the desktop menu.

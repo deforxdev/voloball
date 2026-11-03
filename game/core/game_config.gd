@@ -35,6 +35,9 @@ var capture_wanted: = false
 var capture_wanted_ms: = -1000000
 
 func capture_mouse(on: bool) -> void :
+	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
+		capture_wanted = false
+		return
 	capture_wanted = on
 	if on:
 		capture_wanted_ms = Time.get_ticks_msec()
@@ -43,7 +46,7 @@ func capture_mouse(on: bool) -> void :
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if on else Input.MOUSE_MODE_VISIBLE
 
 func may_warp_mouse() -> bool:
-	return not free_mouse_harness
+	return not free_mouse_harness and not MobileControls.enabled()
 
 func _ready() -> void :
 
@@ -408,6 +411,8 @@ func use_cursor(aiming: bool) -> void :
 	_apply_cursor(aiming)
 
 func _apply_cursor(aiming: bool) -> void :
+	if MobileControls.enabled():
+		return
 	var path: = CURSOR_AIM if aiming else (CURSOR_GRAB if _cursor_pressed else CURSOR_POINT)
 	if path == _cursor_path:
 		return

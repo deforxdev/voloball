@@ -192,6 +192,7 @@ func _ready() -> void :
 
 
 	_keys_lbl = Label.new()
+	_keys_lbl.visible = not MobileControls.enabled()
 	_keys_lbl.text = "shift + enter switch channel | %s to hide" % _hide_key_name()
 	_keys_lbl.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_XBOLD))
 	_keys_lbl.add_theme_font_size_override("font_size", 11)
@@ -271,6 +272,8 @@ func _ready() -> void :
 
 
 func _hide_key_name() -> String:
+	if MobileControls.enabled() or DisplayServer.get_name() == "headless":
+		return "hide"
 	for ev in InputMap.action_get_events("chat_toggle"):
 		if ev is InputEventKey:
 			var k: = ev as InputEventKey

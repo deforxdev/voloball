@@ -1,7 +1,7 @@
 # Mobile renderer audit — 0.2.0
 
 The `mobile` branch in `E:\VOLLBALL\mobile` is the phone project. The independent
-`windows-desktop` branch in `E:\VOLLBALL\windows-lan` produces the existing Windows
+`windows-desktop` branch in `E:\VOLLBALL\pc` produces the existing Windows
 release. Do not copy project.godot or export_presets.cfg between them.
 
 The phone project has a separate title, settings directory, export profiles, boot,

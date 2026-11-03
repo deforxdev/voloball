@@ -78,7 +78,7 @@ func _match_smoke(scene: Node) -> void:
 			return
 		for particles in scene.find_children("*", "GPUParticles3D", true, false):
 			if particles.process_material != null or particles.emitting:
-				_fail("desktop GPU particles are active")
+				_fail("desktop GPU particles are active: " + String(particles.get_path()))
 				return
 		var reflector := scene.get("_reflector") as FloorReflector
 		if reflector != null and reflector.get_child_count() > 0:

@@ -1543,7 +1543,8 @@ func toss(pos: Vector3, up_speed: = 7.5, horiz: = Vector3.ZERO) -> void :
 	_magnet_hold = 0
 	mesh.position = Vector3.ZERO
 	reset_visuals()
-	trail.restart()
+	if not MobileControls.enabled():
+		trail.restart()
 	reset_physics_interpolation()
 	shadow.reset_physics_interpolation()
 	landing_ring.reset_physics_interpolation()

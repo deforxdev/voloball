@@ -22,6 +22,10 @@ func run() -> void:
 	add_child(ball)
 	player.ball = ball
 	await get_tree().process_frame
+	ball.toss(Vector3(0, 2, 0))
+	ball.trail.set_active(true)
+	check(not ball.trail.emitting and ball.trail.process_material == null,
+		"toss and trail activation never restart GPU particles on mobile")
 	var was_menu_open: bool = GameConfig.menu_open
 	GameConfig.menu_open = true
 	_freeplay = true

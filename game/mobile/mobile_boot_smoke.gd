@@ -51,6 +51,8 @@ func _process(_delta: float) -> void:
 		_write("passed")
 		print("MOBILE BOOT SMOKE PASSED: separate phone menu and quality settings")
 		set_process(false)
+		if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
+			get_tree().quit()
 
 func _match_smoke(scene: Node) -> void:
 	if scene == null or not scene.is_node_ready():

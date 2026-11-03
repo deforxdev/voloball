@@ -36,3 +36,5 @@ static func apply() -> void:
 		tree.root.content_scale_size = Vector2i(1280, 720)
 		tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 		tree.root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+
+	GameConfig.apply_frame_cap()

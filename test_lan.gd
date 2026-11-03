@@ -1,5 +1,32 @@
 extends "res://game/mobile/mobile_menu.gd"
 
+class MatchProbe extends Node:
+	var frames := 0
+	var inputs := 0
+	var snapshots := 0
+	var elapsed := 0.0
+	func _ready() -> void:
+		Net.input_received.connect(func(_peer, _ls, _data): inputs += 1)
+		Net.snapshot_received.connect(func(_data): snapshots += 1)
+	func _process(delta: float) -> void:
+		elapsed += delta
+		var scene := get_tree().current_scene
+		if scene != null and scene.scene_file_path == "res://game/main/main.tscn" and scene.get("player") != null:
+			frames += 1
+		if frames > 300:
+			var packets := inputs if Net.is_host else snapshots
+			if packets < 5:
+				push_error("LAN GAME FAILED: no live input/snapshot stream")
+				get_tree().quit(1)
+				return
+			print("LAN GAME PASS: host=%s inputs=%d snapshots=%d" % [Net.is_host, inputs, snapshots])
+			if DisplayServer.get_name() != "headless":
+				get_viewport().get_texture().get_image().save_png("user://lan-match-%s.png" % ("host" if Net.is_host else "client"))
+			get_tree().quit()
+		elif elapsed > 60:
+			push_error("LAN GAME FAILED: game scene did not become ready")
+			get_tree().quit(1)
+
 var _host_test := false
 var _count := 2
 var _elapsed := 0.0
@@ -60,6 +87,7 @@ func _match_started(roster: Array) -> void:
 	_matched = true
 	print("LAN MATCH PASS: %d humans, %d seats" % [humans, roster.size()])
 	if OS.get_cmdline_user_args().has("--lan-play"):
+		get_tree().root.add_child(MatchProbe.new())
 		super._match_started(roster)
 
 func _ball_packet(packet: PackedFloat32Array) -> void:

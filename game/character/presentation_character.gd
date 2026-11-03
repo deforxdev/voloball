@@ -12,7 +12,7 @@ extends Node3D
 
 
 
-const PLAYER_SCENE: = preload("res://game/player/player.tscn")
+const PLAYER_SCENE: = preload("res://game/mobile/mobile_player.tscn")
 
 var player: Player = null
 var rig: ModelRig = null

@@ -121,7 +121,8 @@ func _ready() -> void :
 
 
 
-	_build_stage3d.call_deferred()
+	if not MobileRender.enabled():
+		_build_stage3d.call_deferred()
 	bind(null)
 
 
@@ -351,7 +352,7 @@ func _build_stage3d() -> void :
 	sub.handle_input_locally = false
 	sub.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	sub.positional_shadow_atlas_size = 0
-	sub.msaa_3d = Viewport.MSAA_2X
+	sub.msaa_3d = Viewport.MSAA_DISABLED if MobileRender.enabled() else Viewport.MSAA_2X
 	_stage.add_child(sub)
 	var env: = WorldEnvironment.new()
 	var e: = Environment.new()
@@ -400,7 +401,7 @@ func _build_stage3d() -> void :
 func _sync_stage_size() -> void :
 	if sub == null or _stage == null:
 		return
-	var k: = get_viewport().get_screen_transform().get_scale().x if is_inside_tree() else 1.0
+	var k: = 1.0 if MobileRender.enabled() else (get_viewport().get_screen_transform().get_scale().x if is_inside_tree() else 1.0)
 	if k <= 0.001:
 		k = 1.0
 	var want: = Vector2i((_stage.size * k).ceil())
@@ -417,6 +418,10 @@ func _draw() -> void :
 	if not is_instance_valid(_stage) or sub.size.x <= 0 or sub.size.y <= 0:
 		return
 	if not (cam.is_inside_tree() and cam.current):
+		return
+	# A newly attached camera may not have its world transform on its first draw.
+	var transform := cam.get_camera_transform()
+	if absf(transform.basis.z.dot(-transform.origin)) < 0.0001:
 		return
 	var uv: = cam.unproject_position(Vector3.ZERO)
 	var feet: = (_stage.global_position - global_position)\
@@ -668,6 +673,14 @@ func _cycle_profile(direction: int) -> void :
 
 
 func bind(for_slot: LocalPlayerSlot) -> void :
+	if MobileRender.enabled() and pc == null:
+		if for_slot == null:
+			slot = null
+			state = State.EMPTY
+			_paint()
+			return
+		# Allocate only occupied slots, when their page is actually opened.
+		_build_stage3d()
 
 	if pc == null:
 		_pending = for_slot

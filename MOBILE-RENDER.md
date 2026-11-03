@@ -105,3 +105,26 @@ Android push builds are disabled. This iteration builds only the iPhone IPA.
 Native simulator verification can now run the 2D menu/settings path separately
 from the software-rendered 3D match, including two launches and saved profile
 persistence. Physical iPhone validation still follows installation of the IPA.
+
+
+## 0.2.3 — restore the original desktop UI
+
+The user requested the actual desktop menu with working sections. The launcher
+once again uses the original `game/ui/menu.gd` and its original scene layout,
+including the live court/avatar, settings, profile, locker, shop and freeplay.
+The simplified 0.2.2 launcher is no longer the entry point.
+
+Resource safety fixes, without substituting a new interface:
+- menu player, ball and court use the same safe mobile scenes as the match;
+- locker, shop, controller previews and portrait renders use the mobile player;
+- settings/profile/career/awards/how-to/controller pages build on first open;
+- empty controller slots do not allocate presentation characters;
+- preview AA is off, Retina preview dimensions are bounded;
+- catalog listing uses lightweight metadata, selected model cache holds at most six;
+- generated portrait rig is released after saving a mobile outfit.
+
+Automated menu checks open settings/back, controller config, profile, locker/save/back,
+shop/back. Separate rendered checks cover match/return/freeplay and G at 5.2 m.
+Online UI is restored, but the original Steam service requires a supported transport;
+this change does not add Photon or a server. LAN remains outside this task.
+Android builds remain paused.

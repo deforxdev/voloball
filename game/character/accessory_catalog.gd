@@ -45,6 +45,8 @@ static func by_id(id: String) -> AccessoryItem:
 				if ResourceLoader.exists(path):
 					selected = load(path) as AccessoryItem
 					break
+		if _mobile_items.size() >= 6:
+			_mobile_items.erase(_mobile_items.keys()[0])
 		_mobile_items[id] = selected
 		return selected
 	for it in all():
@@ -53,6 +55,19 @@ static func by_id(id: String) -> AccessoryItem:
 	return null
 
 static func _scan() -> Array:
+	if MobileRender.enabled():
+		var entries: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://game/mobile/accessory_index.json"))
+		var lightweight: Array = []
+		for entry in entries:
+			var item := AccessoryItem.new()
+			item.id = entry.id
+			item.display_name = entry.display_name
+			item.category = entry.category
+			item.price = int(entry.price)
+			item.portrait = entry.portrait
+			item.worn_on_back = entry.worn_on_back
+			lightweight.append(item)
+		return lightweight
 	var found: Array = []
 	var seen: = {}
 	for base in DIRS:

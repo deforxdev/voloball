@@ -27,8 +27,7 @@ for name in ('mobile_main', 'mobile_player', 'mobile_ball', 'mobile_court'):
 print('MOBILE PROFILE CHECK PASSED: isolated startup/scenes/settings; iOS Metal, Android GLES')
 
 menu = (root / "game/mobile/mobile_menu.tscn").read_text(encoding="utf-8")
-assert "res://game/mobile/phone_menu.gd" in menu
-assert "res://game/ui/menu.gd" not in menu
+assert "res://game/ui/menu.gd" in menu
 venue = (root / "game/mobile/mobile_grass.tscn").read_text(encoding="utf-8")
 assert "GrassField" not in venue
 
@@ -36,6 +35,8 @@ for name in ("mobile_body", "mobile_ball", "mobile_ball_cel"):
     shader = (root / "game/mobile" / (name + ".gdshader")).read_text(encoding="utf-8")
     assert not re.search(r"^stencil_mode", shader, re.MULTILINE)
 
-launcher = (root / "game/mobile/phone_menu.gd").read_text(encoding="utf-8")
-for forbidden in ("res://game/ui/menu.gd", "res://game/ui/hud.tscn", "res://game/player/player.tscn", "res://game/character/locker.tscn"):
-    assert forbidden not in launcher
+launcher = (root / "game/ui/menu.gd").read_text(encoding="utf-8")
+for scene in ("player", "ball", "court"):
+    assert f'res://game/mobile/mobile_{scene}.tscn' in launcher
+assert '_queue_page(_configs, _build_configs)' in launcher
+assert '_queue_page(_settings, _build_settings)' in launcher

@@ -16,4 +16,4 @@ CI restores recovered GLB sources with `tools/prepare_mobile_assets.py`, verifie
 profile isolation with `tools/check_mobile_profile.py`, then runs the ball, touch,
 menu and repeated-match checks before export.
 
-0.2.2 iPhone launcher: PC-style 2D cards and baked court/avatar background, no live desktop scene during startup. Locker/shop/online temporarily disabled. Android push builds are paused.
+0.2.3 iPhone: original desktop menu and live avatar restored, with full settings, profile, locker/save, shop, controller config and practice. Heavy pages load on first open, empty controller seats allocate no 3D rigs, all menu/preview bodies use mobile-safe resources. Accessory catalog lists use metadata; selected models load on demand with a bounded cache. Android push builds remain paused. Online services still require a supported backend/transport; restoring the page does not provide a new server.

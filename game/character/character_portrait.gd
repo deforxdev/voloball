@@ -144,7 +144,7 @@ static func _ensure_rig(tree: SceneTree) -> Dictionary:
 	e.ambient_light_energy = 1.5
 	env.environment = e
 	vp.add_child(env)
-	var body: Player = (load("res://game/player/player.tscn") as PackedScene).instantiate()
+	var body: Player = (load("res://game/mobile/mobile_player.tscn") as PackedScene).instantiate()
 	body.enable_reflection = false
 	vp.add_child(body)
 
@@ -187,7 +187,7 @@ static func _render_impl(cfg: CharacterConfig, preset: String,
 	var body: Player = rig["body"]
 
 
-	vp.size = p["vp"]
+	vp.size = Vector2i(Vector2(p["vp"]) * 0.5) if MobileRender.enabled() else p["vp"]
 	var look: Vector3 = p["look"]
 	cam.global_position = look + Vector3(0.0, 0.0, float(p["dist"]))
 	cam.look_at(look)
@@ -238,11 +238,16 @@ static func _render_impl(cfg: CharacterConfig, preset: String,
 
 
 static func generate_and_save(cfg: CharacterConfig, host: Node = null) -> void :
+	if DisplayServer.get_name() == "headless":
+		return
 	DirAccess.make_dir_recursive_absolute(AppData.cache_path("portraits"))
 	for crop in CROPS:
 		var tex: = await render(cfg, crop, Vector2i.ZERO, host)
 		if tex != null:
 			tex.get_image().save_png(_portrait_path(crop))
+	if MobileRender.enabled() and _rig.has("vp"):
+		_rig.vp.queue_free()
+		_rig = {}
 
 
 static func load_full() -> Texture2D:

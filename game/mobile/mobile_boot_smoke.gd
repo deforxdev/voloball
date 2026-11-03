@@ -22,54 +22,95 @@ func _process(_delta: float) -> void:
 	if OS.get_environment("VOLOBALL_BOOT_SMOKE") == "match":
 		_match_smoke(menu)
 		return
-	if menu == null or menu.scene_file_path != MENU or not menu.is_node_ready():
+	_menu_smoke(menu)
+
+func _menu_smoke(scene: Node) -> void:
+	if scene == null or not scene.is_node_ready():
+		return
+	var expected := MENU
+	if _phase == 5:
+		expected = "res://game/character/locker.tscn"
+	elif _phase == 7:
+		expected = "res://game/shop/shop.tscn"
+	if scene.scene_file_path != expected:
 		return
 	_frames += 1
-	if _phase == 0 and _frames >= 60:
-		if menu.get("_card_local") == null:
-			_fail("mobile menu controls are missing")
-			return
-		if not menu is Control or not menu.find_children("*", "Node3D", true, false).is_empty():
-			_fail("phone menu loaded a desktop 3D scene")
-			return
-		menu._open_settings(0)
-		menu._quality(30, 60)
-		_phase = 1
-		_frames = 0
-		_write("settings_opened")
-	elif _phase == 1 and _frames >= 30:
-		if GameConfig.max_fps != 30 or GameConfig.resolution_3d != 60:
-			_fail("economy settings did not apply")
-			return
-		menu._settings_back()
-		menu._quality(60, 75)
-		_phase = 2
-		_frames = 0
-		_write("settings_back")
-	elif _phase == 2 and _frames >= 120:
-		if get_tree().paused or GameConfig.max_fps != 60 or not menu._home.visible:
-			_fail("settings did not preserve an active menu")
-			return
-		if GameConfig.onboarding_active:
-			_fail("desktop startup prewarming is active on mobile")
-			return
-		_write("passed")
-		print("MOBILE BOOT SMOKE PASSED: separate phone menu and quality settings")
-		set_process(false)
-		if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
-			get_tree().quit()
+	if _frames < 20:
+		return
+	_frames = 0
+	match _phase:
+		0:
+			if not scene is Node3D or scene.get("_card_local") == null or scene.player == null:
+				_fail("original desktop menu or live character missing")
+				return
+			if scene.player.scene_file_path != MobileRender.PLAYER:
+				_fail("desktop player resource leaked into phone menu")
+				return
+			if scene._cfg_panels.size() != 0 or scene._settings_panel != null:
+				_fail("hidden pages allocated at startup")
+				return
+			scene._open_settings(0)
+			scene._quality(30, 60)
+			_write("settings_opened")
+		1:
+			if scene._settings_panel == null or GameConfig.max_fps != 30:
+				_fail("original settings did not open or apply")
+				return
+			scene._settings_back()
+			scene._quality(60, 75)
+		2:
+			if get_tree().paused or not scene._home.visible:
+				_fail("settings back did not restore menu")
+				return
+			scene._show(scene._configs)
+		3:
+			var bodies := 0
+			for panel in scene._cfg_panels:
+				if panel.pc != null:
+					bodies += 1
+			if bodies != LocalPlayers.count():
+				_fail("controller page allocated unoccupied preview rigs")
+				return
+			scene._show(scene._profile)
+		4:
+			if scene._profile_pfp == null:
+				_fail("full profile page was not built")
+				return
+			GameConfig.goto_scene(scene._locker_scene())
+		5:
+			if scene._player == null or scene.world.msaa_3d != Viewport.MSAA_DISABLED:
+				_fail("locker preview is missing or uses desktop AA")
+				return
+			scene._save_and_exit()
+		6:
+			GameConfig.goto_scene(scene._shop_scene())
+		7:
+			if scene._player == null:
+				_fail("shop preview missing")
+				return
+			GameConfig.goto_scene("res://game/ui/menu.tscn")
+		8:
+			if get_tree().paused or not scene._home.visible or GameConfig.onboarding_active:
+				_fail("menu did not survive locker/shop round trip")
+				return
+			_write("passed")
+			print("MOBILE BOOT SMOKE PASSED: original menu, settings/back, occupied previews, profile, locker/save/back, shop/back")
+			set_process(false)
+			if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
+				get_tree().quit()
+	_phase += 1
 
 func _match_smoke(scene: Node) -> void:
 	if scene == null or not scene.is_node_ready():
 		return
-	if _phase in [0, 3] and scene.scene_file_path != MENU:
+	if _phase in [0, 3, 4] and scene.scene_file_path != MENU:
 		return
-	if _phase in [1, 2, 4] and scene.scene_file_path != MobileRender.MATCH:
+	if _phase in [1, 2] and scene.scene_file_path != MobileRender.MATCH:
 		return
 	_frames += 1
 	if _phase == 0 and _frames >= 30:
-		if not scene is Control or not scene.find_children("*", "Node3D", true, false).is_empty():
-			_fail("launcher allocated a 3D scene")
+		if not scene is Node3D or scene.player == null:
+			_fail("original desktop menu missing")
 			return
 		if DisplayServer.get_name() != "headless" and not OS.has_feature("ios"):
 			get_viewport().get_texture().get_image().save_png("user://mobile-desktop-menu-" + RenderingServer.get_current_rendering_method() + ".png")
@@ -105,16 +146,15 @@ func _match_smoke(scene: Node) -> void:
 		_frames = 0
 		scene._start_solo_practice()
 	elif _phase == 4 and _frames >= 60:
-		var practice = scene.get("_practice")
-		if practice == null:
-			_fail("mobile practice mode is missing")
+		if scene.get("_freeplay") != true:
+			_fail("original freeplay did not start")
 			return
-		practice.spawn_ball(scene.player)
+		scene._spawn_practice_ball()
 		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3(0, 5.2, 0)):
 			_fail("G did not spawn at 5.2m")
 			return
 		_write("passed")
-		printerr("MOBILE MATCH SMOKE PASSED: 2D menu -> 3D match -> menu -> practice and G at 5.2m")
+		printerr("MOBILE MATCH SMOKE PASSED: original menu -> match -> menu -> freeplay and G at 5.2m")
 		set_process(false)
 		if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
 			get_tree().quit()

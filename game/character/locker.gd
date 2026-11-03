@@ -231,6 +231,7 @@ func _exit_tree() -> void :
 	ModelRig.pick_on_worker -= 1
 
 func _ready() -> void :
+	MobileRender.configure_preview(world)
 
 
 
@@ -264,7 +265,7 @@ func _ready() -> void :
 
 
 	HairWarm.warm_all(cfg.hair_flip)
-	_player = preload("res://game/player/player.tscn").instantiate()
+	_player = preload("res://game/mobile/mobile_player.tscn").instantiate()
 	_player.enable_reflection = false
 	world.add_child(_player)
 	_player.charge_ui_enabled = false

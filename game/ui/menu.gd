@@ -30,9 +30,9 @@ const DISCORD_BLURPLE: = Color("5865f2")
 const WISHLIST_BLUE: = Color("1a9fff")
 const HOW_TO_PLAY: = preload("res://game/ui/how_to_play.tscn")
 const HUD_SCENE: = preload("res://game/ui/hud.tscn")
-const PLAYER_SCENE: = preload("res://game/player/player.tscn")
-const BALL_SCENE: = preload("res://game/ball/ball.tscn")
-const COURT_SCENE: = preload("res://game/court/court.tscn")
+const PLAYER_SCENE: = preload("res://game/mobile/mobile_player.tscn")
+const BALL_SCENE: = preload("res://game/mobile/mobile_ball.tscn")
+const COURT_SCENE: = preload("res://game/mobile/mobile_court.tscn")
 const LOGO: = preload("res://game/logo/jvlogo_sd.png")
 
 
@@ -2171,6 +2171,18 @@ func _broadcast_menu_look() -> void :
 
 
 
+var _pending_pages: Dictionary = {}
+
+func _queue_page(page: Control, builder: Callable) -> void:
+	page.visible = false
+	_pending_pages[page] = builder
+
+func _ensure_page(page: Control) -> void:
+	if page != null and _pending_pages.has(page):
+		var builder: Callable = _pending_pages[page]
+		_pending_pages.erase(page)
+		builder.call()
+
 func _build_ui() -> void :
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2237,29 +2249,29 @@ func _build_ui() -> void :
 	_practice = _page(false)
 	_build_practice()
 	_configs = _page()
-	_build_configs()
+	_queue_page(_configs, _build_configs)
 	_profile = _page()
-	_build_profile()
+	_queue_page(_profile, _build_profile)
 
 
 
 	_career = _page()
 	_career.visible = false
-	_build_career()
+	_queue_page(_career, _build_career)
 	_achievements = _page()
-	_build_achievements()
+	_queue_page(_achievements, _build_achievements)
 	_recent = _page()
-	_build_recent()
+	_queue_page(_recent, _build_recent)
 	_quick = _page()
 	_build_quick()
 
 
 	_settings = _page()
 	_settings.visible = false
-	_build_settings()
+	_queue_page(_settings, _build_settings)
 	_howto = _page()
 	_howto.visible = false
-	_build_howto()
+	_queue_page(_howto, _build_howto)
 
 
 	_browse = _page()
@@ -2983,29 +2995,6 @@ func _build_home() -> void :
 	var v: = _box(_home)
 
 	v.add_theme_constant_override("separation", 9)
-	if MobileRender.enabled():
-		var phone_options := HBoxContainer.new()
-		_root.add_child(phone_options)
-		phone_options.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-		phone_options.offset_left = -170
-		phone_options.offset_right = 70
-		phone_options.offset_top = -47
-		phone_options.offset_bottom = -9
-		phone_options.z_index = 30
-		for option in ["30 FPS", "60 FPS", "Журнал"]:
-			var button := Button.new()
-			button.text = option
-			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.custom_minimum_size.y = 36
-			UiStyle.style_button(button, "tertiary", 14)
-			phone_options.add_child(button)
-			if option == "Журнал":
-				button.pressed.connect(func():
-					DisplayServer.clipboard_set(MobileDiagnostics.read_log())
-					_flash_notice("Журнал скопійовано"))
-			else:
-				var fps: int = 30 if option == "30 FPS" else 60
-				button.pressed.connect(func(): _quality(fps, 60 if fps == 30 else 75))
 	var online_card: = _card_btn("massiveMultiplayer", "online", 
 		MenuCopy.sub("online"), "primary", _open_online)
 	var local_card: = _card_btn("singleplayer", "local", 
@@ -3395,9 +3384,6 @@ func _back_btn(on_press: Callable, text_in: = "back") -> Button:
 
 
 func _open_online() -> void :
-	if MobileRender.enabled():
-		_flash_notice("Онлайн ще не підключений")
-		return
 	if not OnlineTerms.require(_open_online):
 		return
 	_show(_online)
@@ -5457,6 +5443,7 @@ func _build_achievements() -> void :
 	_back_row(v, _back_to_hub)
 
 func _show_achievements() -> void :
+	_ensure_page(_achievements)
 	if is_instance_valid(_awards):
 		_awards.call("open")
 	_show(_achievements)
@@ -5526,6 +5513,8 @@ func _refresh_profile() -> void :
 	_rebuild_profile.call_deferred()
 
 func _rebuild_profile() -> void :
+	if _pending_pages.has(_profile):
+		return
 	if not is_instance_valid(_profile):
 		return
 	var v: = _box(_profile)
@@ -5608,6 +5597,8 @@ func _refresh_recent() -> void :
 	_rebuild_recent.call_deferred()
 
 func _rebuild_recent() -> void :
+	if _pending_pages.has(_recent):
+		return
 	if not is_instance_valid(_recent):
 		return
 	var v: = _box(_recent)
@@ -6706,6 +6697,7 @@ func _open_feedback() -> void :
 	_flatten_cards()
 
 func _open_settings(settings_scope: int) -> void :
+	_ensure_page(_settings)
 	if _settings_panel != null:
 		_settings_panel.set_scope(settings_scope)
 
@@ -6789,6 +6781,7 @@ func _build_howto() -> void :
 var _last_shown: Control = null
 
 func _show(page: Control) -> void :
+	_ensure_page(page)
 	for p in [_home, _online, _local, _practice, _configs, _profile, _quick, 
 		_custom, _settings, _howto, _browse, _host, _room, _direct, _recent, 
 		_achievements, _career, _local_choose]:

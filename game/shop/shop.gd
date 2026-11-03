@@ -135,6 +135,7 @@ var _build_gen: = 0
 @onready var world: SubViewport = $Preview / SubViewport
 
 func _ready() -> void :
+	MobileRender.configure_preview(world)
 	_rail_w = RAIL_W
 	if not section_mode:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -148,7 +149,7 @@ func _ready() -> void :
 	if section_mode and _who() != ProfileStore.active():
 		cfg = CharacterConfig.from_dict(_who().character)\
 		if not _who().character.is_empty() else CharacterConfig.new()
-	_player = preload("res://game/player/player.tscn").instantiate()
+	_player = preload("res://game/mobile/mobile_player.tscn").instantiate()
 	_player.enable_reflection = false
 	world.add_child(_player)
 	_player.charge_ui_enabled = false

@@ -38,3 +38,15 @@ static func apply() -> void:
 		tree.root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
 
 	GameConfig.apply_frame_cap()
+
+# Keep the original preview and controls, with a bounded offscreen render target.
+static func configure_preview(view: SubViewport) -> void:
+	if not enabled():
+		return
+	view.msaa_3d = Viewport.MSAA_DISABLED
+	view.msaa_2d = Viewport.MSAA_DISABLED
+	view.use_hdr_2d = false
+	view.positional_shadow_atlas_size = 0
+	var container := view.get_parent() as SubViewportContainer
+	if container != null:
+		container.stretch_shrink = 2

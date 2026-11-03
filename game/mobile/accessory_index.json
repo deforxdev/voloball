@@ -1,0 +1,322 @@
+[
+  {
+    "id": "achromatic",
+    "display_name": "achromatic",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "adventurebackpack",
+    "display_name": "adventure backpack",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "adventurehat",
+    "display_name": "adventure hat",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "antennae",
+    "display_name": "antennae",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "aubade",
+    "display_name": "aubade",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "backscythe",
+    "display_name": "back scythe",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "bandana",
+    "display_name": "bandana",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "batwings",
+    "display_name": "bat wings",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "beanie",
+    "display_name": "beanie",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "bow",
+    "display_name": "bow",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "bunnyears",
+    "display_name": "bunny ears",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "bunnyheadband",
+    "display_name": "bunny headband",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "cape",
+    "display_name": "cape",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "catears",
+    "display_name": "cat ears",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "crown",
+    "display_name": "crown",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "devilhorns",
+    "display_name": "devil horns",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "eyepatch",
+    "display_name": "eyepatch",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "facemask",
+    "display_name": "face mask",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "halo",
+    "display_name": "halo",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "headband",
+    "display_name": "headband",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "headphones",
+    "display_name": "headphones",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "headscrew",
+    "display_name": "head screw",
+    "category": "head",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": false
+  },
+  {
+    "id": "horns",
+    "display_name": "horns",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "key",
+    "display_name": "key",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "knight",
+    "display_name": "knight",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "mouseear",
+    "display_name": "mouse ears",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "nose_bandage",
+    "display_name": "nose bandage",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "partyhat",
+    "display_name": "party hat",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "punk_glasses",
+    "display_name": "punk glasses",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "roundglasses",
+    "display_name": "round glasses",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "scarf",
+    "display_name": "scarf",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": false
+  },
+  {
+    "id": "sleekvisor",
+    "display_name": "sleek visor",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "spinny_hat",
+    "display_name": "spinny hat",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "sprout",
+    "display_name": "sprout",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "square_glasses",
+    "display_name": "square glasses",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "swirlglasses",
+    "display_name": "swirl glasses",
+    "category": "face",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "tophat",
+    "display_name": "top hat",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "visor",
+    "display_name": "visor",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  },
+  {
+    "id": "wings",
+    "display_name": "wings",
+    "category": "extra",
+    "price": 1000,
+    "portrait": "upper",
+    "worn_on_back": true
+  },
+  {
+    "id": "witch_hat",
+    "display_name": "witch hat",
+    "category": "head",
+    "price": 1000,
+    "portrait": "",
+    "worn_on_back": false
+  }
+]

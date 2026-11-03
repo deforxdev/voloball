@@ -17,6 +17,7 @@ const DIRS: = [
 
 static var _cache: Array = []
 static var _scanned: = false
+static var _mobile_items: Dictionary = {}
 
 static func all() -> Array:
 	if not _scanned:
@@ -34,6 +35,18 @@ static func for_category(category: String) -> Array:
 static func by_id(id: String) -> AccessoryItem:
 	if id == "":
 		return null
+	if MobileRender.enabled():
+		if _mobile_items.has(id):
+			return _mobile_items[id] as AccessoryItem
+		var selected: AccessoryItem = null
+		if id.is_valid_filename():
+			for base in DIRS:
+				var path: String = base + id + ".tres"
+				if ResourceLoader.exists(path):
+					selected = load(path) as AccessoryItem
+					break
+		_mobile_items[id] = selected
+		return selected
 	for it in all():
 		if it.id == id:
 			return it

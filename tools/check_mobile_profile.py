@@ -13,6 +13,10 @@ assert 'renderer/rendering_method.android="gl_compatibility"' in project
 presets = (root / 'export_presets.cfg').read_text(encoding='utf-8')
 assert presets.count('custom_features="mobile,mobile_build"') == 2
 assert 'Windows Desktop' not in presets
+for item in (root / 'game/character/accessories').glob('*.tres'):
+    text = item.read_text(encoding='utf-8')
+    identity = re.search(r'^id = "([^"]+)"', text, re.MULTILINE)
+    assert identity is not None and identity[1] == item.stem, item
 for name in ('mobile_main', 'mobile_player', 'mobile_ball', 'mobile_court'):
     scene = (root / 'game/mobile' / (name + '.tscn')).read_text(encoding='utf-8')
     # Shared script UIDs are fine; duplicated scene UIDs can redirect to desktop resources.

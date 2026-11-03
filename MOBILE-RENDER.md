@@ -16,6 +16,9 @@ template does not support the device Metal renderer.
 
 Problems found and changes:
 
+- Random bot accessories scanned the entire catalog, eagerly loading 40 model
+  resources. Mobile bots now omit extra accessories; saved player accessories
+  load individually by ID. Desktop customization keeps its complete catalog.
 - Accessory code bypassed `_ink()` and allocated outline/highlight meshes even
   when the phone disabled contours. The allocation entry points now reject mobile.
 - FX instantiated 270 meshes/materials at every match load. Mobile pools now total

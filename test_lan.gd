@@ -61,8 +61,11 @@ func _process(delta: float) -> void:
 	if not _host_test:
 		return
 	if Net.human_count() == _count and not _matched:
+		if _full_since == 0.0:
+			print("LAN LOBBY FULL: %d" % _count)
 		_full_since += delta
-		if _full_since > 2:
+		var wait_time := 12 if OS.get_cmdline_user_args().has("--lan-overflow") else 2
+		if _full_since > wait_time:
 			_start_match()
 	if _matched:
 		Net.send_ball_snapshot(PackedFloat32Array([1, 2, 3, 4, 5, 6]))
@@ -99,5 +102,13 @@ func _ball_packet(packet: PackedFloat32Array) -> void:
 
 func _ended(reason: String) -> void:
 	super._ended(reason)
+	if OS.get_cmdline_user_args().has("--lan-reject"):
+		if "full" in reason:
+			print("LAN LIMIT PASS: eleventh player refused: " + reason)
+			get_tree().quit()
+		else:
+			push_error("Unexpected refusal: " + reason)
+			get_tree().quit(1)
+		return
 	if _matched and not _host_test:
 		get_tree().quit()

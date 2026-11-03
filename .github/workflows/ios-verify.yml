@@ -1,5 +1,8 @@
 name: Verify exported iPhone game in Simulator
 on:
+  push:
+    branches: [ci/ios-verify-registration]
+    paths: [.github/workflows/ios-verify.yml]
   workflow_dispatch:
     inputs:
       artifact_id:
@@ -14,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15-intel
     timeout-minutes: 35
     steps:

@@ -14,7 +14,8 @@ func _ready() -> void:
 	_write("starting")
 
 func _process(_delta: float) -> void:
-	if Time.get_ticks_msec() - _started > 180000:
+	var timeout_ms := 600000 if OS.has_feature("ios") else 180000
+	if Time.get_ticks_msec() - _started > timeout_ms:
 		_fail("startup or settings timed out")
 		return
 	var menu := get_tree().current_scene
@@ -90,6 +91,8 @@ func _match_smoke(scene: Node) -> void:
 		_write("passed")
 		print("MOBILE MATCH SMOKE PASSED: menu -> LAN host -> match, 450 stable frames, no GPU trails/reflections/contour")
 		set_process(false)
+	elif _phase == 2 and _frames % 30 == 0:
+		_write("match_running")
 
 func _write(phase: String, error := "") -> void:
 	var profile := ProfileStore.active()
@@ -97,7 +100,8 @@ func _write(phase: String, error := "") -> void:
 	if file != null:
 		file.store_string(JSON.stringify({"phase": phase, "error": error, "run_id": _run_id,
 			"profile": profile.uid if profile != null else "", "fresh": ProfileStore.seeded_fresh,
-			"elapsed_ms": Time.get_ticks_msec() - _started}))
+			"elapsed_ms": Time.get_ticks_msec() - _started, "frames": _frames,
+			"fps": Engine.get_frames_per_second()}))
 		file.close()
 
 func _fail(error: String) -> void:

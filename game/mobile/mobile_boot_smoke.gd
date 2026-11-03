@@ -87,6 +87,9 @@ func _match_smoke(scene: Node) -> void:
 		if GameConfig.contour_outline:
 			_fail("desktop contour rendering is active")
 			return
+		if not scene.find_children("*", "SpringBoneSimulator3D", true, false).is_empty():
+			_fail("desktop secondary hair simulation was allocated")
+			return
 		MobileDiagnostics.record("match_smoke_passed")
 		_write("passed")
 		print("MOBILE MATCH SMOKE PASSED: menu -> LAN host -> match, 450 stable frames, no GPU trails/reflections/contour")

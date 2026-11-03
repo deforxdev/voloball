@@ -2028,6 +2028,8 @@ static var _fit_meshes: = {}
 static var hair_fit_on: = true
 
 func _fit_hair(root: Node) -> void :
+	if MobileControls.enabled():
+		return
 	var hf: = _head_field()
 	if hf == null or not hair_fit_on:
 		return
@@ -2332,6 +2334,8 @@ static var _hat_fields: = {}
 
 
 func _tuck_hair_under(item: AccessoryItem, openings: = true, slot: = "head") -> void :
+	if MobileControls.enabled():
+		return
 	if _hair_root == null or not is_instance_valid(_hair_root):
 		return
 	var hat = _acc_roots.get(slot, null) if item != null and hood_tuck_on else null
@@ -2433,6 +2437,8 @@ static var _hair_reach: = {}
 
 
 func _fit_hat_to_hair(cfg: CharacterConfig, item: AccessoryItem, slot: = "head") -> void :
+	if MobileControls.enabled():
+		return
 	var want: = 1.0
 	var lift: = 0.0
 	var hat = _acc_roots.get(slot, null)
@@ -3743,6 +3749,8 @@ func _drive_hair_hat(node: Node, top: float, full: float, hidden: Dictionary) ->
 
 func _add_jiggle(root: Node, owner: String, stiff_mul: = 1.0, drag_mul: = 1.0, 
 		grav_mul: = 1.0, swing: = 1.0, body: = false) -> void :
+	if MobileControls.enabled():
+		return
 	var found: Array = []
 	_scan_tails_into(root, found)
 	for f in found:

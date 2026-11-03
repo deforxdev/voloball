@@ -45,7 +45,7 @@ func _build() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 12)
 	scroll.add_child(_body)
-	_label("VOLOBALL · локальна мережа", 32)
+	_label("VOLOBALL " + MobileDiagnostics.BUILD + " · локальна мережа", 32)
 	_label("Підключіть телефони до одного Wi-Fi або точки доступу. Хост створює кімнату, інші вводять його IP.", 20)
 	_name = LineEdit.new()
 	_name.placeholder_text = "Ім’я гравця"

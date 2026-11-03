@@ -45,8 +45,8 @@ func _build() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 12)
 	scroll.add_child(_body)
-	_label("VOLOBALL " + MobileDiagnostics.BUILD + " · локальна мережа", 32)
-	_label("Підключіть телефони до одного Wi-Fi або точки доступу. Хост створює кімнату, інші вводять його IP.", 20)
+	_label("VOLOBALL · Windows LAN" if not MobileControls.enabled() else "VOLOBALL " + MobileDiagnostics.BUILD + " · локальна мережа", 32)
+	_label("Підключіть обидва ПК до однієї Wi-Fi мережі. На першому створіть кімнату, на другому введіть IP хоста.", 20)
 	_name = LineEdit.new()
 	_name.placeholder_text = "Ім’я гравця"
 	_name.text = Net.my_name
@@ -58,13 +58,16 @@ func _build() -> void:
 	_button(row, "Створити кімнату", _host)
 	_button(row, "Локальний матч 1 × 1", _offline)
 	_address = LineEdit.new()
+	var join_row := HBoxContainer.new()
+	_body.add_child(join_row)
+	_address.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_address.placeholder_text = "IP хоста, наприклад 192.168.1.5"
 	_address.custom_minimum_size.y = 54
-	_body.add_child(_address)
-	_button(_body, "Підключитися", _join)
+	join_row.add_child(_address)
+	_button(join_row, "Підключитися", _join)
 	_status = _label("", 20)
-	_players = _label("", 20)
 	_start = _button(_body, "Почати матч", _start_match)
+	_players = _label("", 20)
 	_button(_body, "Вийти з кімнати", func(): Net.leave())
 	_button(_body, "Скопіювати журнал запуску", func():
 		DisplayServer.clipboard_set(MobileDiagnostics.read_log())
@@ -114,7 +117,7 @@ func _host() -> void:
 
 func _join() -> void:
 	if _address.text.strip_edges().is_empty():
-		_status.text = "Введіть IP телефона, який створив кімнату."
+		_status.text = "Введіть IP комп’ютера, який створив кімнату."
 		return
 	Net.leave()
 	Net.join_password = ""
@@ -195,5 +198,6 @@ func _quality(fps: int, resolution: int) -> void:
 	GameConfig.resolution_3d = resolution
 	GameConfig.apply_render_scale()
 	GameConfig.apply_display()
+	GameConfig.apply_frame_cap()
 	GameConfig.save_settings()
 	_status.text = "Збережено: %d FPS, масштаб 3D %d%%" % [fps, resolution]

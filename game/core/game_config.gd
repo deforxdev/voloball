@@ -103,6 +103,8 @@ func _ready() -> void :
 	_ensure_voice_bus()
 	_ensure_announcer_bus()
 	_load_settings()
+	if bool(ProjectSettings.get_setting("application/config/lan_desktop", false)):
+		root_ui_aa = false
 	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
 		apply_quality(QUALITY_LOW)
 		resolution_3d = mini(resolution_3d, 60)
@@ -565,6 +567,8 @@ func slow_time(rate: float, duration: float) -> void :
 			Engine.time_scale = 1.0)
 
 func goto_scene(path: String) -> void :
+	if bool(ProjectSettings.get_setting("application/config/lan_desktop", false)) and path == "res://game/ui/menu.tscn":
+		path = "res://game/mobile/mobile_menu.tscn"
 	if MobileControls.enabled():
 		if path == "res://game/main/main.tscn":
 			MobileDiagnostics.record("match_requested")

@@ -5,7 +5,7 @@ const PATH := "user://mobile-diagnostics.log"
 const BUILD := "0.1.4"
 
 static func record(phase: String) -> void:
-	if not (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview")):
+	if not (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview") or bool(ProjectSettings.get_setting("application/config/lan_desktop", false))):
 		return
 	var row := {"build": BUILD, "phase": phase, "time": Time.get_datetime_string_from_system(true),
 		"renderer": RenderingServer.get_current_rendering_method(),

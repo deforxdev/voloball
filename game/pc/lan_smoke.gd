@@ -21,7 +21,7 @@ func _ready() -> void:
 	GameConfig.background_fps = 0
 	Net.input_received.connect(func(_peer, _ls, _data): _inputs += 1)
 	Net.snapshot_received.connect(func(_data): _snapshots += 1)
-	print("WINDOWS LAN SMOKE START: " + _role)
+	printerr("WINDOWS LAN SMOKE START: " + _role)
 
 func _process(_delta: float) -> void:
 	if _finished:
@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 					push_error("WINDOWS LAN TEST FAILED: host creation failed")
 					get_tree().quit(1)
 					return
-				print("WINDOWS LAN HOST CREATED: UDP %d" % Net.host_port())
+				printerr("WINDOWS LAN HOST CREATED: UDP %d" % Net.host_port())
 			else:
 				var address := OS.get_environment("VOLOBALL_LAN_SMOKE_ADDRESS")
 				scene._address.text = address if address != "" else "127.0.0.1"
@@ -60,7 +60,7 @@ func _process(_delta: float) -> void:
 				push_error("WINDOWS LAN TEST FAILED: wrong player count or touch mode")
 				get_tree().quit(1)
 				return
-			print("WINDOWS LAN GAME PASS: role=%s players=2 inputs=%d snapshots=%d" % [_role, _inputs, _snapshots])
+			printerr("WINDOWS LAN GAME PASS: role=%s players=2 inputs=%d snapshots=%d" % [_role, _inputs, _snapshots])
 			if DisplayServer.get_name() != "headless":
 				get_viewport().get_texture().get_image().save_png("user://windows-lan-" + _role + ".png")
 			_finished = true

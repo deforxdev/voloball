@@ -4,21 +4,21 @@ extends Node3D
 
 
 
-const FLASH_POOL: = 8
-const RING_POOL: = 10
-const PUFF_POOL: = 96
+var FLASH_POOL: int = 2 if MobileRender.enabled() else 8
+var RING_POOL: int = 4 if MobileRender.enabled() else 10
+var PUFF_POOL: int = 12 if MobileRender.enabled() else 96
 
 
 
 
 
 
-const SPARK_POOL: = 48
-const LINE_POOL: = 32
-const SWIRL_POOL: = 4
+var SPARK_POOL: int = 8 if MobileRender.enabled() else 48
+var LINE_POOL: int = 8 if MobileRender.enabled() else 32
+var SWIRL_POOL: int = 0 if MobileRender.enabled() else 4
 const PUFF_SHADER: = preload("res://game/fx/puff.gdshader")
 const BEAD_SHADER: = preload("res://game/fx/sweat_bead.gdshader")
-const BEAD_POOL: = 72
+var BEAD_POOL: int = 0 if MobileRender.enabled() else 72
 const SWIRL_SHADER: = preload("res://game/fx/bam_swirl.gdshader")
 const HITSTOP_SCALE: = 0.05
 const FLASH_SHADER: = preload("res://game/fx/flash.gdshader")
@@ -310,6 +310,8 @@ func ring(pos: Vector3, axis: Vector3, strength: float, rim: = Color(0, 0, 0, 0)
 
 
 func bam_swirl(pos: Vector3, strength: = 1.0, follow: Node3D = null) -> void :
+	if _swirls.is_empty():
+		return
 	if recorder != null:
 		recorder.cue("swirl", {"p": pos, "s": strength})
 	var s: = _swirls[_next_swirl]
@@ -623,6 +625,8 @@ func _claim_puff() -> MeshInstance3D:
 	return null
 
 func sweat(pos: Vector3) -> void :
+	if _beads.is_empty():
+		return
 
 
 
@@ -699,6 +703,8 @@ func splash(pos: Vector3) -> void :
 		tween.chain().tween_callback( func(): p.visible = false)
 
 func big_spike(pos: Vector3, dir: Vector3, rim: = Color(0, 0, 0, 0), tier: = 0) -> void :
+	if MobileRender.enabled():
+		return
 	if recorder != null:
 		recorder.cue("bigspike", {"p": pos, "d": dir, "c": rim, "t": tier})
 
@@ -731,6 +737,8 @@ func big_spike(pos: Vector3, dir: Vector3, rim: = Color(0, 0, 0, 0), tier: = 0) 
 
 
 func combo_burst(pos: Vector3, dir: Vector3, tier: = 3) -> void :
+	if MobileRender.enabled():
+		return
 	tier = clampi(tier, 1, 3)
 	if recorder != null:
 		recorder.cue("combo_burst", {"p": pos, "d": dir, "t": tier})

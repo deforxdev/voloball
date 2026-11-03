@@ -2470,10 +2470,14 @@ var _burnout: ColorRect = null
 var _burnout_warm_until: = -1
 
 func prewarm_burnout() -> void :
+	if MobileRender.enabled():
+		return
 	_burnout_warm_until = Engine.get_process_frames() + 3
 	set_burnout(0.0)
 
 func set_burnout(amount: float, pulse: = 0.0) -> void :
+	if MobileRender.enabled():
+		return
 
 
 	if Engine.get_process_frames() < _burnout_warm_until:

@@ -24,8 +24,7 @@ var _layout_size := Vector2.ZERO
 var _safe := Rect2()
 
 func enabled() -> bool:
-	return OS.has_feature("ios") or OS.has_feature("android") \
-		or OS.get_cmdline_user_args().has("--mobile-preview")
+	return MobileRender.enabled()
 
 func action_strength(action: String) -> float:
 	return float(_strengths.get(action, 0.0)) if enabled() else 0.0
@@ -120,8 +119,8 @@ func _rebuild_layout() -> void:
 	_button("strafe", "СТІЙКА", Vector2(left + 285.0 * _scale, bottom - 80.0 * _scale))
 	_button("power_down", "−", Vector2(_safe.get_center().x - 85.0 * _scale, bottom - 65.0 * _scale))
 	_button("power_up", "+", Vector2(_safe.get_center().x + 85.0 * _scale, bottom - 65.0 * _scale))
-	_button("camera", "КАМЕРА", Vector2(right - 170.0 * _scale, top + 80.0 * _scale))
-	_button("pause", "МЕНЮ", Vector2(right - 65.0 * _scale, top + 80.0 * _scale))
+	_button("camera", "КАМЕРА", Vector2(right - 170.0 * _scale, top + 155.0 * _scale))
+	_button("pause", "МЕНЮ", Vector2(right - 65.0 * _scale, top + 155.0 * _scale))
 
 func _button(action: String, label: String, center: Vector2) -> void:
 	_buttons.append({"action": action, "label": label, "center": center, "radius": 42.0 * _scale})

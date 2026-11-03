@@ -15,7 +15,7 @@ extends Node3D
 
 
 const MODEL_PATHS: = [
-	"res://game/character/models/player_char.blend", 
+	"res://game/character/models/player_char.glb",
 	"res://game/character/models/player.glb", 
 ]
 const TOON: = preload("res://game/fx/toon.gdshader")
@@ -44,7 +44,7 @@ const TARGET_HEIGHT: = 1.8
 const HEIGHT_RANGE: = 0.06
 const BLUSH_COLOR: = Color(0.96, 0.52, 0.52, 1.0)
 const NUMBER_FONT: = "res://game/fonts/VarsityTeam-Bold.otf"
-const HAIR_DIR: = "res://game/character/hair/%s.blend"
+const HAIR_DIR: = "res://game/character/hair/%s.glb"
 
 
 
@@ -1914,7 +1914,7 @@ func set_facial_hair(cfg: CharacterConfig) -> void :
 		_facial_meshes = []
 		var list: = CharacterConfig.facial_hair_meshes()
 		var name: = list[style] if style > 0 and style < list.size() else ""
-		var path: = "%s/%s.blend" % [CharacterConfig.FACIAL_HAIR_DIR, name]
+		var path: = "%s/%s.glb" % [CharacterConfig.FACIAL_HAIR_DIR, name]
 		if name != "" and ResourceLoader.exists(path):
 			var scene: = load(path) as PackedScene
 			if scene != null:
@@ -3658,6 +3658,8 @@ func _apply_hair_hat_mode(mode: String) -> void :
 
 func drive_cloth(delta: float, vel_y: float, grounded: bool, air_boost: float, 
 		diving: bool, knocked_down: bool, tilt_x: = 0.0) -> void :
+	if MobileRender.enabled():
+		return
 
 
 	if _cloth_targets.is_empty() or ( not _cloth_on and not _pinny_worn):
@@ -5595,6 +5597,8 @@ func _ink(meshes: Array, width: float, front_part: = false, want_highlight: = tr
 
 
 func _build_acc_proxies(meshes: Array) -> void :
+	if MobileRender.enabled():
+		return
 	for m in meshes:
 		var mi: = m as MeshInstance3D
 		if mi == null or mi.mesh == null or String(mi.name).to_lower().contains("number"):
@@ -5609,6 +5613,8 @@ func _build_acc_proxies(meshes: Array) -> void :
 		proxy.skeleton = mi.skeleton
 
 func _build_outlines(meshes: Array, width: float) -> void :
+	if MobileRender.enabled():
+		return
 
 
 	if not GameConfig.INK_OUTLINES:
@@ -5670,9 +5676,13 @@ func _build_outlines(meshes: Array, width: float) -> void :
 var _hl_pending: Array = []
 
 func _queue_highlight(meshes: Array) -> void :
+	if MobileRender.enabled():
+		return
 	_hl_pending.append_array(meshes)
 
 func _build_highlight(meshes: Array) -> void :
+	if MobileRender.enabled():
+		return
 	if _hl_mat == null:
 		_hl_mat = StandardMaterial3D.new()
 		_hl_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

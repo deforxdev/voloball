@@ -214,7 +214,7 @@ const STAGES: = {
 
 		"pool_strength": 0.3, 
 		"barefoot": false, 
-		"ball": "res://game/ball/models/national_ball.blend", 
+		"ball": "res://game/ball/models/national_ball.glb",
 		"ball_tex": "res://game/ball/textures/nationaldif_SD.png", 
 	}, 
 	"school": {
@@ -282,7 +282,7 @@ const STAGES: = {
 		"lines": Color(0.97, 0.97, 0.95), 
 		"floor_color": Color(0.74, 0.54, 0.32), 
 		"barefoot": false, 
-		"ball": "res://game/ball/models/jv_ball.blend", 
+		"ball": "res://game/ball/models/jv_ball.glb",
 		"ball_tex": "res://game/ball/textures/jvball_diff_SD.png", 
 	}, 
 
@@ -373,7 +373,7 @@ const STAGES: = {
 		"floor_color": Color(0.78, 0.58, 0.36), 
 		"barefoot": false, 
 
-		"ball": "res://game/ball/models/jv_ball.blend", 
+		"ball": "res://game/ball/models/jv_ball.glb",
 		"ball_tex": "res://game/ball/textures/jvball_diff_SD.png", 
 	}, 
 
@@ -414,7 +414,7 @@ const STAGES: = {
 		"cord": Color(0.12, 0.14, 0.2), 
 		"lines": Color(1.0, 1.0, 1.0), 
 		"floor_color": Color(0.6, 0.75, 0.95), 
-		"ball": "res://game/ball/models/outdoorball.blend", 
+		"ball": "res://game/ball/models/outdoorball.glb",
 		"ball_tex": "res://game/ball/textures/outdoor_dif_SD.png", 
 	}, 
 
@@ -462,7 +462,7 @@ const STAGES: = {
 		"cord": Color(0.08, 0.1, 0.16), 
 		"lines": Color(0.03, 0.03, 0.04), 
 		"floor_color": Color(0.6, 0.61, 0.66), 
-		"ball": "res://game/ball/models/outdoorball.blend", 
+		"ball": "res://game/ball/models/outdoorball.glb",
 		"ball_tex": "res://game/ball/textures/outdoor_dif_SD.png", 
 	}, 
 
@@ -543,7 +543,7 @@ const STAGES: = {
 
 		"force_wall": false, 
 
-		"ball": "res://game/ball/models/national_ball.blend", 
+		"ball": "res://game/ball/models/national_ball.glb",
 		"ball_tex": "res://game/ball/textures/nationaldif_SD.png", 
 	}, 
 	"training": {
@@ -558,7 +558,7 @@ const STAGES: = {
 		"cord": Color(0.05, 0.05, 0.08), 
 		"lines": Color(0.97, 0.97, 0.95), 
 		"floor_color": Color(0.2, 0.34, 0.6), 
-		"ball": "res://game/ball/models/national_ball.blend", 
+		"ball": "res://game/ball/models/national_ball.glb",
 		"ball_tex": "res://game/ball/textures/nationaldif_SD.png", 
 	}, 
 	"beach": {
@@ -603,7 +603,7 @@ const STAGES: = {
 		"cord": Color(0.05, 0.05, 0.08), 
 		"lines": Color(0.2, 0.4, 0.85), 
 		"floor_color": Color(0.92, 0.85, 0.68), 
-		"ball": "res://game/ball/models/outdoorball.blend", 
+		"ball": "res://game/ball/models/outdoorball.glb",
 		"ball_tex": "res://game/ball/textures/outdoor_dif_SD.png", 
 	}, 
 	"grass": {
@@ -636,7 +636,7 @@ const STAGES: = {
 		"cord": Color(0.05, 0.05, 0.08), 
 		"lines": Color(0.98, 0.84, 0.16), 
 		"floor_color": Color(0.3, 0.5, 0.26), 
-		"ball": "res://game/ball/models/outdoorball.blend", 
+		"ball": "res://game/ball/models/outdoorball.glb",
 		"ball_tex": "res://game/ball/textures/outdoor_dif_SD.png", 
 	}, 
 
@@ -707,7 +707,7 @@ static func resolve(id: String) -> String:
 
 const DEMO_HOME: = "grass"
 static func home() -> String:
-	var mobile: bool = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview")
+	var mobile: bool = MobileRender.enabled()
 	var preferred: String = "mobile" if mobile else DEMO_HOME if LaunchGate.is_demo() else "nationals"
 	if ResourceLoader.exists(String(STAGES[preferred].get("venue", ""))):
 		return preferred

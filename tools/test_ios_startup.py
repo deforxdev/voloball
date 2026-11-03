@@ -1,4 +1,4 @@
-"""Verify native iOS LAN match and preserve diagnostics on every result."""
+"""Verify native iOS offline mobile match and preserve diagnostics on every result."""
 import json
 import os
 from pathlib import Path
@@ -19,7 +19,7 @@ if not candidates:
 preferred = [pair for pair in candidates if 'iOS-18-' in pair[0]]
 _, device = sorted(preferred or candidates, key=lambda pair: pair[0])[0]
 udid = device['udid']
-print('Testing native iOS LAN match on', device['name'], udid, flush=True)
+print('Testing native iOS offline mobile match on', device['name'], udid, flush=True)
 if device['state'] != 'Booted':
     subprocess.run(['xcrun', 'simctl', 'boot', udid], check=True)
 subprocess.run(['xcrun', 'simctl', 'bootstatus', udid, '-b'], check=True, timeout=300)
@@ -71,7 +71,7 @@ for attempt in (1, 2):
             assert result['profile'] == previous['profile'], 'Profile was lost on relaunch'
             assert not result['fresh'], 'Relaunch restarted first-run setup'
         results.append(result)
-        print(f'PASS: native iOS LAN host and match, launch {attempt}', result, flush=True)
+        print(f'PASS: native iOS offline match and restart, launch {attempt}', result, flush=True)
         previous = result
     except Exception as error:
         results.append({'attempt': attempt, 'error': str(error), 'last_result': result})

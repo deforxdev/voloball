@@ -18,6 +18,7 @@ extends Node3D
 
 
 const PLAYER_SCENE: = preload("res://game/player/player.tscn")
+var _player_scene: PackedScene
 
 
 
@@ -708,6 +709,7 @@ var _net_shot: = false
 var _shot_count: = 0
 
 func _ready() -> void :
+	_player_scene = load(MobileRender.PLAYER) if MobileRender.enabled() else PLAYER_SCENE
 	MobileDiagnostics.record("main_ready_entered")
 
 	_practice_dress = PracticeMode.active()
@@ -2156,7 +2158,7 @@ func _seat_local_guests(n: int, plan: Array) -> void :
 		var slot: LocalPlayerSlot = p[0]
 		var side: int = p[1]
 		var idx: int = p[2]
-		var body: Player = PLAYER_SCENE.instantiate()
+		var body: Player = _player_scene.instantiate()
 		add_child(body)
 		body.team_side = side
 		body.global_position = _formation_spot(idx, n, side)
@@ -3239,7 +3241,7 @@ func _spawn_teams_net() -> void :
 		if is_mine and e_ls == 0:
 			body = player
 		else:
-			body = PLAYER_SCENE.instantiate()
+			body = _player_scene.instantiate()
 			add_child(body)
 		body.team_side = int(entry.side)
 		body.global_position = _formation_spot(int(entry.slot), n, int(entry.side))
@@ -3640,7 +3642,7 @@ func _spec_apply_clean() -> void :
 		(p as Player).set_labels_visible(_spec_clean == 0)
 
 func _spawn_bot(slot: int, n: int, side: int, color: Color, cpu: Dictionary = {}) -> Player:
-	var bot: Player = PLAYER_SCENE.instantiate()
+	var bot: Player = _player_scene.instantiate()
 	bot.team_side = side
 	add_child(bot)
 	bot.global_position = _formation_spot(slot, n, side)

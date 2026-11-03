@@ -1,8 +1,8 @@
-name: Android LAN APK
+name: Android mobile APK
 on:
   workflow_dispatch:
   push:
-    branches: [ios]
+    branches: [mobile]
 permissions:
   contents: read
 concurrency:
@@ -63,13 +63,14 @@ jobs:
           set -euo pipefail
           mkdir -p build
           python3 tools/prepare_mobile_assets.py .
+          python3 tools/check_mobile_profile.py
           godot=/tmp/godot/Godot_v4.7.1-stable_linux.x86_64
           "$godot" --headless --path . --editor --import 2>&1 | tee build/import.log
           "$godot" --headless --path . --scene res://test_mobile_controls.tscn --quit-after 180 -- --mobile-preview 2>&1 | tee build/touch-tests.log
           grep -q 'MOBILE REGRESSION COMPLETE: failures=0' build/touch-tests.log
           VOLOBALL_BOOT_SMOKE=1 "$godot" --headless --path . --quit-after 360 -- --mobile-preview --drive-role boot_ci 2>&1 | tee build/menu-tests.log
           grep -q 'MOBILE BOOT SMOKE PASSED' build/menu-tests.log
-          VOLOBALL_BOOT_SMOKE=match "$godot" --headless --rendering-method gl_compatibility --path . --quit-after 1000 -- --mobile-preview --drive-role match_ci 2>&1 | tee build/match-tests.log
+          VOLOBALL_BOOT_SMOKE_QUIT=1 VOLOBALL_BOOT_SMOKE=match "$godot" --headless --rendering-method gl_compatibility --path . --quit-after 20000 -- --mobile-preview --drive-role match_ci 2>&1 | tee build/match-tests.log
           grep -q 'MOBILE MATCH SMOKE PASSED' build/match-tests.log
           export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$HOME/.android/debug.keystore"
           export GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey

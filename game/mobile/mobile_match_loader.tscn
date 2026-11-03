@@ -8,4 +8,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
-destination = "res://game/main/main.tscn"
+destination = "res://game/mobile/mobile_main.tscn"

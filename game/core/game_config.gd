@@ -103,16 +103,7 @@ func _ready() -> void :
 	_ensure_voice_bus()
 	_ensure_announcer_bus()
 	_load_settings()
-	if OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--mobile-preview"):
-		apply_quality(QUALITY_LOW)
-		resolution_3d = mini(resolution_3d, 60)
-		max_fps = 30
-		msaa = 0
-		root_ui_aa = false
-		crowd_enabled = false
-		contour_outline = false
-		aim_assist = true
-		set_assist = true
+	MobileRender.apply()
 	apply_language()
 	apply_pad_focus()
 	set_process(false)
@@ -566,7 +557,7 @@ func slow_time(rate: float, duration: float) -> void :
 
 func goto_scene(path: String) -> void :
 	if MobileControls.enabled():
-		if path == "res://game/main/main.tscn":
+		if path in ["res://game/main/main.tscn", MobileRender.MATCH]:
 			MobileDiagnostics.record("match_requested")
 			path = "res://game/mobile/mobile_match_loader.tscn"
 		if path == "res://game/ui/menu.tscn":
@@ -592,7 +583,7 @@ func goto_scene(path: String) -> void :
 
 	if path == "res://game/ui/menu.tscn" and BootLoader.enabled() and not BootLoader.running\
 	and tree.current_scene != null\
-	and tree.current_scene.scene_file_path == "res://game/main/main.tscn":
+	and tree.current_scene.scene_file_path in ["res://game/main/main.tscn", MobileRender.MATCH]:
 		BootLoader.begin(tree)
 		return
 
@@ -1826,6 +1817,7 @@ func _ui_mips(node: Node) -> void :
 			up = up.get_parent()
 
 func apply_msaa() -> void :
+	MobileRender.apply()
 
 
 	var tree: = Engine.get_main_loop() as SceneTree

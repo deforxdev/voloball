@@ -10,9 +10,12 @@ config_version=5
 
 [application]
 
-config/name="VOLOBALL"
+config/name="VOLOBALL Mobile"
+config/mobile_build=true
+config/use_custom_user_dir=true
+config/custom_user_dir_name="VOLOBALL-Mobile"
 run/main_scene="res://game/mobile/mobile_boot.tscn"
-config/features=PackedStringArray("4.7", "Forward Plus")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(1, 0.84, 0.24, 1)
 boot_splash/show_image=false
 config/icon="uid://ewerp6c0ycjk"
@@ -259,8 +262,9 @@ common/physics_interpolation=true
 
 [rendering]
 
+renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-renderer/rendering_method.ios="gl_compatibility"
+renderer/rendering_method.ios="mobile"
 renderer/rendering_method.android="gl_compatibility"
 gl_compatibility/driver.ios="opengl3"
 rendering_device/driver="metal"

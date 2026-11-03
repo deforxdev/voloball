@@ -14,7 +14,7 @@ const FLOOR_SHADER: = preload("res://game/court/floor_sweat.gdshader")
 static func unique_net(net: MeshInstance3D, scale_x: float) -> void :
 	net.mesh = net.mesh.duplicate(true)
 	((net.mesh as PlaneMesh).material as ShaderMaterial)\
-	.set_shader_parameter("grid", Vector2(46.0 * scale_x, 7.0))
+	.set_shader_parameter("grid", Vector2((28.0 if MobileRender.enabled() else 46.0) * scale_x, 7.0))
 
 
 

@@ -1,0 +1,107 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://game/main/main.gd" id="1"]
+[ext_resource type="PackedScene" path="res://game/mobile/mobile_court.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://game/mobile/mobile_player.tscn" id="3"]
+[ext_resource type="Script" path="res://game/fx/fx.gd" id="4"]
+[ext_resource type="Script" path="res://game/sfx/sfx.gd" id="5"]
+[ext_resource type="PackedScene" path="res://game/sfx/crowd_audio.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://game/fx/barred_marker.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://game/mobile/mobile_ball.tscn" id="8"]
+[ext_resource type="Script" path="res://game/camera/camera_rig.gd" id="9"]
+[ext_resource type="Script" path="res://game/fx/aim_marker.gd" id="10"]
+[ext_resource type="PackedScene" path="res://game/ui/hud.tscn" id="11"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.1, 0.12, 0.16, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.72, 0.74, 0.8, 1)
+ambient_light_energy = 1.25
+tonemap_mode = 0
+
+[sub_resource type="WorldBoundaryShape3D" id="stage_floor_shape"]
+
+[sub_resource type="StandardMaterial3D" id="verdict_mat"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.95, 0.25, 0.2, 0.75)
+
+[sub_resource type="CylinderMesh" id="verdict_mesh"]
+radial_segments = 12
+material = SubResource("verdict_mat")
+top_radius = 0.45
+bottom_radius = 0.45
+height = 0.02
+
+[node name="Main" type="Node3D" unique_id=1849461208]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1842016052]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1793731698]
+transform = Transform3D(0.8192, 0, -0.5736, -0.4699, 0.5736, -0.671, 0.329, 0.8192, 0.4699, 0, 10, 0)
+light_energy = 0.0
+
+[node name="StageFloor" type="StaticBody3D" parent="." unique_id=2138012464]
+collision_layer = 3
+
+[node name="StageFloorShape" type="CollisionShape3D" parent="StageFloor" unique_id=194132231]
+shape = SubResource("stage_floor_shape")
+
+[node name="Court" parent="." unique_id=1934184597 instance=ExtResource("2")]
+
+[node name="ArenaLightN" type="OmniLight3D" parent="." unique_id=712929494]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -5)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 0.0
+omni_range = 24.0
+
+[node name="ArenaLightS" type="OmniLight3D" parent="." unique_id=287436485]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 5)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 0.0
+omni_range = 24.0
+
+[node name="Player" parent="." unique_id=2004545427 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 6)
+
+[node name="Fx" type="Node3D" parent="." unique_id=1739591965]
+script = ExtResource("4")
+
+[node name="Sfx" type="Node3D" parent="." unique_id=1003433124]
+script = ExtResource("5")
+
+[node name="Crowd" parent="." unique_id=894416094 instance=ExtResource("6")]
+
+[node name="LandingMarker" type="Node3D" parent="." unique_id=972536482]
+visible = false
+
+[node name="Disc" type="MeshInstance3D" parent="LandingMarker" unique_id=1132802938]
+mesh = SubResource("verdict_mesh")
+
+[node name="VerdictLabel" type="Label3D" parent="LandingMarker" unique_id=660212118]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+pixel_size = 0.008
+billboard = 1
+font_size = 96
+outline_size = 24
+
+[node name="BarredMarker" parent="." unique_id=297401537 instance=ExtResource("7")]
+
+[node name="Ball" parent="." unique_id=11924556 instance=ExtResource("8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4)
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=1134638721]
+script = ExtResource("9")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1506836472]
+fov = 72.0
+
+[node name="AimIndicator" type="Node3D" parent="." unique_id=838200639]
+script = ExtResource("10")
+
+[node name="UiLayer" type="CanvasLayer" parent="." unique_id=1125243991]
+
+[node name="Hud" parent="UiLayer" unique_id=1025558407 instance=ExtResource("11")]

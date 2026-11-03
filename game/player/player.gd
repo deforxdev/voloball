@@ -1485,6 +1485,8 @@ func _ensure_hand_acc_proxies() -> void :
 		_hand_acc_proxies.append(proxy)
 
 func set_highlight(color: Color) -> void :
+	if MobileRender.enabled():
+		return
 
 
 

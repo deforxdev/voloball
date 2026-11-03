@@ -54,3 +54,15 @@ Physical iPhone 11 testing is still required. If it exits, relaunch and copy the
 startup journal from the phone menu; the last phase distinguishes loading,
 scene construction and rendering. An iOS crash report can identify a native driver
 fault or an operating-system memory termination that GDScript cannot catch.
+
+Additional validation result (0.2.0 build 6, before catalog lazy loading): the
+unchanged device pack reached `match_smoke_passed` in native iOS Simulator,
+returned to the menu and constructed the second match. The complete repeated-match
+test timed out at 609 seconds with Apple Software Renderer around 1 FPS. No native
+crash report was produced. This does not validate the physical iPhone Metal path.
+Build 7 includes the catalog change and passes the Windows GPU and CI checks.
+Its macOS headless match test also reports 21 ObjectDB objects / 3 resources still
+held during process shutdown; no script or shader error occurs during gameplay.
+Android 0.2.0 uses the mobile branch's test signing key, different from Android
+0.1.4, so installing it over that older APK is unsupported. Preserve local data
+before removing any existing installation.

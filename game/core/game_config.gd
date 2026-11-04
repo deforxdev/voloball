@@ -560,8 +560,8 @@ func goto_scene(path: String) -> void :
 		if path in ["res://game/main/main.tscn", MobileRender.MATCH]:
 			MobileDiagnostics.record("match_requested")
 			path = "res://game/mobile/mobile_match_loader.tscn"
-		if path == "res://game/ui/menu.tscn":
-			path = "res://game/mobile/mobile_menu.tscn"
+		if path in ["res://game/ui/menu.tscn", MobileRender.MENU]:
+			path = "res://game/mobile/mobile_boot.tscn"
 		get_tree().paused = false
 		MobileControls.release_all()
 	if _scene_pending != "":
@@ -606,18 +606,18 @@ func _do_scene_change(path: String) -> void :
 	_scene_pending = ""
 
 
-func goto_packed(ps: PackedScene) -> void :
-	if MobileControls.enabled():
-		get_tree().paused = false
-		MobileControls.release_all()
-	var tree: = Engine.get_main_loop() as SceneTree
+func goto_packed(ps: PackedScene) -> Error:
+	var tree := get_tree()
 	if tree == null or ps == null:
-		return
+		return ERR_INVALID_PARAMETER
+	if MobileControls.enabled():
+		tree.paused = false
+		MobileControls.release_all()
 	Engine.time_scale = 1.0
 	SandDeform.decal_y = 0.0
 	SandDeform.decal_y_feet = 0.0
 	_before_scene_change(tree, ps.resource_path)
-	tree.change_scene_to_packed(ps)
+	return tree.change_scene_to_packed(ps)
 
 
 

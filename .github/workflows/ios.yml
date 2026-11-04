@@ -70,7 +70,8 @@ jobs:
             ~/Library/Application Support/Godot/export_templates/4.7.1.stable
           key: godot-4.7.1-ios-v1
       - name: Restore portable assets
-        run: python3 tools/prepare_mobile_assets.py .
+        run: |
+          python3 tools/prepare_mobile_assets.py .
           python3 tools/check_mobile_profile.py
       - name: Import for mobile and export Xcode project
         shell: bash
@@ -120,6 +121,29 @@ jobs:
           PY
           (cd build/package && zip -qry ../VOLOBALL-iPhone-SideStore.ipa Payload)
           unzip -t build/VOLOBALL-iPhone-SideStore.ipa
+      - name: Test startup from the packaged iPhone game data
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot="$HOME/godot-ci/Godot.app/Contents/MacOS/Godot"
+          pck="$(find build/package/Payload -name '*.pck' -type f -print -quit)"
+          test -n "$pck"
+          output="$PWD/build"
+          unzip -p build/VOLOBALL-iPhone-SideStore.ipa "${pck#build/package/}" > "$output/packaged-ios.pck"
+          isolated="$(mktemp -d)"
+          cd "$isolated"
+          for mode in 1 match; do
+            log="$output/packaged-ios-$mode.log"
+            VOLOBALL_BOOT_SMOKE_QUIT=1 VOLOBALL_BOOT_SMOKE="$mode" "$godot" --headless --main-pack "$output/packaged-ios.pck" --quit-after 2400 -- --drive-role "packaged_$mode" 2>&1 | tee "$log"
+            if [ "$mode" = 1 ]; then
+              grep -q 'MOBILE BOOT SMOKE PASSED' "$log"
+            else
+              grep -q 'MOBILE MATCH SMOKE PASSED' "$log"
+            fi
+            if grep -Eq "SCRIPT ERROR|Failed loading resource|No loader found|Can't load dependency|venue_fallback|loader_failed" "$log"; then
+              exit 1
+            fi
+          done
       - name: Upload iPhone IPA
         uses: actions/upload-artifact@v4
         with:

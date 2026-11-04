@@ -738,6 +738,20 @@ static func info(id: String) -> Dictionary:
 		return merged
 	return d
 
+# Scenery is optional. The court scene supplies the playable floor and net.
+static func instantiate_venue(id: String) -> Node3D:
+	var path := String(info(id).venue)
+	var scene := ResourceLoader.load(path, "PackedScene") as PackedScene
+	if scene != null and scene.can_instantiate():
+		var instance := scene.instantiate()
+		if instance is Node3D:
+			return instance
+		if instance != null:
+			instance.free()
+	push_warning("Court scenery unavailable: " + path)
+	MobileDiagnostics.record("venue_fallback: " + path)
+	return Node3D.new()
+
 static func title(id: String) -> String:
 	return String(info(id).get("title", id))
 

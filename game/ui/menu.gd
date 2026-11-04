@@ -1168,8 +1168,7 @@ func _build_stage_arena() -> void :
 	_foley.water_x = float(Stage.val(id, "water_x", INF))
 	_foley.water_side = float(Stage.val(id, "water_side", 1.0))
 	_apply_freeplay_env(id)
-	var shell: = (load(String(Stage.info(id).venue))\
-	as PackedScene).instantiate()
+	var shell := Stage.instantiate_venue(id)
 	add_child(shell)
 	_arena_nodes.append(shell)
 
@@ -1202,7 +1201,7 @@ func _build_stage_arena() -> void :
 
 
 
-	if bool(Stage.val(id, "owns_floor", false)):
+	if not shell.scene_file_path.is_empty() and bool(Stage.val(id, "owns_floor", false)):
 		var cf: = court.get_node_or_null("CourtFloor") as MeshInstance3D
 		if cf != null:
 			if bool(Stage.val(id, "mirror_overlay", false)):

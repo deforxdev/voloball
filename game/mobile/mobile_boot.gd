@@ -70,6 +70,9 @@ func start_loading() -> void:
 	MobileDiagnostics.record("resource_loading: " + destination)
 	var state := ResourceLoader.load_threaded_get_status(destination)
 	if state == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE or state == ResourceLoader.THREAD_LOAD_FAILED:
+		if state == ResourceLoader.THREAD_LOAD_FAILED:
+			# Consume the failed request so Retry can start a new one.
+			ResourceLoader.load_threaded_get(destination)
 		var error := ResourceLoader.load_threaded_request(destination, "PackedScene")
 		if error != OK:
 			_fail("Не вдалося почати завантаження (%d)" % error)
@@ -98,10 +101,14 @@ func _process(_delta: float) -> void:
 func _open_menu(scene: PackedScene) -> void:
 	MobileDiagnostics.record("scene_instantiating: " + destination)
 	print("[mobile boot] menu resources loaded")
-	GameConfig.goto_packed(scene)
+	var result := GameConfig.goto_packed(scene)
+	if result != OK:
+		_fail("Не вдалося відкрити сцену (%d)" % result)
 
 func _fail(message: String) -> void:
+	_opening = false
 	set_process(false)
+	MobileDiagnostics.record("loader_failed: " + destination + " — " + message)
 	_status.text = message
 	_retry.show()
 	push_error("[mobile boot] " + message)

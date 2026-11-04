@@ -10927,14 +10927,14 @@ func _apply_stage() -> void :
 
 
 
-	if bool(Stage.val(id, "owns_floor", false)):
+	var shell := Stage.instantiate_venue(id)
+	if not shell.scene_file_path.is_empty() and bool(Stage.val(id, "owns_floor", false)):
 		_floor_mat.shader = load("res://game/mobile/mobile_overlay.gdshader") if MobileRender.enabled() else load("res://game/court/floor_overlay.gdshader")
 		var cf: = court.get_node_or_null("CourtFloor") as MeshInstance3D
 		if cf != null:
 			cf.position.y += 0.06
 
 
-	var shell: = (load(String(Stage.info(id).venue)) as PackedScene).instantiate()
 	_stage_shell = shell
 	add_child(shell)
 

@@ -3,20 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bsjdvfftn7mqy"
-path.s3tc="res://.godot/imported/tree_impostor.png-08ccba01411259ab352c976139e7ec36.s3tc.ctex"
+path="res://.godot/imported/tree_impostor.png-08ccba01411259ab352c976139e7ec36.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://game/stage/kits/tree_impostor.png"
-dest_files=["res://.godot/imported/tree_impostor.png-08ccba01411259ab352c976139e7ec36.s3tc.ctex"]
+dest_files=["res://.godot/imported/tree_impostor.png-08ccba01411259ab352c976139e7ec36.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=1.0
 compress/uastc_level=2

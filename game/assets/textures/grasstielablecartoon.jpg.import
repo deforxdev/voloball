@@ -3,20 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cyfshn22jglr2"
-path.s3tc="res://.godot/imported/grasstielablecartoon.jpg-e0632b9c90beb26300cc7db2c3d74686.s3tc.ctex"
+path="res://.godot/imported/grasstielablecartoon.jpg-e0632b9c90beb26300cc7db2c3d74686.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://game/assets/textures/grasstielablecartoon.jpg"
-dest_files=["res://.godot/imported/grasstielablecartoon.jpg-e0632b9c90beb26300cc7db2c3d74686.s3tc.ctex"]
+dest_files=["res://.godot/imported/grasstielablecartoon.jpg-e0632b9c90beb26300cc7db2c3d74686.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=1.0
 compress/uastc_level=2

@@ -5,6 +5,7 @@ import re
 root = Path(__file__).resolve().parents[1]
 project = (root / 'project.godot').read_text(encoding='utf-8')
 assert 'config/mobile_build=true' in project
+assert 'window/handheld/orientation=4' in project
 assert 'config/custom_user_dir_name="VOLOBALL-Mobile"' in project
 assert 'run/main_scene="res://game/mobile/mobile_boot.tscn"' in project
 assert 'renderer/rendering_method.ios="mobile"' in project

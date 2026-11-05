@@ -14,7 +14,7 @@ on:
   push:
     branches: [mobile]
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: ios-${{ github.ref }}-${{ inputs.runner || 'macos-26' }}
   cancel-in-progress: true
@@ -154,6 +154,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+      - name: Publish direct IPA download
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/publish_ios_release.py build/VOLOBALL-iPhone-SideStore.ipa
       - name: Build and test iOS startup and Settings Back
         if: ${{ inputs.test_simulator == true }}
         shell: bash

@@ -73,6 +73,15 @@ func run() -> void:
 		touch.pressed = false
 		Input.parse_input_event(touch)
 		await get_tree().process_frame
+	# Layout edits must keep the same finger captured across multiple drag events.
+	editor.layout_changed()
+	editor.begin_drag(21, item("contact").center)
+	editor.drag_to(21, desired + Vector2(20, 0))
+	check(item("contact").center.distance_to(desired + Vector2(20, 0)) < 1.0, "first drag update moves the selected control")
+	editor.drag_to(21, desired)
+	check(item("contact").center.distance_to(desired) < 1.0, "continuous dragging keeps the selected finger")
+	editor.layout_changed()
+	check(editor._drag_pointer == -1, "orientation layout refresh cancels the active drag")
 	editor._size_slider.value = 130
 	editor._opacity_slider.value = 40
 	if DisplayServer.get_name() != "headless":

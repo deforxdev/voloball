@@ -193,10 +193,13 @@ func _exit_tree() -> void:
 			get_tree().paused = _was_paused
 		controls._editor = null
 
+func layout_changed() -> void:
+	_drag_pointer = -1
+	queue_redraw()
+
 func _notification(what: int) -> void:
 	if what in [NOTIFICATION_RESIZED, NOTIFICATION_APPLICATION_FOCUS_OUT]:
-		_drag_pointer = -1
-		queue_redraw()
+		layout_changed()
 
 func _draw() -> void:
 	if controls == null:

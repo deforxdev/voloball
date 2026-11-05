@@ -21,6 +21,7 @@ var _has_player := false
 var _player: Node
 var _layout_size := Vector2.ZERO
 var _safe := Rect2()
+var _display_safe_area := Rect2i()
 const LAYOUT_PATH := "user://touch_controls.cfg"
 var _custom_layout: Dictionary = {}
 var _editor: Control
@@ -56,6 +57,10 @@ func _ready() -> void:
 		get_tree().root.add_child.call_deferred(smoke)
 
 func _process(_delta: float) -> void:
+	# A 180-degree flip can change the notch inset without changing window size.
+	if OS.has_feature("ios") or OS.has_feature("android"):
+		if DisplayServer.get_display_safe_area() != _display_safe_area:
+			_rebuild_layout()
 	if is_instance_valid(_editor):
 		return
 	var scene := get_tree().current_scene
@@ -100,11 +105,14 @@ func action_label(action: String) -> String:
 	return LABELS.get(action, action)
 
 func _rebuild_layout() -> void:
+	var previous_size := _layout_size
+	var previous_safe := _safe
 	release_all()
 	_layout_size = get_viewport().get_visible_rect().size
 	_safe = Rect2(Vector2.ZERO, _layout_size)
 	if OS.has_feature("ios") or OS.has_feature("android"):
-		var pixels := Rect2(DisplayServer.get_display_safe_area())
+		_display_safe_area = DisplayServer.get_display_safe_area()
+		var pixels := Rect2(_display_safe_area)
 		if pixels.has_area():
 			var inverse := get_viewport().get_screen_transform().affine_inverse()
 			var safe_rect := Rect2(inverse * pixels.position, inverse.basis_xform(pixels.size))
@@ -135,6 +143,8 @@ func _rebuild_layout() -> void:
 	_button("power_up", "+", Vector2(_safe.get_center().x + 85.0 * _scale, bottom - 65.0 * _scale))
 	_button("camera", "КАМЕРА", Vector2(right - 170.0 * _scale, top + 155.0 * _scale))
 	_button("pause", "МЕНЮ", Vector2(right - 65.0 * _scale, top + 155.0 * _scale))
+	if is_instance_valid(_editor) and (previous_size != _layout_size or previous_safe != _safe):
+		_editor.layout_changed()
 
 func _button(action: String, label: String, center: Vector2) -> void:
 	var radius := minf(42.0 * _scale * control_scale(action), _safe.size.y * 0.45)

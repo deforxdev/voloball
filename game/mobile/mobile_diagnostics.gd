@@ -2,7 +2,7 @@ class_name MobileDiagnostics
 extends RefCounted
 
 const PATH := "user://mobile-diagnostics.log"
-const BUILD := "0.2.5"
+const BUILD := "0.2.6"
 
 static func record(phase: String) -> void:
 	if not MobileRender.enabled():

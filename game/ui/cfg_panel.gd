@@ -1031,6 +1031,9 @@ func _cycle_outfit() -> void :
 	_paint()
 
 func _open_overlay(kind: String, animate: = true) -> void :
+	if kind == "controls" and MobileRender.enabled():
+		MobileControls.open_editor()
+		return
 	for c in _overlay.get_children():
 		c.queue_free()
 	_overlay_kind = kind

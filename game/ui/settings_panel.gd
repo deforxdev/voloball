@@ -378,6 +378,8 @@ func _build_system_tabs(tabs: TabContainer) -> void :
 		prof.add_child(go)
 
 
+	if MobileRender.enabled() and scope == Scope.SYSTEM:
+		_build_controls_tab(tabs)
 	if _is_dev_build():
 		_build_debug_tab(tabs)
 
@@ -551,6 +553,9 @@ func _color_row(col: VBoxContainer, label: String, value: Color, apply: Callable
 
 func _build_controls_tab(tabs: TabContainer) -> void :
 	var col: = _tab(tabs, "controls")
+	if MobileRender.enabled():
+		_build_touch_controls(col)
+		return
 	_bind_buttons.clear()
 	var binds: = _active_binds()
 
@@ -616,6 +621,33 @@ func _build_controls_tab(tabs: TabContainer) -> void :
 		_refresh_power_keys()
 		_refresh_bind_labels())
 	col.add_child(reset)
+
+func _build_touch_controls(col: VBoxContainer) -> void:
+	_subheader(col, "Сенсорне керування")
+	var edit := Button.new()
+	edit.name = "EditTouchControls"
+	edit.text = "Змінити керування"
+	edit.custom_minimum_size = Vector2(300, 56)
+	UiStyle.style_button(edit, "primary", 19)
+	edit.pressed.connect(MobileControls.open_editor)
+	col.add_child(edit)
+	var hint := Label.new()
+	hint.text = "Перетягуй кнопки, змінюй їхній розмір і прозорість.\nКамера — свайп по правій половині екрана."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiStyle.style_label(hint, "body")
+	col.add_child(hint)
+	_range(col, "Чутливість камери", 0.25, 3.0, 0.05, GameConfig.mouse_sensitivity,
+		func(v: float) -> String: return "%.2fx" % v,
+		func(v: float): GameConfig.mouse_sensitivity = v, DEFAULTS.mouse_sensitivity)
+	_check(col, "Інверсія X", "", GameConfig.invert_cam_x,
+		func(on: bool): GameConfig.invert_cam_x = on, "invert_cam_x")
+	_check(col, "Інверсія Y", "", GameConfig.invert_cam_y,
+		func(on: bool): GameConfig.invert_cam_y = on, "invert_cam_y")
+	_range(col, "Максимальна сила", float(GameConfig.POWER_CAP_MIN), 16.0, 1.0, float(GameConfig.power_cap),
+		func(v: float) -> String: return "%d" % int(v),
+		func(v: float):
+			GameConfig.power_cap = int(v)
+			GameConfig.save_settings(), 16.0)
 
 const BIND_BTN_W: = 96
 const BIND_SLOT_W: = 156

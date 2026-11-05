@@ -3005,7 +3005,10 @@ func _build_home() -> void :
 
 	var coop_card: = _card_btn("gamepad", "controller config", 
 		MenuCopy.sub("controllers"), "info", func():
-			_show(_configs), false, UiStyle.HIGHLIGHT)
+			if MobileRender.enabled():
+				MobileControls.open_editor()
+			else:
+				_show(_configs), false, UiStyle.HIGHLIGHT)
 
 
 

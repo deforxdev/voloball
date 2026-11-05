@@ -15,7 +15,11 @@ static func apply() -> void:
 		return
 	GameConfig.apply_quality(GameConfig.QUALITY_LOW)
 	GameConfig.max_fps = 60 if GameConfig.max_fps == 60 else 30
-	GameConfig.resolution_3d = clampi(GameConfig.resolution_3d, 50, 75)
+	if not GameConfig.mobile_native_resolution:
+		GameConfig.mobile_native_resolution = true
+		GameConfig.resolution_3d = 100
+		GameConfig.save_settings.call_deferred()
+	GameConfig.resolution_3d = clampi(GameConfig.resolution_3d, 50, 100)
 	GameConfig.msaa = 0
 	GameConfig.root_ui_aa = false
 	GameConfig.contour_outline = false
@@ -32,9 +36,9 @@ static func apply() -> void:
 		tree.root.msaa_3d = Viewport.MSAA_DISABLED
 		tree.root.use_hdr_2d = false
 		tree.root.positional_shadow_atlas_size = 0
-		# Bound the actual render target on Retina screens, including GLES.
+		# Keep logical UI coordinates while rendering at the actual screen resolution.
 		tree.root.content_scale_size = Vector2i(1280, 720)
-		tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+		tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 		tree.root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
 
 	GameConfig.apply_frame_cap()
@@ -49,4 +53,4 @@ static func configure_preview(view: SubViewport) -> void:
 	view.positional_shadow_atlas_size = 0
 	var container := view.get_parent() as SubViewportContainer
 	if container != null:
-		container.stretch_shrink = 2
+		container.stretch_shrink = 1

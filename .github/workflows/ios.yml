@@ -84,6 +84,8 @@ jobs:
           grep -q 'BALL REGRESSION COMPLETE: failures=0' build/ball-tests.log
           "$godot" --headless --path . --scene res://test_mobile_controls.tscn --quit-after 180 -- --mobile-preview 2>&1 | tee build/touch-tests.log
           grep -q 'MOBILE REGRESSION COMPLETE: failures=0' build/touch-tests.log
+          "$godot" --headless --path . --scene res://test_touch_layout.tscn --quit-after 600 -- --mobile-preview --drive-role touch_layout_ci 2>&1 | tee build/touch-layout-tests.log
+          grep -q 'TOUCH LAYOUT REGRESSION COMPLETE: failures=0' build/touch-layout-tests.log
           VOLOBALL_BOOT_SMOKE_QUIT=1 VOLOBALL_BOOT_SMOKE=1 "$godot" --headless --path . --quit-after 1200 -- --mobile-preview --drive-role boot_ci 2>&1 | tee build/menu-tests.log
           grep -q 'MOBILE BOOT SMOKE PASSED' build/menu-tests.log
           VOLOBALL_BOOT_SMOKE_QUIT=1 VOLOBALL_BOOT_SMOKE=match "$godot" --headless --rendering-method gl_compatibility --path . --quit-after 20000 -- --mobile-preview --drive-role match_ci 2>&1 | tee build/match-tests.log

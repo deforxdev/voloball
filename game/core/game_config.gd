@@ -706,7 +706,8 @@ func _save_settings() -> void :
 		"video": {
 			"window_mode": int(window_mode), "vsync": vsync, 
 			"max_fps": max_fps, "background_fps": background_fps, 
-			"show_fps": show_fps, "resolution_3d": resolution_3d, 
+			"show_fps": show_fps, "resolution_3d": resolution_3d,
+			"mobile_native_resolution": mobile_native_resolution,
 			"reflections": reflections, 
 			"bloom": bloom, "grass": grass, "hair_physics": hair_physics, 
 			"floor_sunlight": floor_sunlight, "court_dome": court_dome, 
@@ -880,6 +881,7 @@ func _load_settings() -> void :
 	show_fps = bool(video.get("show_fps", false))
 
 
+	mobile_native_resolution = bool(video.get("mobile_native_resolution", false))
 	resolution_3d = int(video.get("resolution_3d", 100))
 	reflections = bool(video.get("reflections", true))
 	bloom = bool(video.get("bloom", true))
@@ -1372,6 +1374,7 @@ var show_fps: = false
 
 
 const RESOLUTION_3D_MIN: = 25
+var mobile_native_resolution := false
 var resolution_3d: = 100:
 	set(v):
 		resolution_3d = clampi(v, RESOLUTION_3D_MIN, 100)

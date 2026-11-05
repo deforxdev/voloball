@@ -21,6 +21,13 @@ var _has_player := false
 var _player: Node
 var _layout_size := Vector2.ZERO
 var _safe := Rect2()
+const LAYOUT_PATH := "user://touch_controls.cfg"
+var _custom_layout: Dictionary = {}
+var _editor: Control
+var _power_center := Vector2.ZERO
+var _move_opacity := 1.0
+var _power_size := 1.0
+var _power_opacity := 1.0
 
 func enabled() -> bool:
 	return MobileRender.enabled()
@@ -42,11 +49,15 @@ func _ready() -> void:
 	add_child(_surface)
 	get_tree().root.size_changed.connect(_rebuild_layout)
 	_rebuild_layout()
+	load_layout()
+	_rebuild_layout()
 	if OS.get_environment("VOLOBALL_BOOT_SMOKE") in ["1", "match"]:
 		var smoke: Node = (load("res://game/mobile/mobile_boot_smoke.gd") as GDScript).new()
 		get_tree().root.add_child.call_deferred(smoke)
 
 func _process(_delta: float) -> void:
+	if is_instance_valid(_editor):
+		return
 	var scene := get_tree().current_scene
 	var game := game_scene()
 	_player = game.get("player") if game != null else null
@@ -104,7 +115,12 @@ func _rebuild_layout() -> void:
 	var right := _safe.end.x
 	var top := _safe.position.y
 	var bottom := _safe.end.y
-	_move_center = Vector2(left + 135.0 * _scale, bottom - 140.0 * _scale)
+	_stick_radius *= control_scale("move")
+	_move_center = control_position("move", Vector2(left + 135.0 * _scale, bottom - 140.0 * _scale), Vector2.ONE * _stick_radius)
+	_move_opacity = control_opacity("move")
+	_power_size = control_scale("power_display")
+	_power_opacity = control_opacity("power_display")
+	_power_center = control_position("power_display", Vector2(_safe.get_center().x, bottom - 65.0 * _scale), Vector2(55, 22) * _scale * _power_size)
 	_buttons.clear()
 	_button("contact", "УДАР", Vector2(right - 65.0 * _scale, bottom - 165.0 * _scale))
 	_button("jump", "СТРИБОК", Vector2(right - 165.0 * _scale, bottom - 65.0 * _scale))
@@ -121,9 +137,14 @@ func _rebuild_layout() -> void:
 	_button("pause", "МЕНЮ", Vector2(right - 65.0 * _scale, top + 155.0 * _scale))
 
 func _button(action: String, label: String, center: Vector2) -> void:
-	_buttons.append({"action": action, "label": label, "center": center, "radius": 42.0 * _scale})
+	var radius := minf(42.0 * _scale * control_scale(action), _safe.size.y * 0.45)
+	_buttons.append({"action": action, "label": label,
+		"center": control_position(action, center, Vector2.ONE * radius), "radius": radius,
+		"size": control_scale(action), "opacity": control_opacity(action)})
 
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(_editor):
+		return
 	if not enabled() or not _has_player:
 		return
 	if (event is InputEventMouseButton or event is InputEventMouseMotion) and event.device == -1:
@@ -173,15 +194,15 @@ func touch_begin(index: int, at: Vector2) -> bool:
 		return false
 	if not _safe.has_point(at):
 		return false
+	if at.distance_to(_move_center) <= _stick_radius * 1.35 and not _touches.values().has("move"):
+		_touches[index] = "move"
+		touch_move(index, at)
+		return true
 	if at.x >= _safe.get_center().x:
 		if _touches.values().has("look"):
 			return false
 		_touches[index] = "look"
 		_look_position = at
-		return true
-	if at.distance_to(_move_center) <= _stick_radius * 1.35 and not _touches.values().has("move"):
-		_touches[index] = "move"
-		touch_move(index, at)
 		return true
 	return false
 
@@ -257,6 +278,8 @@ func _key_pulse(code: Key) -> void:
 	Input.parse_input_event.call_deferred(release)
 
 func draw_controls(surface: Control) -> void:
+	if is_instance_valid(_editor):
+		return
 	if not _has_player:
 		return
 	if _playing:
@@ -265,22 +288,90 @@ func draw_controls(surface: Control) -> void:
 		if not _playing and button.action != "pause":
 			continue
 		var held := _touches.values().has(button.action)
-		var fill := Color(0.13, 0.3, 0.47, 0.85) if held else Color(0.04, 0.09, 0.16, 0.65)
+		var fill := Color(0.13, 0.3, 0.47, 0.85 * button.opacity) if held else Color(0.04, 0.09, 0.16, 0.65 * button.opacity)
 		surface.draw_circle(button.center, button.radius, fill)
-		surface.draw_arc(button.center, button.radius, 0, TAU, 40, Color(1, 1, 1, 0.65), 2.0 * _scale, true)
-		_text(surface, button.center, button.label, 14)
+		surface.draw_arc(button.center, button.radius, 0, TAU, 40, Color(1, 1, 1, 0.65 * button.opacity), 2.0 * _scale, true)
+		_text(surface, button.center, button.label, roundi(14 * button.size), button.opacity)
 	if _playing and _player != null:
 		var level := GameConfig.power_disp_of(int(_player.get("power_level")))
-		_text(surface, Vector2(_safe.get_center().x, _safe.end.y - 65.0 * _scale), "%d / %d" % [level, GameConfig.power_cap], 22)
+		_text(surface, _power_center, "%d / %d" % [level, GameConfig.power_cap], roundi(22 * _power_size), _power_opacity)
 
 func _draw_stick(surface: Control, center: Vector2, value: Vector2, label: String) -> void:
-	surface.draw_circle(center, _stick_radius, Color(0.04, 0.09, 0.16, 0.4))
-	surface.draw_arc(center, _stick_radius, 0, TAU, 48, Color(1, 1, 1, 0.5), 2.0 * _scale, true)
-	surface.draw_circle(center + value * _stick_radius * 0.65, _stick_radius * 0.36, Color(1, 1, 1, 0.45))
-	_text(surface, center - Vector2(0, _stick_radius + 18.0 * _scale), label, 15)
+	surface.draw_circle(center, _stick_radius, Color(0.04, 0.09, 0.16, 0.4 * _move_opacity))
+	surface.draw_arc(center, _stick_radius, 0, TAU, 48, Color(1, 1, 1, 0.5 * _move_opacity), 2.0 * _scale, true)
+	surface.draw_circle(center + value * _stick_radius * 0.65, _stick_radius * 0.36, Color(1, 1, 1, 0.45 * _move_opacity))
+	_text(surface, center - Vector2(0, _stick_radius + 18.0 * _scale), label, roundi(15 * control_scale("move")), _move_opacity)
 
-func _text(surface: Control, at: Vector2, text: String, size: int) -> void:
+func _text(surface: Control, at: Vector2, text: String, size: int, opacity := 1.0) -> void:
 	var font := ThemeDB.fallback_font
 	var pixels := maxi(10, roundi(size * _scale))
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, pixels).x
-	surface.draw_string(font, at + Vector2(-width * 0.5, pixels * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, pixels, Color.WHITE)
+	surface.draw_string(font, at + Vector2(-width * 0.5, pixels * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, pixels, Color(1, 1, 1, opacity))
+
+func control_scale(id: String) -> float:
+	return float(_custom_layout.get(id, {}).get("size", 1.0))
+
+func control_opacity(id: String) -> float:
+	return float(_custom_layout.get(id, {}).get("opacity", 1.0))
+
+func control_position(id: String, fallback: Vector2, extent: Vector2) -> Vector2:
+	var position: Vector2 = _custom_layout.get(id, {}).get("position", (_safe.get_center() - _safe.position) / _safe.size)
+	var center := _safe.position + position * _safe.size if _custom_layout.has(id) else fallback
+	var margin := extent.min(_safe.size * 0.45)
+	return center.clamp(_safe.position + margin, _safe.end - margin)
+
+func control_items() -> Array:
+	var items: Array = _buttons.duplicate(true)
+	items.append({"action": "move", "label": "РУХ", "center": _move_center, "radius": _stick_radius,
+		"size": control_scale("move"), "opacity": _move_opacity})
+	items.append({"action": "power_display", "label": "3 / %d" % GameConfig.power_cap, "center": _power_center,
+		"radius": 35.0 * _scale * _power_size, "size": _power_size, "opacity": _power_opacity})
+	return items
+
+func update_control(id: String, center: Vector2, size_factor: float, opacity: float) -> void:
+	if not center.is_finite() or not is_finite(size_factor) or not is_finite(opacity) or not _safe.has_area():
+		return
+	_custom_layout[id] = {
+		"position": ((center - _safe.position) / _safe.size).clamp(Vector2.ZERO, Vector2.ONE),
+		"size": clampf(size_factor, 0.5, 2.0), "opacity": clampf(opacity, 0.0, 1.0)}
+	_rebuild_layout()
+
+func load_layout() -> void:
+	_custom_layout.clear()
+	var config := ConfigFile.new()
+	if config.load(LAYOUT_PATH) != OK or config.get_value("layout", "version", 0) != 1:
+		return
+	var saved: Variant = config.get_value("layout", "controls", {})
+	if not saved is Dictionary:
+		return
+	for item in control_items():
+		var record: Variant = saved.get(item.action)
+		if not record is Dictionary:
+			continue
+		var position: Variant = record.get("position")
+		var factor: Variant = record.get("size")
+		var opacity: Variant = record.get("opacity")
+		if not position is Vector2 or not (factor is float or factor is int) or not (opacity is float or opacity is int):
+			continue
+		if not position.is_finite() or not is_finite(float(factor)) or not is_finite(float(opacity)):
+			continue
+		_custom_layout[item.action] = {"position": position.clamp(Vector2.ZERO, Vector2.ONE),
+			"size": clampf(float(factor), 0.5, 2.0), "opacity": clampf(float(opacity), 0, 1)}
+
+func save_layout() -> Error:
+	var config := ConfigFile.new()
+	config.set_value("layout", "version", 1)
+	config.set_value("layout", "controls", _custom_layout)
+	var error := config.save(LAYOUT_PATH + ".tmp")
+	if error != OK:
+		return error
+	return DirAccess.rename_absolute(ProjectSettings.globalize_path(LAYOUT_PATH + ".tmp"),
+		ProjectSettings.globalize_path(LAYOUT_PATH))
+
+func open_editor() -> void:
+	if is_instance_valid(_editor):
+		return
+	release_all()
+	_editor = (load("res://game/mobile/touch_layout_editor.gd") as GDScript).new()
+	_editor.controls = self
+	add_child(_editor)

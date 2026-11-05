@@ -2559,7 +2559,7 @@ func hide_countdown() -> void :
 	$Countdown.visible = false
 
 func grab_dissolve() -> void :
-	if MobileControls.enabled():
+	if MobileControls.enabled() or DisplayServer.get_name() == "headless":
 		return
 
 

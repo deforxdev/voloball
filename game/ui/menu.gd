@@ -3386,6 +3386,9 @@ func _back_btn(on_press: Callable, text_in: = "back") -> Button:
 
 
 func _open_online() -> void :
+	if Net.cloud_session() and not Net.players.is_empty():
+		_show_room()
+		return
 	if not OnlineTerms.require(_open_online):
 		return
 	_show(_online)
@@ -3394,6 +3397,9 @@ func _build_online() -> void :
 	var v: = _box(_online)
 	v.add_theme_constant_override("separation", 12)
 	_hero_head(v, "online")
+	if MobileRender.enabled():
+		_build_cloud_online(v)
+		return
 	v.add_child(_card_btn("massiveMultiplayer", "quick match", 
 		MenuCopy.sub("quick_match"), "primary", func(): _show(_quick)))
 	v.add_child(_card_btn("menuList", "server browser", 
@@ -3406,6 +3412,96 @@ func _build_online() -> void :
 	v.add_child(custom_card)
 
 	_back_row(v, func(): _show(_home))
+
+var _cloud_status: Label
+var _cloud_code_edit: LineEdit
+var _cloud_create: Button
+var _cloud_join: Button
+var _cloud_busy := false
+
+func _build_cloud_online(v: VBoxContainer) -> void:
+	var hint := Label.new()
+	hint.text = "Photon • Європа • до 10 гравців\nСтвори кімнату та передай її код друзям."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiStyle.style_label(hint, "small")
+	v.add_child(hint)
+	var create_card := _card_btn("plus", "Створити кімнату", "Гра через інтернет", "primary", _host_cloud)
+	_cloud_create = create_card.get_child(0) as Button
+	v.add_child(create_card)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	_cloud_code_edit = LineEdit.new()
+	_cloud_code_edit.placeholder_text = "Код кімнати — 8 символів"
+	_cloud_code_edit.max_length = 16
+	_cloud_code_edit.custom_minimum_size = Vector2(0, 46)
+	_cloud_code_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cloud_code_edit.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_DEFAULT
+	UiStyle.style_line_edit(_cloud_code_edit)
+	_cloud_code_edit.text_submitted.connect(func(_text): _join_cloud())
+	row.add_child(_cloud_code_edit)
+	_cloud_join = Button.new()
+	_cloud_join.text = "Приєднатись"
+	_cloud_join.custom_minimum_size = Vector2(180, 46)
+	UiStyle.style_button(_cloud_join, "primary", 22)
+	_cloud_join.pressed.connect(_join_cloud)
+	row.add_child(_cloud_join)
+	v.add_child(row)
+	_cloud_status = _online_status()
+	_cloud_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(_cloud_status)
+	Net.cloud_ready.connect(_cloud_connected)
+	Net.lobby_changed.connect(_cloud_lobby_updated)
+	Net.session_ended.connect(func(reason: String):
+		_cloud_set_busy(false)
+		if reason not in ["left", "restart"]:
+			_cloud_status.text = reason)
+	_back_row(v, func():
+		if _cloud_busy:
+			Net.leave()
+		_cloud_set_busy(false)
+		_show(_home))
+
+func _cloud_set_busy(busy: bool) -> void:
+	_cloud_busy = busy
+	if is_instance_valid(_cloud_create):
+		_cloud_create.disabled = busy
+	if is_instance_valid(_cloud_join):
+		_cloud_join.disabled = busy
+	if is_instance_valid(_cloud_code_edit):
+		_cloud_code_edit.editable = not busy
+
+func _host_cloud() -> void:
+	if _cloud_busy:
+		return
+	_cancel_search()
+	_cloud_set_busy(true)
+	_cloud_status.text = "Створення кімнати Photon…"
+	var error := Net.host_cloud(_online_name())
+	if error != OK:
+		_cloud_set_busy(false)
+		_cloud_status.text = "Не вдалося створити кімнату (%d)." % error
+
+func _join_cloud() -> void:
+	if _cloud_busy:
+		return
+	_cancel_search()
+	var error := Net.join_cloud(_cloud_code_edit.text, _online_name())
+	if error != OK:
+		_cloud_status.text = "Введи правильний код кімнати: 8 символів."
+		return
+	_cloud_set_busy(true)
+	_cloud_status.text = "Підключення до Photon…"
+	_cloud_code_edit.release_focus()
+
+func _cloud_connected() -> void:
+	_cloud_set_busy(false)
+	if Net.cloud_session() and Net.is_host:
+		_cloud_status.text = "Код кімнати: " + Net.cloud_code
+		_show_room()
+
+func _cloud_lobby_updated() -> void:
+	if Net.cloud_session() and not Net.players.is_empty():
+		_cloud_set_busy(false)
 
 
 
@@ -8652,7 +8748,8 @@ func _drive_reform(delta: float) -> void :
 
 func _start_party(then: = Callable()) -> void :
 	if MobileRender.enabled():
-		_flash_notice("Online is not connected yet")
+		_show(_online)
+		_flash_notice("Створи кімнату Photon та передай код друзям.")
 		return
 	if not OnlineTerms.require(_start_party.bind(then)):
 		return
@@ -9097,6 +9194,10 @@ func _build_room() -> void :
 	_room_panel.start_pressed.connect(_on_start_online)
 	_room_panel.shuffle_pressed.connect( func(): Net.shuffle_sides())
 	_room_panel.invite_pressed.connect( func():
+		if Net.cloud_session():
+			DisplayServer.clipboard_set(Net.cloud_code)
+			_flash_notice("Код скопійовано: " + Net.cloud_code)
+			return
 		if not Net.steam_invite_overlay():
 			_open_friends_for_invite())
 	_room_panel.human_pressed.connect(_on_room_player)
@@ -10082,7 +10183,7 @@ func _refresh_room() -> void :
 		tell = "that side is full, join %s to play" % ("away" if my_side == 1 else "home")
 	elif my_side == 0 and Net.players.has(me):
 		tell = "join home or away to play"
-	_room_panel.apply({"title": "lobby", "stage_ids": Stage.ids(), 
+	_room_panel.apply({"title": "Кімната • " + Net.cloud_code if Net.cloud_session() else "lobby", "stage_ids": Stage.ids(),
 		"stage": Stage.resolve(Net.stage), "tod": Net.rule_tod, 
 
 		"outfit": Net.rule_outfit, "outfit_edit": Net.is_host and Net.custom_lobby, 
@@ -10100,7 +10201,7 @@ func _refresh_room() -> void :
 		"cpu": CpuSlots.global_diff(Net.cpu_slots), 
 		"editable": Net.is_host, "my_side": my_side, "side_mode": "online", 
 		"side_editable": true, 
-		"can_start": Net.is_host, "invite": Net.steam_transport_available(), 
+		"can_start": Net.is_host, "invite": Net.cloud_session() or Net.steam_transport_available(),
 
 		"shuffle": Net.is_host and Net.players.size() >= 2, 
 		"spectators": specs, 

@@ -90,6 +90,11 @@ jobs:
           grep -q 'MOBILE BOOT SMOKE PASSED' build/menu-tests.log
           VOLOBALL_BOOT_SMOKE_QUIT=1 VOLOBALL_BOOT_SMOKE=match "$godot" --headless --rendering-method gl_compatibility --path . --quit-after 20000 -- --mobile-preview --drive-role match_ci 2>&1 | tee build/match-tests.log
           grep -q 'MOBILE MATCH SMOKE PASSED' build/match-tests.log
+          "$godot" --headless --path . --scene res://test_photon_cancel.tscn -- --drive-role photon_cancel_ci 2>&1 | tee build/cloud-cancel.log
+          grep -q 'PHOTON CANCEL PASS' build/cloud-cancel.log
+          python3 tools/test_photon_online.py --godot "$godot" --output build/cloud-tests
+          "$godot" --headless --path . --script res://test_photon_capacity.gd -- --drive-role photon_capacity_ci 2>&1 | tee build/cloud-capacity.log
+          grep -q 'PHOTON CAPACITY PASS' build/cloud-capacity.log
           "$godot" --headless --path . --export-release iOS build/ios/voloball.ipa 2>&1 | tee build/export.log
           test -d build/ios/voloball.xcodeproj
       - name: Build iPhone app without Apple signing credentials

@@ -13,6 +13,7 @@ const REGION := "eu"
 const MAX_PLAYERS := 10
 const MAX_FRAME := 262144
 var app_version := "voloball-61-cloud-1"
+var capacity := MAX_PLAYERS
 var room := ""
 var hosting := false
 var actor_id := 0
@@ -198,7 +199,7 @@ func _response(operation: int, error: int, values: Dictionary) -> void:
 func _join_operation() -> void:
 	var values: Array = [255, room, 250, true]
 	if hosting:
-		values.append_array([248, {"255": MAX_PLAYERS, "254": false, "253": true}, 241, true, 232, true, 239, true, 235, 0, 236, 0])
+		values.append_array([248, {"255": capacity, "254": false, "253": true}, 241, true, 232, true, 239, true, 235, 0, 236, 0])
 	if phase == "game":
 		values.append_array([249, {"255": _nickname}])
 	_op(227 if hosting else 226, values)

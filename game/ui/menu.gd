@@ -3397,9 +3397,6 @@ func _build_online() -> void :
 	var v: = _box(_online)
 	v.add_theme_constant_override("separation", 12)
 	_hero_head(v, "online")
-	if MobileRender.enabled():
-		_build_cloud_online(v)
-		return
 	v.add_child(_card_btn("massiveMultiplayer", "quick match", 
 		MenuCopy.sub("quick_match"), "primary", func(): _show(_quick)))
 	v.add_child(_card_btn("menuList", "server browser", 
@@ -3413,108 +3410,40 @@ func _build_online() -> void :
 
 	_back_row(v, func(): _show(_home))
 
-var _cloud_status: Label
-var _cloud_code_edit: LineEdit
-var _cloud_create: Button
-var _cloud_join: Button
-var _cloud_busy := false
-
-func _build_cloud_online(v: VBoxContainer) -> void:
-	var hint := Label.new()
-	hint.text = "Photon • Європа • до 10 гравців\nСтвори кімнату та передай її код друзям."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	UiStyle.style_label(hint, "small")
-	hint.add_theme_font_size_override("font_size", 18)
-	hint.add_theme_color_override("font_color", Color("27324a"))
-	var hint_box := PanelContainer.new()
-	var hint_style := StyleBoxFlat.new()
-	hint_style.bg_color = Color(0.96, 0.97, 1.0, 0.94)
-	hint_style.set_corner_radius_all(12)
-	hint_style.content_margin_left = 12
-	hint_style.content_margin_right = 12
-	hint_style.content_margin_top = 8
-	hint_style.content_margin_bottom = 8
-	hint_box.add_theme_stylebox_override("panel", hint_style)
-	hint_box.add_child(hint)
-	v.add_child(hint_box)
-	var create_card := _card_btn("plus", "Створити кімнату", "Гра через інтернет", "primary", _host_cloud)
-	_cloud_create = create_card.get_child(0) as Button
-	v.add_child(create_card)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	_cloud_code_edit = LineEdit.new()
-	_cloud_code_edit.placeholder_text = "Код кімнати — 8 символів"
-	_cloud_code_edit.max_length = 16
-	_cloud_code_edit.custom_minimum_size = Vector2(0, 46)
-	_cloud_code_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cloud_code_edit.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_DEFAULT
-	UiStyle.style_line_edit(_cloud_code_edit)
-	_cloud_code_edit.text_submitted.connect(func(_text): _join_cloud())
-	row.add_child(_cloud_code_edit)
-	_cloud_join = Button.new()
-	_cloud_join.text = "Приєднатись"
-	_cloud_join.custom_minimum_size = Vector2(180, 46)
-	UiStyle.style_button(_cloud_join, "primary", 22)
-	_cloud_join.pressed.connect(_join_cloud)
-	row.add_child(_cloud_join)
-	v.add_child(row)
-	_cloud_status = _online_status()
-	_cloud_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(_cloud_status)
-	Net.cloud_ready.connect(_cloud_connected)
-	Net.lobby_changed.connect(_cloud_lobby_updated)
-	Net.session_ended.connect(func(reason: String):
-		_cloud_set_busy(false)
-		if reason not in ["left", "restart"]:
-			_cloud_status.text = reason)
-	_back_row(v, func():
-		if _cloud_busy:
-			Net.leave()
-		_cloud_set_busy(false)
-		_show(_home))
-
-func _cloud_set_busy(busy: bool) -> void:
-	_cloud_busy = busy
-	if is_instance_valid(_cloud_create):
-		_cloud_create.disabled = busy
-	if is_instance_valid(_cloud_join):
-		_cloud_join.disabled = busy
-	if is_instance_valid(_cloud_code_edit):
-		_cloud_code_edit.editable = not busy
+var _host_cloud_pending := false
 
 func _host_cloud() -> void:
-	if _cloud_busy:
+	if _host_cloud_pending:
 		return
 	_cancel_search()
-	_cloud_set_busy(true)
-	_cloud_status.text = "Створення кімнати Photon…"
-	var error := Net.host_cloud(_online_name())
+	var error := Net.host_cloud(_online_name(), _selected_max_humans())
 	if error != OK:
-		_cloud_set_busy(false)
-		_cloud_status.text = "Не вдалося створити кімнату (%d)." % error
+		_host_status.text = "Не вдалося створити кімнату (%d)." % error
+		return
+	_set_host_cloud_pending(true)
+	_host_status.text = "Створення кімнати Photon…"
 
-func _join_cloud() -> void:
-	if _cloud_busy:
+func _set_host_cloud_pending(pending: bool) -> void:
+	_host_cloud_pending = pending
+	(_host_steam_card.get_child(0) as Button).disabled = pending
+
+func _join_cloud(code: String) -> void:
+	if _bw_joining:
 		return
-	_cancel_search()
-	var error := Net.join_cloud(_cloud_code_edit.text, _online_name())
+	var error := Net.join_cloud(code, _online_name())
 	if error != OK:
-		_cloud_status.text = "Введи правильний код кімнати: 8 символів."
+		_browse_hint.text = "Введи код кімнати з 8 символів." if error == ERR_INVALID_PARAMETER else "Не вдалося підключитися (%d)." % error
 		return
-	_cloud_set_busy(true)
-	_cloud_status.text = "Підключення до Photon…"
-	_cloud_code_edit.release_focus()
+	_browse_hint.text = "Підключення до Photon…"
+	_bw_code.release_focus()
+	_bw_search.release_focus()
+	_watch_join(code, 95.0)
 
 func _cloud_connected() -> void:
-	_cloud_set_busy(false)
-	if Net.cloud_session() and Net.is_host:
-		_cloud_status.text = "Код кімнати: " + Net.cloud_code
+	if _host_cloud_pending:
+		_set_host_cloud_pending(false)
+		_host_status.text = ""
 		_show_room()
-
-func _cloud_lobby_updated() -> void:
-	if Net.cloud_session() and not Net.players.is_empty():
-		_cloud_set_busy(false)
-
 
 
 func _open_local() -> void :
@@ -5920,6 +5849,9 @@ func _party_queue_when_formed(sz: int, give_up: float) -> void :
 	_find_quick()
 
 func _find_quick() -> void :
+	if MobileRender.enabled():
+		_flash_notice("Швидкий пошук доступний у Steam. Для гри за кодом відкрий Server Browser.")
+		return
 
 	if Net.party and not Net.is_host:
 		_flash_notice("only the party leader can queue")
@@ -6891,6 +6823,14 @@ func _build_howto() -> void :
 var _last_shown: Control = null
 
 func _show(page: Control) -> void :
+	if _host_cloud_pending and page != _host:
+		_set_host_cloud_pending(false)
+		_host_status.text = ""
+		_bw_quiet_leave = true
+		Net.leave()
+		_bw_quiet_leave = false
+	if MobileRender.enabled() and _bw_joining and page != _browse and Net.players.is_empty():
+		_cancel_browse_join()
 	_ensure_page(page)
 	for p in [_home, _online, _local, _practice, _configs, _profile, _quick, 
 		_custom, _settings, _howto, _browse, _host, _room, _direct, _recent, 
@@ -7063,7 +7003,7 @@ func _refresh_host_cards() -> void :
 	if _host_party_card != null:
 		_host_party_card.visible = leader
 	if _host_steam_card != null:
-		_host_steam_card.visible = Net.steam_transport_available() and not leader
+		_host_steam_card.visible = MobileRender.enabled() or (Net.steam_transport_available() and not leader)
 
 func _setup_online() -> void :
 	_steam_up = Net.steam_init()
@@ -7087,6 +7027,7 @@ func _setup_online() -> void :
 			_friends_btn.visible = Net.steam_transport_available()
 		if _browse.visible:
 			_refresh_browser())
+	Net.cloud_ready.connect(_cloud_connected)
 	Net.lobby_changed.connect(_refresh_room)
 
 
@@ -9111,15 +9052,16 @@ func _build_host() -> void :
 	_hero_head(v, "custom lobby", true)
 
 
-	_priv_opt = UiSelect.new(["public", "friends only", "private"])
+	_priv_opt = UiSelect.new(["private"] if MobileRender.enabled() else ["public", "friends only", "private"])
 	v.add_child(_labeled("who can join", _priv_opt))
 
 
 	var player_labels: Array = []
 	for n in MAX_PLAYER_CHOICES:
-		player_labels.append("%d players" % n)
+		if not MobileRender.enabled() or n <= Net.PhotonPeer.Cloud.MAX_PLAYERS:
+			player_labels.append("%d players" % n)
 	_max_players_opt = UiSelect.new(player_labels)
-	_max_players_opt.selected = MAX_PLAYER_CHOICES.find(Net.MAX_PLAYERS)
+	_max_players_opt.selected = player_labels.size() - 1
 	v.add_child(_labeled("max players", _max_players_opt))
 	_pw_edit = LineEdit.new()
 	_pw_edit.secret = true
@@ -9130,8 +9072,9 @@ func _build_host() -> void :
 	_priv_opt.picked.connect( func(i: int):
 		_pw_edit.visible = i == Net.Priv.PASSWORD)
 	v.add_child(_pw_edit)
-	_host_steam_card = _card_btn("massiveMultiplayer", "host on steam", 
-		"", "primary", _on_host_steam)
+	_host_steam_card = _card_btn("massiveMultiplayer",
+		"create server" if MobileRender.enabled() else "host on steam",
+		"", "primary", _host_cloud if MobileRender.enabled() else _on_host_steam)
 	v.add_child(_host_steam_card)
 
 
@@ -9519,6 +9462,15 @@ func _on_party_travel_to(host_id: int, code: String) -> void :
 		_browse_hint.text = "taking the party to the lobby..."
 
 func _on_session_ended(reason: String) -> void :
+	if _host_cloud_pending:
+		_set_host_cloud_pending(false)
+		_host_status.text = reason
+		return
+	if MobileRender.enabled() and _bw_joining and not _bw_quiet_leave:
+		_join_gen += 1
+		_set_browse_joining(false)
+		_browse_hint.text = reason
+		return
 
 
 
@@ -9567,6 +9519,10 @@ func _on_session_ended(reason: String) -> void :
 
 
 func _refresh_browser() -> void :
+	if MobileRender.enabled():
+		if not _bw_joining:
+			_browse_hint.text = "Введи код кімнати друга або натисни Create Server."
+		return
 	for child in _browse_list.get_children():
 		child.queue_free()
 	if not _steam_up:
@@ -9939,6 +9895,9 @@ func _on_join_code(text: String) -> void :
 		return
 	if not OnlineTerms.require(_on_join_code.bind(text)):
 		return
+	if MobileRender.enabled():
+		_join_cloud(s)
+		return
 
 
 	if Net.party and not Net.is_host:
@@ -10093,11 +10052,11 @@ func _prompt_password(row: Dictionary) -> void :
 		_pw_panel = null)
 	edit.grab_focus()
 
-func _watch_join(court_name: String) -> void :
+func _watch_join(court_name: String, timeout := 10.0) -> void :
 	_join_gen += 1
 	var gen: = _join_gen
 	_set_browse_joining(true)
-	await get_tree().create_timer(10.0).timeout
+	await get_tree().create_timer(timeout).timeout
 	if gen != _join_gen or not _bw_joining:
 		return
 
@@ -10195,7 +10154,7 @@ func _refresh_room() -> void :
 		tell = "that side is full, join %s to play" % ("away" if my_side == 1 else "home")
 	elif my_side == 0 and Net.players.has(me):
 		tell = "join home or away to play"
-	_room_panel.apply({"title": "Кімната • " + Net.cloud_code if Net.cloud_session() else "lobby", "stage_ids": Stage.ids(),
+	_room_panel.apply({"title": "lobby • " + Net.cloud_code if Net.cloud_session() else "lobby", "stage_ids": Stage.ids(),
 		"stage": Stage.resolve(Net.stage), "tod": Net.rule_tod, 
 
 		"outfit": Net.rule_outfit, "outfit_edit": Net.is_host and Net.custom_lobby, 

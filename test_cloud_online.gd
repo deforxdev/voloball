@@ -69,9 +69,12 @@ func _ready() -> void:
 	var probe := CloudProbe.new()
 	probe.name = "CloudProbe"
 	get_tree().root.add_child.call_deferred(probe)
+	_open_cloud_test_menu.call_deferred()
+
+func _open_cloud_test_menu() -> void:
 	_show(_online)
-	if _cloud_code_edit == null:
-		push_error("CLOUD UI FAILED: original menu cloud controls missing")
+	if _card_custom_lobby == null:
+		push_error("CLOUD UI FAILED: desktop online menu missing")
 		get_tree().quit(1)
 		return
 	var code := ""
@@ -80,10 +83,12 @@ func _ready() -> void:
 			code = arg.trim_prefix("--cloud-code=")
 	if code.is_empty():
 		Net.cloud_ready.connect(func(): print("CLOUD CODE: ", Net.cloud_code))
-		_host_cloud()
+		_card_custom_lobby.pressed.emit()
+		(_host_steam_card.get_child(0) as Button).pressed.emit()
 	else:
-		_cloud_code_edit.text = code
-		_join_cloud()
+		_show(_browse)
+		_bw_code.text = code
+		_join_cloud(_bw_code.text)
 
 func leave_for_match() -> void:
 	# The test inherits the menu scene under another resource path.

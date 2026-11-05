@@ -34,12 +34,12 @@ static func valid_cloud_code(code: String) -> bool:
 			return false
 	return true
 
-func host_cloud(player_name: String) -> Error:
+func host_cloud(player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
 	var alphabet := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 	var code := ""
 	for value in Crypto.new().generate_random_bytes(8):
 		code += alphabet[int(value) % alphabet.length()]
-	return _connect_cloud(true, code, player_name)
+	return _connect_cloud(true, code, player_name, capacity)
 
 func join_cloud(code: String, player_name: String) -> Error:
 	code = code.strip_edges().to_upper().replace(" ", "").replace("-", "")
@@ -47,10 +47,11 @@ func join_cloud(code: String, player_name: String) -> Error:
 		return ERR_INVALID_PARAMETER
 	return _connect_cloud(false, code, player_name)
 
-func _connect_cloud(hosting: bool, code: String, player_name: String) -> Error:
+func _connect_cloud(hosting: bool, code: String, player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
 	if active:
 		_teardown("restart")
 	var peer := PhotonPeer.new()
+	peer.cloud.capacity = clampi(capacity, 2, PhotonPeer.Cloud.MAX_PLAYERS)
 	peer.cloud.app_version = "voloball-%d-cloud-1" % wire_proto()
 	peer.cloud_error.connect(func(message: String): _cloud_error = message)
 	peer.room_ready.connect(_on_cloud_ready.bind(peer))
@@ -67,7 +68,7 @@ func _connect_cloud(hosting: bool, code: String, player_name: String) -> Error:
 	custom_lobby = true
 	privacy = Priv.PUBLIC
 	password = ""
-	max_humans = 10
+	max_humans = peer.cloud.capacity
 	GameConfig.quick_match = false
 	init_rules_from_config()
 	multiplayer.multiplayer_peer = peer

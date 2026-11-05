@@ -35,5 +35,6 @@ Validation:
   and notifying clients when the host leaves.
 - These tests use temporary unlisted rooms and no account credentials.
 
-Android builds remain paused. The PC worktree is separate and has not been
-updated to this transport.
+Android 0.2.8 is built from the separate `android` branch and uses the same
+Photon application/version as iPhone 0.2.8. The PC worktree has not been updated
+to this transport.

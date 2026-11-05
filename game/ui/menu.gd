@@ -3424,7 +3424,19 @@ func _build_cloud_online(v: VBoxContainer) -> void:
 	hint.text = "Photon • Європа • до 10 гравців\nСтвори кімнату та передай її код друзям."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	UiStyle.style_label(hint, "small")
-	v.add_child(hint)
+	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_color_override("font_color", Color("27324a"))
+	var hint_box := PanelContainer.new()
+	var hint_style := StyleBoxFlat.new()
+	hint_style.bg_color = Color(0.96, 0.97, 1.0, 0.94)
+	hint_style.set_corner_radius_all(12)
+	hint_style.content_margin_left = 12
+	hint_style.content_margin_right = 12
+	hint_style.content_margin_top = 8
+	hint_style.content_margin_bottom = 8
+	hint_box.add_theme_stylebox_override("panel", hint_style)
+	hint_box.add_child(hint)
+	v.add_child(hint_box)
 	var create_card := _card_btn("plus", "Створити кімнату", "Гра через інтернет", "primary", _host_cloud)
 	_cloud_create = create_card.get_child(0) as Button
 	v.add_child(create_card)

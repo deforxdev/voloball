@@ -17,6 +17,77 @@ signal event_received(kind: String, args: Dictionary)
 signal up_event_received(peer_id: int, kind: String, args: Dictionary)
 signal peer_left_match(peer_id: int)
 signal peer_match_ready(peer_id: int)
+signal cloud_ready
+
+const PhotonPeer := preload("res://game/net/photon_peer.gd")
+const CLOUD_STAGE := "grass"
+var cloud_code := ""
+var _cloud_error := ""
+
+func cloud_session() -> bool:
+	return active and multiplayer.multiplayer_peer is PhotonPeer
+
+static func valid_cloud_code(code: String) -> bool:
+	if code.length() != 8:
+		return false
+	for letter in code:
+		if not letter in "ABCDEFGHJKLMNPQRSTUVWXYZ23456789":
+			return false
+	return true
+
+func host_cloud(player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
+	var alphabet := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	var code := ""
+	for value in Crypto.new().generate_random_bytes(8):
+		code += alphabet[int(value) % alphabet.length()]
+	return _connect_cloud(true, code, player_name, capacity)
+
+func join_cloud(code: String, player_name: String) -> Error:
+	code = code.strip_edges().to_upper().replace(" ", "").replace("-", "")
+	if not valid_cloud_code(code):
+		return ERR_INVALID_PARAMETER
+	return _connect_cloud(false, code, player_name)
+
+func _connect_cloud(hosting: bool, code: String, player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
+	if active:
+		_teardown("restart")
+	var peer := PhotonPeer.new()
+	peer.cloud.capacity = clampi(capacity, 2, PhotonPeer.Cloud.MAX_PLAYERS)
+	peer.cloud.app_version = "voloball-%d-cloud-1" % wire_proto()
+	peer.cloud_error.connect(func(message: String): _cloud_error = message)
+	peer.room_ready.connect(_on_cloud_ready.bind(peer))
+	var err := peer.connect_room(hosting, code, player_name)
+	if err != OK:
+		return err
+	active = true
+	is_host = hosting
+	my_name = DevBadge.guard_name(sanitize_name(player_name), my_steam_id())
+	cloud_code = code
+	_cloud_error = ""
+	players = {}
+	party = false
+	custom_lobby = true
+	privacy = Priv.PUBLIC
+	password = ""
+	max_humans = peer.cloud.capacity
+	stage = CLOUD_STAGE
+	GameConfig.quick_match = false
+	init_rules_from_config()
+	multiplayer.multiplayer_peer = peer
+	return OK
+
+func _on_cloud_ready(peer: MultiplayerPeer) -> void:
+	if multiplayer.multiplayer_peer != peer or not active:
+		return
+	if is_host:
+		players = {1: {"name": my_name, "cfg": local_character_dict(), "wr": Career.winrate(), "sid": my_steam_id(), "side": 1}}
+		hide_imposter_level(my_name, players[1]["cfg"])
+		_seat_host_locals(my_name)
+		session_token = randi()
+		hosted_sid = int(Time.get_unix_time_from_system() * 1000.0) * 1000 + randi() % 1000
+	cloud_ready.emit()
+	if is_host:
+		lobby_changed.emit()
 
 signal votekick_opened(target_peer: int, target_name: String, yes: int, needed: int, secs: int)
 signal votekick_updated(yes: int, needed: int, secs: int)
@@ -676,8 +747,8 @@ func _ready() -> void :
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected)
-	multiplayer.connection_failed.connect( func(): _teardown("connection failed"))
-	multiplayer.server_disconnected.connect( func(): _teardown("host left"))
+	multiplayer.connection_failed.connect( func(): _teardown(_cloud_error if _cloud_error != "" else "connection failed"))
+	multiplayer.server_disconnected.connect( func(): _teardown(_cloud_error if _cloud_error != "" else "host left"))
 
 
 
@@ -1230,6 +1301,8 @@ func steam_transport_available() -> bool:
 
 var remote_lobby_code: = ""
 func lobby_code() -> String:
+	if cloud_session():
+		return cloud_code
 
 
 
@@ -1964,7 +2037,7 @@ func leave() -> void :
 
 
 
-	if is_host and active and _has_live_peer():
+	if is_host and active and _has_live_peer() and _can_send():
 		_s_session_closing.rpc()
 	elif active and not is_host and _has_live_peer()\
 	and multiplayer.multiplayer_peer.get_connection_status()\
@@ -1995,6 +2068,8 @@ func _teardown(reason: String) -> void :
 	last_players = players.duplicate(true)
 	last_chat = chat_log.duplicate(true)
 	active = false
+	cloud_code = ""
+	_cloud_error = ""
 	is_host = false
 	_rtt_ms = 0.0
 	practice_live = false
@@ -2047,6 +2122,8 @@ func _teardown(reason: String) -> void :
 	session_ended.emit(reason)
 
 func peer_rtt_ms(peer_id: int) -> float:
+	if cloud_session():
+		return float(multiplayer.multiplayer_peer.cloud.rtt_ms) + float(fake_latency_ms)
 
 	if _steam_peer != null:
 
@@ -2164,7 +2241,7 @@ func lan_session() -> bool:
 	if OS.has_feature("editor") and ("--fix-probe" in LaunchGate.dev_args()
 			or "--demo-online-probe" in LaunchGate.dev_args()):
 		return false
-	return active and _steam_peer == null and not _steam_hosting
+	return active and not cloud_session() and _steam_peer == null and not _steam_hosting
 
 func my_steam_id() -> int:
 	if _dev_sid != 0:
@@ -3344,7 +3421,7 @@ func set_outfit(index: int) -> void :
 
 func set_stage(id: String) -> void :
 	if is_host:
-		stage = Stage.resolve(id)
+		stage = CLOUD_STAGE if cloud_session() else Stage.resolve(id)
 		_broadcast_lobby()
 		lobby_changed.emit()
 
@@ -3507,6 +3584,8 @@ func _client_check_host_ban() -> void :
 var match_ready_peers: = {}
 
 func start_match(roster: Array, seed: int, is_practice: = false) -> void :
+	if cloud_session() and is_host:
+		multiplayer.multiplayer_peer.refuse_new_connections = true
 
 
 
@@ -3581,7 +3660,7 @@ func _s_start(roster: Array, seed: int, stage_id: = "", quick: = false,
 
 
 var pending_start: Array = []
-const _MATCH_START_SCENES: = ["res://game/mobile/mobile_match_loader.tscn", "res://game/mobile/mobile_menu.tscn", "res://game/ui/menu.tscn", "res://game/main/main.tscn",
+const _MATCH_START_SCENES: = ["res://game/mobile/mobile_main.tscn", "res://game/mobile/mobile_match_loader.tscn", "res://game/mobile/mobile_menu.tscn", "res://game/ui/menu.tscn", "res://game/main/main.tscn",
 	"res://game/net/lobby.tscn"]
 
 func _pull_into_match() -> void :
@@ -3616,6 +3695,8 @@ func end_practice() -> void :
 		_broadcast_lobby()
 
 func end_match() -> void :
+	if cloud_session() and is_host:
+		multiplayer.multiplayer_peer.refuse_new_connections = false
 	in_match = false
 	practice_live = false
 	if is_host and practice:

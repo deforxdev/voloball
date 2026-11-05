@@ -1,7 +1,9 @@
-VOLOBALL 0.1.6 — Windows x64
+VOLOBALL 0.1.7 — Windows x64
 
-Розпакуй ZIP повністю та запусти VOLOBALL-Windows.exe.
+Завантаж і запусти VOLOBALL-Windows.exe.
 Godot встановлювати не потрібно.
 Десктопне меню, клавіатура та миша. Для матчу з ботами вибери Local.
-LAN та зовнішній сервер у цій збірці не налаштовувалися.
+Створи кімнату через Online → Custom Lobby → Create Crossplay Room.
+Друг вводить код кімнати в Online → Server Browser → Join.
+Кімнати Photon підтримують Windows, Android та iPhone 0.2.9 на Grass Court.
 Налаштування: %APPDATA%\VOLOBALL-Windows

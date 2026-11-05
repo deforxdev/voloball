@@ -4,7 +4,7 @@ on:
   push:
     branches: [windows-desktop]
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: windows-desktop-${{ github.ref }}
   cancel-in-progress: true
@@ -40,6 +40,7 @@ jobs:
           "$godot" --headless --path . --editor --import > build/import.log 2>&1
           "$godot" --headless --path . --scene res://test_ball_controls.tscn --quit-after 360 > build/ball-tests.log 2>&1
           grep -q 'BALL REGRESSION COMPLETE: failures=0' build/ball-tests.log
+          python3 tools/test_photon_online.py --godot "$godot" --output build/cloud-tests
           "$godot" --headless --path . --export-release 'Windows' build/VOLOBALL-Windows.exe > build/export.log 2>&1
           python3 - <<'PY'
           from pathlib import Path
@@ -53,7 +54,8 @@ jobs:
           assert struct.unpack_from('<H',data,pe+4)[0] == 0x8664
           assert b'GDPC' in data, 'Embedded game pack is missing'
           assert b'game/ui/menu.tscn' in data
-          with ZipFile('build/VOLOBALL-Windows-0.1.6.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
+          assert b'photon_cloud' in data, 'Embedded Photon client is missing'
+          with ZipFile('build/VOLOBALL-Windows-0.1.7.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
               archive.write(path,path.name)
               archive.write('WINDOWS.txt','WINDOWS.txt')
           print('Windows x64 EXE validated:',len(data),'bytes',hashlib.sha256(data).hexdigest())
@@ -61,13 +63,22 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: VOLOBALL-Windows
-          path: build/VOLOBALL-Windows-0.1.6.zip
+          path: build/VOLOBALL-Windows-0.1.7.zip
           compression-level: 0
           if-no-files-found: error
           retention-days: 14
+      - name: Publish direct Windows download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.1.7-windows build/VOLOBALL-Windows.exe \
+            --target "$GITHUB_SHA" --prerelease --title "VOLOBALL Windows 0.1.7" \
+            --notes-file WINDOWS.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: windows-build-logs
-          path: build/*.log
+          path: |
+            build/*.log
+            build/cloud-tests/*.log
           retention-days: 7

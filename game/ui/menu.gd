@@ -281,6 +281,9 @@ var _settings_panel: SettingsPanel = null
 var _settings_title: Label = null
 var _pw_edit: LineEdit = null
 var _host_status: Label = null
+var _host_cloud_card: Control
+var _host_cloud_pending := false
+var _cloud_join_pending := false
 var _host_steam_card: Control = null
 var _host_party_card: Control = null
 var _ip_edit: LineEdit = null
@@ -3352,6 +3355,9 @@ func _back_btn(on_press: Callable, text_in: = "back") -> Button:
 
 
 func _open_online() -> void :
+	if Net.cloud_session() and not Net.players.is_empty():
+		_show_room()
+		return
 	if not OnlineTerms.require(_open_online):
 		return
 	_show(_online)
@@ -6739,6 +6745,14 @@ func _build_howto() -> void :
 var _last_shown: Control = null
 
 func _show(page: Control) -> void :
+	if _host_cloud_pending and page != _host:
+		_set_host_cloud_pending(false)
+		_host_status.text = ""
+		_bw_quiet_leave = true
+		Net.leave()
+		_bw_quiet_leave = false
+	if _cloud_join_pending and page != _browse and Net.players.is_empty():
+		_cancel_browse_join()
 	for p in [_home, _online, _local, _practice, _configs, _profile, _quick, 
 		_custom, _settings, _howto, _browse, _host, _room, _direct, _recent, 
 		_achievements, _career, _local_choose]:
@@ -6934,6 +6948,7 @@ func _setup_online() -> void :
 			_friends_btn.visible = Net.steam_transport_available()
 		if _browse.visible:
 			_refresh_browser())
+	Net.cloud_ready.connect(_cloud_connected)
 	Net.lobby_changed.connect(_refresh_room)
 
 
@@ -8874,6 +8889,8 @@ func _build_browse() -> void :
 
 func _set_browse_joining(on: bool) -> void :
 	_bw_joining = on
+	if not on:
+		_cloud_join_pending = false
 	if _bw_cancel != null:
 		_bw_cancel.visible = on
 	if _bw_join_btn != null:
@@ -8976,6 +8993,9 @@ func _build_host() -> void :
 	_host_steam_card = _card_btn("massiveMultiplayer", "host on steam", 
 		"", "primary", _on_host_steam)
 	v.add_child(_host_steam_card)
+	_host_cloud_card = _card_btn("plus", "create crossplay room",
+		"Play by code with Windows, Android and iPhone", "primary", _host_cloud)
+	v.add_child(_host_cloud_card)
 
 
 	_host_party_card = _card_btn("multiplayer", "open lobby with party", 
@@ -8986,6 +9006,49 @@ func _build_host() -> void :
 	_host_status = _online_status()
 	v.add_child(_host_status)
 	_back_row(v, func(): _show(_online))
+
+func _host_cloud() -> void:
+	if not OnlineTerms.require(_host_cloud):
+		return
+	_create_cloud_room()
+
+func _create_cloud_room() -> void:
+	if _host_cloud_pending:
+		return
+	if Net.party:
+		_host_status.text = "Leave your Steam party before creating a crossplay room."
+		return
+	_cancel_search()
+	var error := Net.host_cloud(_online_name(), _selected_max_humans())
+	if error != OK:
+		_host_status.text = "Could not create the crossplay room (%d)." % error
+		return
+	_set_host_cloud_pending(true)
+	_host_status.text = "Creating crossplay room…"
+
+func _set_host_cloud_pending(pending: bool) -> void:
+	_host_cloud_pending = pending
+	(_host_cloud_card.get_child(0) as Button).disabled = pending
+
+func _cloud_connected() -> void:
+	if _host_cloud_pending:
+		_set_host_cloud_pending(false)
+		_host_status.text = ""
+		_show_room()
+
+func _join_cloud(code: String) -> void:
+	if Net.party:
+		_browse_hint.text = "Leave your Steam party before joining a crossplay room."
+		return
+	var error := Net.join_cloud(code, _online_name())
+	if error != OK:
+		_browse_hint.text = "Could not join the crossplay room (%d)." % error
+		return
+	_cloud_join_pending = true
+	_browse_hint.text = "Connecting to Photon…"
+	_bw_code.release_focus()
+	_bw_search.release_focus()
+	_watch_join(code, 95.0)
 
 func _build_direct() -> void :
 	var v: = _box(_direct)
@@ -9049,6 +9112,10 @@ func _build_room() -> void :
 	_room_panel.start_pressed.connect(_on_start_online)
 	_room_panel.shuffle_pressed.connect( func(): Net.shuffle_sides())
 	_room_panel.invite_pressed.connect( func():
+		if Net.cloud_session():
+			DisplayServer.clipboard_set(Net.cloud_code)
+			_flash_notice("Room code copied: " + Net.cloud_code)
+			return
 		if not Net.steam_invite_overlay():
 			_open_friends_for_invite())
 	_room_panel.human_pressed.connect(_on_room_player)
@@ -9358,6 +9425,15 @@ func _on_party_travel_to(host_id: int, code: String) -> void :
 		_browse_hint.text = "taking the party to the lobby..."
 
 func _on_session_ended(reason: String) -> void :
+	if _host_cloud_pending:
+		_set_host_cloud_pending(false)
+		_host_status.text = reason
+		return
+	if _cloud_join_pending and not _bw_quiet_leave:
+		_join_gen += 1
+		_set_browse_joining(false)
+		_browse_hint.text = reason
+		return
 
 
 
@@ -9409,7 +9485,7 @@ func _refresh_browser() -> void :
 	for child in _browse_list.get_children():
 		child.queue_free()
 	if not _steam_up:
-		_browse_hint.text = Net.steam_status_text()
+		_browse_hint.text = "Enter a crossplay room code below or choose Create Server."
 		return
 	_browse_hint.text = "searching..."
 	Net.steam_request_lobbies("custom")
@@ -9778,6 +9854,9 @@ func _on_join_code(text: String) -> void :
 		return
 	if not OnlineTerms.require(_on_join_code.bind(text)):
 		return
+	if not _bw_joining and Net.valid_cloud_code(s.to_upper().replace(" ", "").replace("-", "")):
+		_join_cloud(s)
+		return
 
 
 	if Net.party and not Net.is_host:
@@ -9932,11 +10011,11 @@ func _prompt_password(row: Dictionary) -> void :
 		_pw_panel = null)
 	edit.grab_focus()
 
-func _watch_join(court_name: String) -> void :
+func _watch_join(court_name: String, timeout := 10.0) -> void :
 	_join_gen += 1
 	var gen: = _join_gen
 	_set_browse_joining(true)
-	await get_tree().create_timer(10.0).timeout
+	await get_tree().create_timer(timeout).timeout
 	if gen != _join_gen or not _bw_joining:
 		return
 
@@ -10034,7 +10113,8 @@ func _refresh_room() -> void :
 		tell = "that side is full, join %s to play" % ("away" if my_side == 1 else "home")
 	elif my_side == 0 and Net.players.has(me):
 		tell = "join home or away to play"
-	_room_panel.apply({"title": "lobby", "stage_ids": Stage.ids(), 
+	_room_panel.apply({"title": "lobby • " + Net.cloud_code if Net.cloud_session() else "lobby",
+		"stage_ids": [Net.CLOUD_STAGE] if Net.cloud_session() else Stage.ids(),
 		"stage": Stage.resolve(Net.stage), "tod": Net.rule_tod, 
 
 		"outfit": Net.rule_outfit, "outfit_edit": Net.is_host and Net.custom_lobby, 
@@ -10052,7 +10132,7 @@ func _refresh_room() -> void :
 		"cpu": CpuSlots.global_diff(Net.cpu_slots), 
 		"editable": Net.is_host, "my_side": my_side, "side_mode": "online", 
 		"side_editable": true, 
-		"can_start": Net.is_host, "invite": Net.steam_transport_available(), 
+		"can_start": Net.is_host, "invite": Net.cloud_session() or Net.steam_transport_available(),
 
 		"shuffle": Net.is_host and Net.players.size() >= 2, 
 		"spectators": specs, 

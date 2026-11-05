@@ -12,9 +12,8 @@ var _touches: Dictionary = {}
 var _strengths: Dictionary = {}
 var _buttons: Array = []
 var _move_center := Vector2.ZERO
-var _aim_center := Vector2.ZERO
 var _move_value := Vector2.ZERO
-var _aim_value := Vector2.ZERO
+var _look_position := Vector2.ZERO
 var _stick_radius := 82.0
 var _scale := 1.0
 var _playing := false
@@ -55,7 +54,7 @@ func _process(_delta: float) -> void:
 		_player = GameConfig._active_power_player()
 	var freeplay: bool = scene != null and scene.get("_freeplay") == true
 	_has_player = _player != null and (not GameConfig.menu_open or GameConfig.menu_practice or freeplay)
-	var blocked: bool = GameConfig.menu_open and not GameConfig.menu_practice and not freeplay
+	var blocked: bool = get_tree().paused or (GameConfig.menu_open and not GameConfig.menu_practice and not freeplay)
 	var focus := get_viewport().gui_get_focus_owner()
 	blocked = blocked or focus is LineEdit or focus is TextEdit
 	if game != null:
@@ -106,7 +105,6 @@ func _rebuild_layout() -> void:
 	var top := _safe.position.y
 	var bottom := _safe.end.y
 	_move_center = Vector2(left + 135.0 * _scale, bottom - 140.0 * _scale)
-	_aim_center = Vector2(right - 145.0 * _scale, bottom - 365.0 * _scale)
 	_buttons.clear()
 	_button("contact", "УДАР", Vector2(right - 65.0 * _scale, bottom - 165.0 * _scale))
 	_button("jump", "СТРИБОК", Vector2(right - 165.0 * _scale, bottom - 65.0 * _scale))
@@ -173,45 +171,52 @@ func touch_begin(index: int, at: Vector2) -> bool:
 		return true
 	if not _playing:
 		return false
-	for stick in ["move", "aim"]:
-		var center: Vector2 = _move_center if stick == "move" else _aim_center
-		if at.distance_to(center) <= _stick_radius * 1.35 and not _touches.values().has(stick):
-			_touches[index] = stick
-			touch_move(index, at)
-			return true
+	if not _safe.has_point(at):
+		return false
+	if at.x >= _safe.get_center().x:
+		if _touches.values().has("look"):
+			return false
+		_touches[index] = "look"
+		_look_position = at
+		return true
+	if at.distance_to(_move_center) <= _stick_radius * 1.35 and not _touches.values().has("move"):
+		_touches[index] = "move"
+		touch_move(index, at)
+		return true
 	return false
 
 func touch_move(index: int, at: Vector2) -> void:
 	var action: String = _touches.get(index, "")
-	if action != "move" and action != "aim":
-		return
-	var center: Vector2 = _move_center if action == "move" else _aim_center
-	var value := ((at - center) / _stick_radius).limit_length(1.0)
-	if value.length() < 0.12:
-		value = Vector2.ZERO
-	if action == "move":
+	if action == "look":
+		var relative := (at - _look_position) / _scale
+		_look_position = at
+		var scene := game_scene()
+		var rig: Node = scene.get("camera_rig") if scene != null else null
+		if _playing and rig != null and rig.has_method("apply_touch_look"):
+			rig.apply_touch_look(relative)
+	elif action == "move":
+		var value := ((at - _move_center) / _stick_radius).limit_length(1.0)
+		if value.length() < 0.12:
+			value = Vector2.ZERO
 		_move_value = value
-	else:
-		_aim_value = value
-	_set_stick(action, value)
+		_set_move(value)
 
 func touch_end(index: int) -> void:
 	var action: String = _touches.get(index, "")
 	_touches.erase(index)
-	if action == "move" or action == "aim":
-		_set_stick(action, Vector2.ZERO)
-		if action == "move":
-			_move_value = Vector2.ZERO
-		else:
-			_aim_value = Vector2.ZERO
+	if action == "move":
+		_set_move(Vector2.ZERO)
+		_move_value = Vector2.ZERO
+	elif action == "look":
+		_look_position = Vector2.ZERO
 	elif not _touches.values().has(action):
 		_set_strength(action, 0.0)
 
-func _set_stick(stick: String, value: Vector2) -> void:
-	_set_strength(stick + "_left", maxf(-value.x, 0.0))
-	_set_strength(stick + "_right", maxf(value.x, 0.0))
-	_set_strength("move_forward" if stick == "move" else "aim_up", maxf(-value.y, 0.0))
-	_set_strength("move_back" if stick == "move" else "aim_down", maxf(value.y, 0.0))
+func _set_move(value: Vector2) -> void:
+	_set_strength("move_left", maxf(-value.x, 0.0))
+	_set_strength("move_right", maxf(value.x, 0.0))
+	_set_strength("move_forward", maxf(-value.y, 0.0))
+	_set_strength("move_back", maxf(value.y, 0.0))
 
 func _set_strength(action: String, strength: float) -> void:
 	if not InputMap.has_action(action):
@@ -235,7 +240,7 @@ func release_all() -> void:
 	_strengths.clear()
 	_touches.clear()
 	_move_value = Vector2.ZERO
-	_aim_value = Vector2.ZERO
+	_look_position = Vector2.ZERO
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
@@ -256,7 +261,6 @@ func draw_controls(surface: Control) -> void:
 		return
 	if _playing:
 		_draw_stick(surface, _move_center, _move_value, "РУХ")
-		_draw_stick(surface, _aim_center, _aim_value, "ПРИЦІЛ")
 	for button in _buttons:
 		if not _playing and button.action != "pause":
 			continue

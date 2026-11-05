@@ -229,12 +229,7 @@ func _unhandled_input(event: InputEvent) -> void :
 
 
 
-		var msens: = MOUSE_SENS * _mouse_sens()
-		var rel: Vector2 = event.relative * _look_sign()
-		_yaw -= rel.x * msens
-		var lo: = FP_PITCH_MIN if mode == Mode.FIRST_PERSON else PITCH_MIN
-		var hi: = FP_PITCH_MAX if mode == Mode.FIRST_PERSON else PITCH_MAX
-		_pitch = clampf(_pitch - rel.y * msens, lo, hi)
+		apply_mouse_look(event.relative)
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom(-1.0)
@@ -479,6 +474,17 @@ func apply_mouse_look(rel: Vector2) -> void :
 		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
+	_apply_look_delta(rel)
+
+# Touch gestures do not require desktop mouse capture on iOS.
+func apply_touch_look(rel: Vector2) -> void:
+	if input_frozen or watched or shared or mode_locked or rel.is_zero_approx():
+		return
+	if mode != Mode.ACTION and mode != Mode.FIRST_PERSON:
+		switch_to(Mode.ACTION)
+	_apply_look_delta(rel)
+
+func _apply_look_delta(rel: Vector2) -> void:
 	var ms: = MOUSE_SENS * _mouse_sens()
 	rel *= _look_sign()
 	_yaw -= rel.x * ms

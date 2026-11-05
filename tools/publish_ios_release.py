@@ -109,6 +109,10 @@ def main():
     release = api(base + "/releases/" + str(release["id"]), "PATCH", payload=dict(description, draft=False))
     ref = api(base + "/git/ref/tags/" + tag)
     assert ref["object"]["sha"] == source, "Published tag does not match the build"
+    release = api(base + "/releases/" + str(release["id"]))
+    assert not release["draft"]
+    asset = next(entry for entry in release["assets"] if entry["name"] == filename)
+    assert asset["digest"] == digest
     report = {
         "release": release["html_url"],
         "ipa": asset["browser_download_url"],

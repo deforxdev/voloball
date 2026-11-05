@@ -82,7 +82,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose build/VOLOBALL-Android.apk
           unzip -t build/VOLOBALL-Android.apk | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging build/VOLOBALL-Android.apk | tee build/apk-metadata.log
-          grep -q "package: name='com.deforxdev.voloball' versionCode='15' versionName='0.2.8'" build/apk-metadata.log
+          grep -q "package: name='com.deforxdev.voloball' versionCode='16' versionName='0.2.9'" build/apk-metadata.log
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions build/VOLOBALL-Android.apk | tee build/apk-permissions.log
           grep -q 'android.permission.INTERNET' build/apk-permissions.log
           python3 tools/publish_android_release.py build/VOLOBALL-Android.apk --validate-only

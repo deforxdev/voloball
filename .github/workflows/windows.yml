@@ -41,6 +41,7 @@ jobs:
           "$godot" --headless --path . --scene res://test_ball_controls.tscn --quit-after 360 > build/ball-tests.log 2>&1
           grep -q 'BALL REGRESSION COMPLETE: failures=0' build/ball-tests.log
           python3 tools/test_photon_online.py --godot "$godot" --output build/cloud-tests
+          python3 tools/test_photon_online.py --godot "$godot" --quick --output build/quick-tests
           "$godot" --headless --path . --export-release 'Windows' build/VOLOBALL-Windows.exe > build/export.log 2>&1
           python3 - <<'PY'
           from pathlib import Path
@@ -55,7 +56,7 @@ jobs:
           assert b'GDPC' in data, 'Embedded game pack is missing'
           assert b'game/ui/menu.tscn' in data
           assert b'photon_cloud' in data, 'Embedded Photon client is missing'
-          with ZipFile('build/VOLOBALL-Windows-0.1.7.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
+          with ZipFile('build/VOLOBALL-Windows-0.1.8.zip','w',ZIP_DEFLATED,compresslevel=6) as archive:
               archive.write(path,path.name)
               archive.write('WINDOWS.txt','WINDOWS.txt')
           print('Windows x64 EXE validated:',len(data),'bytes',hashlib.sha256(data).hexdigest())
@@ -63,7 +64,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: VOLOBALL-Windows
-          path: build/VOLOBALL-Windows-0.1.7.zip
+          path: build/VOLOBALL-Windows-0.1.8.zip
           compression-level: 0
           if-no-files-found: error
           retention-days: 14
@@ -71,8 +72,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.1.7-windows build/VOLOBALL-Windows.exe \
-            --target "$GITHUB_SHA" --prerelease --title "VOLOBALL Windows 0.1.7" \
+          gh release create v0.1.8-windows build/VOLOBALL-Windows.exe \
+            --target "$GITHUB_SHA" --prerelease --title "VOLOBALL Windows 0.1.8" \
             --notes-file WINDOWS.txt
       - uses: actions/upload-artifact@v4
         if: always()
@@ -81,4 +82,5 @@ jobs:
           path: |
             build/*.log
             build/cloud-tests/*.log
+            build/quick-tests/*.log
           retention-days: 7

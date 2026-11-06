@@ -283,6 +283,7 @@ var _pw_edit: LineEdit = null
 var _host_status: Label = null
 var _host_cloud_card: Control
 var _host_cloud_pending := false
+var _cloud_search := false
 var _cloud_join_pending := false
 var _host_steam_card: Control = null
 var _host_party_card: Control = null
@@ -5774,6 +5775,25 @@ func _party_queue_when_formed(sz: int, give_up: float) -> void :
 		(_quick_chips[sz] as Button).button_pressed = true
 	_find_quick()
 
+func _begin_cloud_search(modes: Array) -> void:
+	_cancel_search()
+	if Net.find_cloud_match(_online_name(), modes) != OK:
+		_flash_notice("Вибери формат Quick Match від 1v1 до 5v5.")
+		return
+	_cloud_search = true
+	_quick_find_btn.disabled = true
+	_set_matchmaking(true)
+	_mm_label.text = "Підключення до Photon…"
+
+func _finish_cloud_search() -> void:
+	_cloud_search = false
+	_quick_find_btn.disabled = false
+	_set_matchmaking(false)
+
+func _start_cloud_match_if_ready() -> void:
+	if _cloud_search and Net.cloud_quick_session() and Net.is_host and not Net.in_match and Net.players.size() >= 2 * Net.team_size:
+		_on_start_online()
+
 func _find_quick() -> void :
 
 	if Net.party and not Net.is_host:
@@ -5790,6 +5810,9 @@ func _find_quick() -> void :
 			modes.append(n)
 	if modes.is_empty() or _quick_any.button_pressed:
 		modes = GameConfig.team_sizes().duplicate()
+	if not Net.party and not LocalPlayers.has_guests() and modes.any(func(size): return int(size) * 2 <= Net.PhotonPeer.Cloud.MAX_PLAYERS):
+		_begin_cloud_search(modes)
+		return
 
 
 
@@ -6401,6 +6424,8 @@ func _quick_freeze_and_start() -> void :
 	Net.start_match(roster, randi())
 
 func _menu_match_started(roster: Array) -> void :
+	if _cloud_search:
+		_finish_cloud_search()
 	if not Net.practice:
 		Net.pending_start = []
 	if Net.practice:
@@ -6745,6 +6770,8 @@ func _build_howto() -> void :
 var _last_shown: Control = null
 
 func _show(page: Control) -> void :
+	if _cloud_search and page != _quick:
+		_cancel_search()
 	if _host_cloud_pending and page != _host:
 		_set_host_cloud_pending(false)
 		_host_status.text = ""
@@ -6837,6 +6864,10 @@ func _stagger_reveal(page: Control) -> void :
 
 
 func _cancel_search() -> void :
+	if _cloud_search:
+		_finish_cloud_search()
+		if Net.cloud_quick_session():
+			Net.leave()
 	if _qp != null and _qp.state != QuickPlay.State.IDLE:
 		_qp.cancel()
 
@@ -9031,6 +9062,8 @@ func _set_host_cloud_pending(pending: bool) -> void:
 	(_host_cloud_card.get_child(0) as Button).disabled = pending
 
 func _cloud_connected() -> void:
+	if _cloud_search:
+		_mm_label.text = "Очікуємо гравців…"
 	if _host_cloud_pending:
 		_set_host_cloud_pending(false)
 		_host_status.text = ""
@@ -9425,6 +9458,11 @@ func _on_party_travel_to(host_id: int, code: String) -> void :
 		_browse_hint.text = "taking the party to the lobby..."
 
 func _on_session_ended(reason: String) -> void :
+	if _cloud_search:
+		_finish_cloud_search()
+		if reason not in ["left", "restart"]:
+			_flash_notice(reason)
+		return
 	if _host_cloud_pending:
 		_set_host_cloud_pending(false)
 		_host_status.text = reason
@@ -10027,6 +10065,10 @@ func _watch_join(court_name: String, timeout := 10.0) -> void :
 
 func _refresh_room() -> void :
 	if not Net.active:
+		return
+	if _cloud_search:
+		_mm_label.text = "Гравці: %d / %d" % [Net.players.size(), 2 * Net.team_size]
+		_start_cloud_match_if_ready.call_deferred()
 		return
 
 	if _bw_joining and not Net.players.is_empty():

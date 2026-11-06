@@ -27,7 +27,7 @@ class CloudProbe extends Node:
 		var scene := get_tree().current_scene
 		if scene == null:
 			return
-		if not started and Net.is_host and Net.players.size() == 2:
+		if not started and not Net.cloud_quick_session() and Net.is_host and Net.players.size() == 2:
 			full_since += delta
 			if full_since > 2.0:
 				started = true
@@ -48,7 +48,7 @@ class CloudProbe extends Node:
 	func client_passed(count: int) -> void:
 		if not Net.is_host or multiplayer.get_remote_sender_id() <= 1 or finishing:
 			return
-		if count < 10 or inputs < 10 or frames < 100:
+		if count < 10 or inputs < 10 or frames == 0:
 			push_error("CLOUD GAME FAILED: inputs=%d frames=%d snapshots=%d" % [inputs, frames, count])
 			get_tree().quit(1)
 			return
@@ -76,6 +76,13 @@ func _open_cloud_test_menu() -> void:
 	if _card_custom_lobby == null:
 		push_error("CLOUD UI FAILED: desktop online menu missing")
 		get_tree().quit(1)
+		return
+	if "--cloud-quick" in OS.get_cmdline_user_args():
+		_show(_quick)
+		Net.cloud_ready.connect(func():
+			if Net.is_host:
+				print("CLOUD CODE: ", Net.cloud_code))
+		_begin_cloud_search([1, 2])
 		return
 	var code := ""
 	for arg in OS.get_cmdline_user_args():

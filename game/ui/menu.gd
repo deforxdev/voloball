@@ -9125,7 +9125,7 @@ func _build_room() -> void :
 	_room.add_theme_constant_override("margin_top", 88)
 	_room.add_theme_constant_override("margin_bottom", 70)
 	_room.position.x = WIDE_PAGE_X
-	_room_panel = LobbyPanel.new()
+	_room_panel = LobbyPanel.new(true)
 	_room_panel.stage_changed.connect( func(id: String):
 		Net.set_stage(id)
 		GameConfig.stage = id
@@ -9168,7 +9168,16 @@ func _build_room() -> void :
 		GameConfig.stage = Stage.home()
 		_refresh_room()
 		_refresh_modifiers())
-	v.add_child(_room_panel)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size.x = LobbyPanel.WIDTH + 16.0
+	var resize_scroll := func():
+		var margins := _room.get_theme_constant("margin_top") + _room.get_theme_constant("margin_bottom")
+		scroll.custom_minimum_size.y = maxf(180.0, get_viewport().get_visible_rect().size.y - margins - 76.0)
+	get_viewport().size_changed.connect(resize_scroll)
+	resize_scroll.call()
+	v.add_child(scroll)
+	scroll.add_child(_room_panel)
 	_start_btn = _room_panel.start_btn
 var _room_panel: LobbyPanel = null
 

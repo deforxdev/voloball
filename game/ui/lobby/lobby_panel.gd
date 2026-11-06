@@ -65,7 +65,7 @@ var _spec: Label
 var _wait: Label
 var _state: Dictionary = {}
 
-func _init() -> void :
+func _init(actions_first := false) -> void :
 	custom_minimum_size.x = WIDTH
 	add_theme_constant_override("separation", 6)
 	_title = Label.new()
@@ -243,6 +243,8 @@ func _init() -> void :
 	UiStyle.style_label(_wait, "body", UiStyle.muted())
 	_wait.visible = false
 	acts.add_child(_wait)
+	if actions_first:
+		move_child(acts, 1)
 
 func _on_rule(key: String, value: Variant) -> void :
 	if key == "cpu":

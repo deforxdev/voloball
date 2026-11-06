@@ -243,6 +243,8 @@ func _init() -> void :
 	UiStyle.style_label(_wait, "body", UiStyle.muted())
 	_wait.visible = false
 	acts.add_child(_wait)
+	if MobileRender.enabled():
+		move_child(acts, 1)
 
 func _on_rule(key: String, value: Variant) -> void :
 	if key == "cpu":

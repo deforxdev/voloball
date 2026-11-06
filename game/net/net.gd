@@ -34,12 +34,29 @@ static func valid_cloud_code(code: String) -> bool:
 			return false
 	return true
 
+func cloud_quick_session() -> bool:
+	return cloud_session() and not (multiplayer.multiplayer_peer as PhotonPeer).cloud.quick_modes.is_empty()
+
+func find_cloud_match(player_name: String, modes: Array) -> Error:
+	var supported: Array[int] = []
+	for mode in modes:
+		var size := int(mode)
+		if size in GameConfig.team_sizes() and size * 2 <= PhotonPeer.Cloud.MAX_PLAYERS and not supported.has(size):
+			supported.append(size)
+	if supported.is_empty():
+		return ERR_INVALID_PARAMETER
+	supported.sort()
+	return _connect_cloud(false, _new_cloud_code(), player_name, supported[0] * 2, supported)
+
 func host_cloud(player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
+	return _connect_cloud(true, _new_cloud_code(), player_name, capacity)
+
+static func _new_cloud_code() -> String:
 	var alphabet := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 	var code := ""
 	for value in Crypto.new().generate_random_bytes(8):
 		code += alphabet[int(value) % alphabet.length()]
-	return _connect_cloud(true, code, player_name, capacity)
+	return code
 
 func join_cloud(code: String, player_name: String) -> Error:
 	code = code.strip_edges().to_upper().replace(" ", "").replace("-", "")
@@ -47,11 +64,12 @@ func join_cloud(code: String, player_name: String) -> Error:
 		return ERR_INVALID_PARAMETER
 	return _connect_cloud(false, code, player_name)
 
-func _connect_cloud(hosting: bool, code: String, player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
+func _connect_cloud(hosting: bool, code: String, player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS, modes: Array[int] = []) -> Error:
 	if active:
 		_teardown("restart")
 	var peer := PhotonPeer.new()
 	peer.cloud.capacity = clampi(capacity, 2, PhotonPeer.Cloud.MAX_PLAYERS)
+	peer.cloud.quick_modes = modes
 	peer.cloud.app_version = "voloball-%d-cloud-1" % wire_proto()
 	peer.cloud_error.connect(func(message: String): _cloud_error = message)
 	peer.room_ready.connect(_on_cloud_ready.bind(peer))
@@ -77,6 +95,13 @@ func _connect_cloud(hosting: bool, code: String, player_name: String, capacity :
 func _on_cloud_ready(peer: MultiplayerPeer) -> void:
 	if multiplayer.multiplayer_peer != peer or not active:
 		return
+	var cloud := (peer as PhotonPeer).cloud
+	is_host = cloud.hosting
+	cloud_code = cloud.room
+	if is_host and cloud_quick_session():
+		team_size = cloud.quick_team_size
+		max_humans = 2 * team_size
+		stage = "grass"
 	if is_host:
 		players = {1: {"name": my_name, "cfg": local_character_dict(), "wr": Career.winrate(), "sid": my_steam_id(), "side": 1}}
 		hide_imposter_level(my_name, players[1]["cfg"])
@@ -3693,7 +3718,7 @@ func end_practice() -> void :
 		_broadcast_lobby()
 
 func end_match() -> void :
-	if cloud_session() and is_host:
+	if cloud_session() and is_host and not cloud_quick_session():
 		multiplayer.multiplayer_peer.refuse_new_connections = false
 	in_match = false
 	practice_live = false

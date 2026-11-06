@@ -3411,6 +3411,7 @@ func _build_online() -> void :
 	_back_row(v, func(): _show(_home))
 
 var _host_cloud_pending := false
+var _cloud_search := false
 
 func _host_cloud() -> void:
 	if _host_cloud_pending:
@@ -3440,6 +3441,8 @@ func _join_cloud(code: String) -> void:
 	_watch_join(code, 95.0)
 
 func _cloud_connected() -> void:
+	if _cloud_search:
+		_mm_label.text = "Очікуємо гравців…"
 	if _host_cloud_pending:
 		_set_host_cloud_pending(false)
 		_host_status.text = ""
@@ -5677,6 +5680,8 @@ func _build_quick() -> void :
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	for n in GameConfig.team_sizes():
+		if n * 2 > Net.PhotonPeer.Cloud.MAX_PLAYERS:
+			continue
 		var tile: = Button.new()
 		tile.text = "%dv%d" % [n, n]
 		tile.toggle_mode = true
@@ -5848,11 +5853,26 @@ func _party_queue_when_formed(sz: int, give_up: float) -> void :
 		(_quick_chips[sz] as Button).button_pressed = true
 	_find_quick()
 
-func _find_quick() -> void :
-	if MobileRender.enabled():
-		_flash_notice("Швидкий пошук доступний у Steam. Для гри за кодом відкрий Server Browser.")
+func _begin_cloud_search(modes: Array) -> void:
+	_cancel_search()
+	if Net.find_cloud_match(_online_name(), modes) != OK:
+		_flash_notice("Вибери формат Quick Match від 1v1 до 5v5.")
 		return
+	_cloud_search = true
+	_quick_find_btn.disabled = true
+	_set_matchmaking(true)
+	_mm_label.text = "Підключення до Photon…"
 
+func _finish_cloud_search() -> void:
+	_cloud_search = false
+	_quick_find_btn.disabled = false
+	_set_matchmaking(false)
+
+func _start_cloud_match_if_ready() -> void:
+	if _cloud_search and Net.cloud_quick_session() and Net.is_host and not Net.in_match and Net.players.size() >= 2 * Net.team_size:
+		_on_start_online()
+
+func _find_quick() -> void :
 	if Net.party and not Net.is_host:
 		_flash_notice("only the party leader can queue")
 		return
@@ -5867,6 +5887,9 @@ func _find_quick() -> void :
 			modes.append(n)
 	if modes.is_empty() or _quick_any.button_pressed:
 		modes = GameConfig.team_sizes().duplicate()
+	if not Net.party and not LocalPlayers.has_guests() and modes.any(func(size): return int(size) * 2 <= Net.PhotonPeer.Cloud.MAX_PLAYERS):
+		_begin_cloud_search(modes)
+		return
 
 
 
@@ -6478,6 +6501,8 @@ func _quick_freeze_and_start() -> void :
 	Net.start_match(roster, randi())
 
 func _menu_match_started(roster: Array) -> void :
+	if _cloud_search:
+		_finish_cloud_search()
 	if not Net.practice:
 		Net.pending_start = []
 	if Net.practice:
@@ -6823,6 +6848,8 @@ func _build_howto() -> void :
 var _last_shown: Control = null
 
 func _show(page: Control) -> void :
+	if _cloud_search and page != _quick:
+		_cancel_search()
 	if _host_cloud_pending and page != _host:
 		_set_host_cloud_pending(false)
 		_host_status.text = ""
@@ -6916,6 +6943,10 @@ func _stagger_reveal(page: Control) -> void :
 
 
 func _cancel_search() -> void :
+	if _cloud_search:
+		_finish_cloud_search()
+		if Net.cloud_quick_session():
+			Net.leave()
 	if _qp != null and _qp.state != QuickPlay.State.IDLE:
 		_qp.cancel()
 
@@ -9172,7 +9203,16 @@ func _build_room() -> void :
 		GameConfig.stage = Stage.home()
 		_refresh_room()
 		_refresh_modifiers())
-	v.add_child(_room_panel)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size.x = LobbyPanel.WIDTH + 16.0
+	var resize_scroll := func():
+		var margins := _room.get_theme_constant("margin_top") + _room.get_theme_constant("margin_bottom")
+		scroll.custom_minimum_size.y = maxf(180.0, get_viewport().get_visible_rect().size.y - margins - 76.0)
+	get_viewport().size_changed.connect(resize_scroll)
+	resize_scroll.call()
+	v.add_child(scroll)
+	scroll.add_child(_room_panel)
 	_start_btn = _room_panel.start_btn
 var _room_panel: LobbyPanel = null
 
@@ -9462,6 +9502,11 @@ func _on_party_travel_to(host_id: int, code: String) -> void :
 		_browse_hint.text = "taking the party to the lobby..."
 
 func _on_session_ended(reason: String) -> void :
+	if _cloud_search:
+		_finish_cloud_search()
+		if reason not in ["left", "restart"]:
+			_flash_notice(reason)
+		return
 	if _host_cloud_pending:
 		_set_host_cloud_pending(false)
 		_host_status.text = reason
@@ -10068,6 +10113,10 @@ func _watch_join(court_name: String, timeout := 10.0) -> void :
 
 func _refresh_room() -> void :
 	if not Net.active:
+		return
+	if _cloud_search:
+		_mm_label.text = "Гравці: %d / %d" % [Net.players.size(), 2 * Net.team_size]
+		_start_cloud_match_if_ready.call_deferred()
 		return
 
 	if _bw_joining and not Net.players.is_empty():

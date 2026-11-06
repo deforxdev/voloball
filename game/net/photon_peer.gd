@@ -36,6 +36,7 @@ func connect_room(hosting: bool, code: String, nickname: String) -> Error:
 	return cloud.connect_room(hosting, code, nickname)
 
 func _joined(id: int, actors: Array, host: int) -> void:
+	_hosting = cloud.hosting
 	if host != 1 or not actors.has(1) or (_hosting and id != 1):
 		_failed("Власник цієї кімнати вже вийшов. Створи нову кімнату.")
 		return

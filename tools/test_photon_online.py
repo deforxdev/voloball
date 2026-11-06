@@ -11,6 +11,7 @@ def main():
     parser.add_argument("--godot", required=True)
     parser.add_argument("--output", type=Path, default=Path("build/cloud-tests"))
     parser.add_argument("--rendered", action="store_true")
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     startup = None
@@ -34,7 +35,7 @@ def main():
             processes.append(process)
             return process
 
-        host = launch("host", [])
+        host = launch("host", ["--cloud-quick"] if args.quick else [])
         deadline = time.monotonic() + 55
         code = None
         while time.monotonic() < deadline:
@@ -47,7 +48,7 @@ def main():
                 break
             time.sleep(0.2)
         assert code, "Cloud host did not create a room:\n" + output[-9000:]
-        launch("client", ["--cloud-code=" + code])
+        launch("client", ["--cloud-quick"] if args.quick else ["--cloud-code=" + code])
         print("Two mobile game clients connected to the real Photon Cloud", flush=True)
         deadline = time.monotonic() + 100
         for process in processes:

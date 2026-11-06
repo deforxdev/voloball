@@ -11,9 +11,12 @@ signal failed(message: String)
 const APP_ID := "358a2750-d824-4049-ad0d-cb0b587d0bda"
 const REGION := "eu"
 const MAX_PLAYERS := 10
+const QUICK_LOBBY := "voloball-quick-v1"
 const MAX_FRAME := 262144
 var app_version := "voloball-61-cloud-1"
 var capacity := MAX_PLAYERS
+var quick_modes: Array[int] = []
+var quick_team_size := 0
 var room := ""
 var hosting := false
 var actor_id := 0
@@ -175,7 +178,7 @@ func _response(operation: int, error: int, values: Dictionary) -> void:
 			_connect_server(str(values.get("230", "")), "master")
 		else:
 			_join_operation()
-	elif operation in [226, 227]:
+	elif operation in [225, 226, 227]:
 		if phase == "master":
 			room = str(values.get("255", room))
 			_connect_server(str(values.get("230", "")), "game")
@@ -193,16 +196,39 @@ func _response(operation: int, error: int, values: Dictionary) -> void:
 				actors.append(actor_id)
 			var properties: Dictionary = values.get("248", {})
 			host_id = int(properties.get("248", 1))
+			if not quick_modes.is_empty():
+				hosting = actor_id == host_id
+				quick_team_size = int(properties.get("C0", quick_modes[0]))
 			phase = "room"
 			joined.emit(actor_id, actors.duplicate(), host_id)
 
+func _room_options(property_key: int) -> Array:
+	var quick := not quick_modes.is_empty()
+	var properties := {"255": capacity, "254": quick, "253": true}
+	if quick:
+		properties["C0"] = quick_modes[0]
+		properties["250"] = ["C0"] # Properties exposed to matchmaking.
+	return [property_key, properties, 241, true, 232, true, 239, true, 235, 0, 236, 0]
+
 func _join_operation() -> void:
 	var values: Array = [255, room, 250, true]
-	if hosting:
-		values.append_array([248, {"255": capacity, "254": false, "253": true}, 241, true, 232, true, 239, true, 235, 0, 236, 0])
+	var quick := not quick_modes.is_empty()
+	if quick:
+		# Named SQL lobby separates the queue from private rooms. Join-or-create
+		# lets Photon pick a waiting room atomically when searches overlap.
+		values.append_array([215, 1, 213, QUICK_LOBBY, 212, 2])
+		if phase == "master":
+			var modes := ",".join(PackedStringArray(quick_modes))
+			values.append_array([245, "C0 IN (%s)" % modes])
+			values.append_array(_room_options(251))
+			_op(225, values)
+			return
+		values.append_array(_room_options(248))
+	elif hosting:
+		values.append_array(_room_options(248))
 	if phase == "game":
 		values.append_array([249, {"255": _nickname}])
-	_op(227 if hosting else 226, values)
+	_op(227 if hosting and not quick else 226, values)
 
 func _event(code: int, values: Dictionary) -> void:
 	var sender := int(values.get("254", 0))

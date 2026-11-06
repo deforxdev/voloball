@@ -1,5 +1,7 @@
 """Run two actual Godot clients through Photon Cloud and a complete mobile match."""
 import argparse
+import os
+import uuid
 from pathlib import Path
 import re
 import subprocess
@@ -23,6 +25,7 @@ def main():
                "--scene", "res://test_cloud_online.tscn"]
     if not args.rendered:
         command.append("--headless")
+    env = dict(os.environ, VOLOBALL_PHOTON_TEST_QUEUE=uuid.uuid4().hex[:12])
     processes = []
     files = []
     paths = [args.output / (role + ".log") for role in ("host", "client")]
@@ -31,7 +34,7 @@ def main():
             output = paths[len(processes)].open("w", encoding="utf-8")
             files.append(output)
             process = subprocess.Popen(command + ["--", "--drive-role", "photon_" + role] + extra,
-                                       stdout=output, stderr=subprocess.STDOUT, startupinfo=startup)
+                                       stdout=output, stderr=subprocess.STDOUT, startupinfo=startup, env=env)
             processes.append(process)
             return process
 

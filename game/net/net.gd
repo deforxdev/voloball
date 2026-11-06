@@ -72,7 +72,7 @@ func _connect_cloud(hosting: bool, code: String, player_name: String, capacity :
 	peer.cloud.quick_modes = modes
 	peer.cloud.app_version = "voloball-%d-cloud-1" % wire_proto()
 	peer.cloud_error.connect(func(message: String): _cloud_error = message)
-	peer.room_ready.connect(_on_cloud_ready.bind(peer))
+	peer.room_ready.connect(_on_cloud_ready.bind(weakref(peer)))
 	var err := peer.connect_room(hosting, code, player_name)
 	if err != OK:
 		return err
@@ -92,10 +92,11 @@ func _connect_cloud(hosting: bool, code: String, player_name: String, capacity :
 	multiplayer.multiplayer_peer = peer
 	return OK
 
-func _on_cloud_ready(peer: MultiplayerPeer) -> void:
-	if multiplayer.multiplayer_peer != peer or not active:
+func _on_cloud_ready(reference: WeakRef) -> void:
+	var peer := reference.get_ref() as PhotonPeer
+	if peer == null or multiplayer.multiplayer_peer != peer or not active:
 		return
-	var cloud := (peer as PhotonPeer).cloud
+	var cloud := peer.cloud
 	is_host = cloud.hosting
 	cloud_code = cloud.room
 	if is_host and cloud_quick_session():

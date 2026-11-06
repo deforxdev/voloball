@@ -12,7 +12,7 @@ from zipfile import ZipFile
 
 RELEASE_BODY = """Android {version} (ARM64)
 
-Меню Online має ті самі пункти, що на ПК. Створи кімнату через Online → Custom Lobby → Create Server. Друзі вводять восьмисимвольний код в Online → Server Browser → Join. До 10 гравців у кімнаті. Сумісний із iPhone {version}.
+Quick Match → Find Match автоматично шукає гравців через Photon на ПК та телефонах. У приватному лобі кнопка «Почати матч» розміщена над командами. Створи кімнату через Online → Custom Lobby → Create Server. Друзі вводять восьмисимвольний код в Online → Server Browser → Join. До 10 гравців у кімнаті. Сумісний із iPhone {version}.
 
 Власник кімнати обчислює матч і має залишатись у грі. Photon передає дані через інтернет. Збережено редактор сенсорного керування, чітку графіку та обидва горизонтальні положення екрана. Android використовує GLES Compatibility.
 

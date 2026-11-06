@@ -75,6 +75,7 @@ jobs:
           "$godot" --headless --path . --scene res://test_photon_cancel.tscn -- --drive-role android_cancel_ci 2>&1 | tee build/cloud-cancel.log
           grep -q 'PHOTON CANCEL PASS' build/cloud-cancel.log
           python3 tools/test_photon_online.py --godot "$godot" --output build/cloud-tests
+          python3 tools/test_photon_online.py --godot "$godot" --quick --output build/quick-tests
           export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$HOME/.android/debug.keystore"
           export GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey
           export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=android
@@ -82,7 +83,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose build/VOLOBALL-Android.apk
           unzip -t build/VOLOBALL-Android.apk | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging build/VOLOBALL-Android.apk | tee build/apk-metadata.log
-          grep -q "package: name='com.deforxdev.voloball' versionCode='16' versionName='0.2.9'" build/apk-metadata.log
+          grep -q "package: name='com.deforxdev.voloball' versionCode='17' versionName='0.2.10'" build/apk-metadata.log
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions build/VOLOBALL-Android.apk | tee build/apk-permissions.log
           grep -q 'android.permission.INTERNET' build/apk-permissions.log
           python3 tools/publish_android_release.py build/VOLOBALL-Android.apk --validate-only
@@ -104,4 +105,5 @@ jobs:
           path: |
             build/*.log
             build/cloud-tests/*.log
+            build/quick-tests/*.log
           retention-days: 7

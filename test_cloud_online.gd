@@ -57,11 +57,15 @@ class CloudProbe extends Node:
 		print("CLOUD HOST MATCH PASS: inputs=", inputs, " client snapshots=", count)
 		await get_tree().create_timer(3).timeout
 		Net.leave()
+		await get_tree().process_frame
+		await get_tree().process_frame
 		get_tree().quit(0)
 	@rpc("authority", "reliable")
 	func finish() -> void:
 		await get_tree().create_timer(0.5).timeout
 		Net.leave()
+		await get_tree().process_frame
+		await get_tree().process_frame
 		get_tree().quit(0)
 
 func _ready() -> void:
@@ -83,6 +87,10 @@ func _open_cloud_test_menu() -> void:
 			if Net.is_host:
 				print("CLOUD CODE: ", Net.cloud_code))
 		_begin_cloud_search([1, 2])
+		# Each CI run has its own queue even when several platforms test at once.
+		var test_queue := OS.get_environment("VOLOBALL_PHOTON_TEST_QUEUE")
+		if Net.cloud_quick_session() and not test_queue.is_empty():
+			(multiplayer.multiplayer_peer as Net.PhotonPeer).cloud.app_version += "-" + test_queue
 		return
 	var code := ""
 	for arg in OS.get_cmdline_user_args():

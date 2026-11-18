@@ -19,18 +19,18 @@ class_name UiStyle
 
 
 
-const PRIMARY: = Color("ffd23f")
-const SECONDARY: = Color("2e78ff")
-const INK: = Color("232b3b")
-const NEUTRAL: = Color("f2f4fb")
-const CARD: = Color("ffffff")
-const SUCCESS: = Color("3fd46a")
-const HIGHLIGHT: = Color("ff7ea8")
-const MUTED: = Color("8b93a7")
+const PRIMARY: = Color("ff5e3a")
+const SECONDARY: = Color("00d2ff")
+const INK: = Color("080d1a")
+const NEUTRAL: = Color("0b1120")
+const CARD: = Color("131d33")
+const SUCCESS: = Color("1ee38c")
+const HIGHLIGHT: = Color("a855f7")
+const MUTED: = Color("8699bf")
 
-const RADIUS: = 14
-const RADIUS_SOFT: = 22
-const EDGE: = 4
+const RADIUS: = 12
+const RADIUS_SOFT: = 18
+const EDGE: = 3
 
 const FONT_BLACK: = "res://game/fonts/Nunito/Nunito-Black.ttf"
 const FONT_XBOLD: = "res://game/fonts/Nunito/Nunito-ExtraBold.ttf"
@@ -44,31 +44,31 @@ static func font(path: String) -> FontFile:
 
 
 
-static var dark: = false
+static var dark: = true
 
 static func bg() -> Color:
-	return Color("0c0c0e") if dark else NEUTRAL
+	return Color("070c17") if dark else NEUTRAL
 
 static func card() -> Color:
-	return Color("1a1a1d") if dark else CARD
+	return Color("111a2e") if dark else CARD
 
 static func text() -> Color:
-	return Color("f4f4f6") if dark else INK
+	return Color("f2f6ff") if dark else Color("edf3ff")
 
 static func muted() -> Color:
-	return Color("9b9ba3") if dark else MUTED
+	return Color("8295bc") if dark else MUTED
 
 
 
 static func hairline() -> Color:
-	return Color("2c2c33") if dark else Color("dde3ee")
+	return Color("243659") if dark else Color("2c4069")
 
 
 static func sunk() -> Color:
-	return Color("2a2a30") if dark else Color("e4e8f2")
+	return Color("0a1120") if dark else Color("0e172a")
 
 
-const PRIMARY_PALE: = Color("ffe9a3")
+const PRIMARY_PALE: = Color("ff9e85")
 
 
 static func flat_box(fill: Color, radius: = RADIUS, hair: = false) -> StyleBoxFlat:
@@ -102,7 +102,7 @@ static func style_panel(p: Control, fill: = _AUTO, radius: = RADIUS) -> void :
 
 
 
-const CAPSULE: = 99
+const CAPSULE: = 14
 
 static func _slab(fill: Color, edge: Color, _pressed: bool, 
 		radius: = CAPSULE) -> StyleBoxFlat:
@@ -113,13 +113,13 @@ static func _slab(fill: Color, edge: Color, _pressed: bool,
 	if edge.a > 0.0:
 		b.set_border_width_all(2)
 		b.border_color = edge
-	b.content_margin_left = 20.0
-	b.content_margin_right = 20.0
+	b.content_margin_left = 18.0
+	b.content_margin_right = 18.0
 	b.content_margin_top = 8.0
 	b.content_margin_bottom = 9.0
 	return b
 
-const RED: = Color("e5484d")
+const RED: = Color("ff4757")
 
 
 
@@ -128,11 +128,11 @@ const RED: = Color("e5484d")
 static func style_button(btn: Button, kind: = "primary", 
 		font_size: = 20) -> void :
 	var fill: = PRIMARY
-	var text_c: = INK
+	var text_c: = Color.WHITE
 	match kind:
 		"secondary":
 			fill = card()
-			text_c = SECONDARY.lightened(0.25) if dark else SECONDARY
+			text_c = SECONDARY.lightened(0.12)
 		"tertiary":
 			fill = Color(0, 0, 0, 0)
 			text_c = muted()
@@ -144,36 +144,36 @@ static func style_button(btn: Button, kind: = "primary",
 			text_c = Color.WHITE
 		"chip":
 			fill = CHIP
-			text_c = Color.WHITE
+			text_c = INK
 		"blue":
 			fill = SECONDARY
-			text_c = Color.WHITE
+			text_c = INK
 
-	var edge: = hairline() if kind == "secondary" else Color(0, 0, 0, 0)
-	var hover_fill: = fill.lightened(0.08) if kind != "secondary"\
-	else fill.lerp(SECONDARY, 0.08)
+	var edge: = hairline() if kind == "secondary" else (PRIMARY.lightened(0.22) if kind == "primary" else Color(0, 0, 0, 0))
+	var hover_fill: = fill.lightened(0.1) if kind != "secondary"\
+	else fill.lerp(SECONDARY, 0.14)
 	btn.add_theme_stylebox_override("normal", _slab(fill, edge, false))
-	btn.add_theme_stylebox_override("hover", _slab(hover_fill, edge, false))
+	btn.add_theme_stylebox_override("hover", _slab(hover_fill, edge.lightened(0.15) if edge.a > 0.0 else Color(0, 0, 0, 0), false))
 	btn.add_theme_stylebox_override("pressed", 
-		_slab(fill.darkened(0.08), edge, true))
+		_slab(fill.darkened(0.1), edge, true))
 
 
 	var focus: = _slab(hover_fill, edge, false)
-	focus.set_border_width_all(4)
+	focus.set_border_width_all(3)
 	focus.border_color = SECONDARY
 	btn.add_theme_stylebox_override("focus", focus)
 
-	var dis: = _slab(Color(muted(), 0.22), Color(0, 0, 0, 0), true)
+	var dis: = _slab(Color(muted(), 0.18), Color(0, 0, 0, 0), true)
 	btn.add_theme_stylebox_override("disabled", dis)
-	btn.add_theme_color_override("font_disabled_color", Color(muted(), 0.85))
+	btn.add_theme_color_override("font_disabled_color", Color(muted(), 0.65))
 	if kind == "tertiary":
 		btn.add_theme_stylebox_override("hover", _slab(
-			Color(text(), 0.06), Color(0, 0, 0, 0), false))
+			Color(text(), 0.08), Color(0, 0, 0, 0), false))
 	btn.add_theme_font_override("font", font(FONT_XBOLD))
 	btn.add_theme_font_size_override("font_size", font_size)
 	btn.add_theme_color_override("font_color", text_c)
 	btn.add_theme_color_override("font_hover_color", text_c)
-	btn.add_theme_color_override("font_pressed_color", text_c.darkened(0.1))
+	btn.add_theme_color_override("font_pressed_color", text_c.darkened(0.08))
 	btn.add_theme_color_override("font_hover_pressed_color", text_c)
 	btn.add_theme_color_override("font_focus_color", text_c)
 	var bounce: = press_bounce.bind(btn)
@@ -209,16 +209,16 @@ static func style_pill(l: Label, bg_c: = PRIMARY, text_c: = _AUTO,
 		font_size: = 14) -> void :
 	var b: = StyleBoxFlat.new()
 	b.bg_color = bg_c
-	b.set_corner_radius_all(99)
-	b.content_margin_left = 12.0
-	b.content_margin_right = 12.0
+	b.set_corner_radius_all(10)
+	b.content_margin_left = 10.0
+	b.content_margin_right = 10.0
 	b.content_margin_top = 3.0
 	b.content_margin_bottom = 3.0
 	l.add_theme_stylebox_override("normal", b)
 	l.add_theme_font_override("font", font(FONT_XBOLD))
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", 
-		INK if text_c == _AUTO else text_c)
+		Color.WHITE if text_c == _AUTO else text_c)
 
 
 
@@ -247,7 +247,7 @@ static func style_label(l: Label, role: = "body", color: = _AUTO) -> void :
 
 
 static func icon(name: String, force_white: = false, force_black: = false) -> Texture2D:
-	var shade: = "Black" if force_black else ("White" if (force_white or dark) else "Black")
+	var shade: = "Black" if force_black else "White"
 	return load("res://game/ui_icon/Game Icons/PNG/%s/2x/%s.png"
 		%[shade, name]) as Texture2D
 
@@ -1044,26 +1044,30 @@ static func icon_disc(icon_name: String, fill: Color, px: = 52,
 
 
 
-static func sticker(icon_name: String, fill: Color, px: = 52, rot: = -0.07, 
+static func sticker(icon_name: String, fill: Color, px: = 52, _rot: = 0.0, 
 		glyph: = Color.WHITE) -> Control:
 	var holder: = Control.new()
 	holder.custom_minimum_size = Vector2(px, px)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sq: = Panel.new()
-	var inset: = px * 0.06
+	var inset: = px * 0.04
 	sq.position = Vector2(inset, inset)
 	sq.size = Vector2(px, px) - Vector2(inset, inset) * 2.0
 	sq.pivot_offset = sq.size * 0.5
-	sq.rotation = rot
+	sq.rotation = 0.0
 	sq.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sq.add_theme_stylebox_override("panel", flat_box(fill, int(px * 0.28)))
+	var box: = flat_box(fill.darkened(0.15), int(px * 0.24))
+	box.set_border_width_all(2)
+	box.border_color = fill.lightened(0.28)
+	box.border_width_bottom = 3
+	sq.add_theme_stylebox_override("panel", box)
 	holder.add_child(sq)
 	var g: = TextureRect.new()
 	g.texture = icon(icon_name, true)
-	g.modulate = glyph
+	g.modulate = Color.WHITE if glyph == INK else glyph
 	g.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	g.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	var gs: = sq.size.x * 0.56
+	var gs: = sq.size.x * 0.54
 	g.size = Vector2(gs, gs)
 	g.position = (sq.size - g.size) * 0.5
 	g.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1190,14 +1194,14 @@ static func paint_field_tab(b: Button, lit: bool, fs: = 15) -> void :
 	style_button(b, "blue" if lit else "secondary", fs)
 	if lit:
 		return
-	var idle: = Color(1, 1, 1, 0.06) if dark else Color(1, 1, 1, 0.55)
-	var hov: = Color(1, 1, 1, 0.12) if dark else Color(1, 1, 1, 0.85)
+	var idle: = Color(1, 1, 1, 0.07)
+	var hov: = Color(1, 1, 1, 0.14)
 	for st in ["normal", "hover", "pressed"]:
 		var sb: = _slab(hov if st != "normal" else idle, Color(0, 0, 0, 0), false)
 		sb.content_margin_left = 16.0
 		sb.content_margin_right = 16.0
 		b.add_theme_stylebox_override(st, sb)
-	var t: = Color(1, 1, 1, 0.65) if dark else Color("7a5a00")
+	var t: = Color(0.76, 0.85, 0.98, 0.85)
 	for st in ["font_color", "font_hover_color", "font_pressed_color", 
 			"font_hover_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(st, t)
@@ -1224,22 +1228,24 @@ static func paint_viewer_btn(b: Button, glyph: String, fs: = 16) -> void :
 	b.icon = icon(glyph, true)
 	b.add_theme_constant_override("icon_max_width", 20)
 	b.add_theme_constant_override("h_separation", 8)
-	var c: = SECONDARY.lightened(0.25) if dark else SECONDARY
+	var c: = SECONDARY.lightened(0.18)
 	for st in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", 
 			"icon_hover_pressed_color", "icon_focus_color"]:
 		b.add_theme_color_override(st, c)
 
 
-static func field_box(radius: = 30) -> StyleBoxFlat:
-	return flat_box(Color("2a2a30") if dark else PRIMARY, radius)
+static func field_box(radius: = 22) -> StyleBoxFlat:
+	var b: = flat_box(Color("0d1527"), radius, true)
+	b.border_color = Color("24385e")
+	return b
 
 
 
 static func field_ink() -> Color:
-	return Color("c3c3cc") if dark else Color("7a5a00")
+	return Color("a8bce0")
 
 static func field_doodles(host: Control) -> void :
-	UiBackdrop.doodles(host, Color(1, 1, 1, 0.04) if dark else Color(1, 1, 1, 0.3))
+	UiBackdrop.doodles(host, Color(SECONDARY, 0.05))
 
 
 

@@ -228,7 +228,8 @@ var _tilt: Array = []
 var _lean: Array = []
 var _top_strip: Panel = null
 var _bottom_strip: Panel = null
-var _logo_rect: TextureRect = null
+var _logo_rect: Control = null
+var _nav_tabs: Dictionary = {}
 var _tilt_fake: = 0.0
 var _cam_side_target: = 1.0
 var _cam_look_now: = Vector3.ZERO
@@ -2335,42 +2336,54 @@ func _on_slot_connection(_slot: LocalPlayerSlot, _connected: bool) -> void :
 	_on_local_roster()
 
 func _bar_box(top: bool) -> HBoxContainer:
-
 	var bar: = PanelContainer.new()
 	var b: = StyleBoxFlat.new()
-
-	b.bg_color = UiStyle.bg()
-	b.content_margin_left = 28.0
-	b.content_margin_right = 28.0
-
-	b.content_margin_top = 18.0 if top else 9.0
-	b.content_margin_bottom = 18.0 if top else 9.0
+	b.bg_color = Color(0.05, 0.08, 0.15, 0.92)
+	b.set_corner_radius_all(18)
+	b.corner_detail = 12
+	b.set_border_width_all(2)
+	b.border_color = Color(0.18, 0.28, 0.48, 0.88)
+	if top:
+		b.border_width_bottom = 3
+		b.border_color = Color(0.18, 0.34, 0.58, 0.92)
+	else:
+		b.border_width_top = 3
+		b.border_color = Color(0.18, 0.32, 0.54, 0.92)
+	b.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	b.shadow_size = 14
+	b.shadow_offset = Vector2(0, 4 if top else -2)
+	b.content_margin_left = 18.0
+	b.content_margin_right = 18.0
+	b.content_margin_top = 10.0 if top else 8.0
+	b.content_margin_bottom = 10.0 if top else 8.0
 	bar.add_theme_stylebox_override("panel", b)
 	if top:
 		bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+		bar.offset_left = 18.0
+		bar.offset_right = -18.0
+		bar.offset_top = 10.0
 		_top_panel = bar
 		_top_normal = b
 		_top_green = b.duplicate()
-		_top_green.bg_color = Color(UiStyle.SUCCESS, 0.94)
+		_top_green.bg_color = Color(0.05, 0.28, 0.20, 0.95)
+		_top_green.border_color = UiStyle.SUCCESS
 	else:
 		bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 		bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
-		bar.offset_bottom = 0.0
+		bar.offset_left = 18.0
+		bar.offset_right = -18.0
+		bar.offset_bottom = -10.0
 		_bottom_panel = bar
-
 		_bar_normal = b
 		_bar_green = b.duplicate()
-		_bar_green.bg_color = Color(UiStyle.SUCCESS, 0.94)
-
+		_bar_green.bg_color = Color(0.05, 0.28, 0.20, 0.95)
+		_bar_green.border_color = UiStyle.SUCCESS
 
 	ui.add_child(bar)
 
-
 	var strip: = Panel.new()
-	var sb: = StyleBoxFlat.new()
-	sb.bg_color = UiStyle.PRIMARY
-	strip.add_theme_stylebox_override("panel", sb)
-	strip.custom_minimum_size.y = 4
+	strip.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	strip.custom_minimum_size.y = 0
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_sibling(strip)
 	if top:
@@ -2380,70 +2393,159 @@ func _bar_box(top: bool) -> HBoxContainer:
 		strip.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 		strip.grow_vertical = Control.GROW_DIRECTION_BEGIN
 		_bottom_strip = strip
-	UiBackdrop.doodles(bar, Color(UiStyle.text(), 0.05), 0.0)
+	UiBackdrop.doodles(bar, Color(UiStyle.SECONDARY, 0.04), 0.0)
 	var h: = HBoxContainer.new()
-	h.add_theme_constant_override("separation", 14)
+	h.add_theme_constant_override("separation", 10)
 	bar.add_child(h)
 	return h
 
 
 
 func _place_strips() -> void :
-	if _top_strip != null and _top_panel != null:
-		_top_strip.offset_top = _top_panel.size.y
-		_top_strip.offset_bottom = _top_panel.size.y + 4.0
-	if _bottom_strip != null and _bottom_panel != null:
-		_bottom_strip.offset_top = - _bottom_panel.size.y - 4.0
-		_bottom_strip.offset_bottom = - _bottom_panel.size.y
+	pass
+
+class VoloballCrest extends Control:
+	func _init() -> void :
+		custom_minimum_size = Vector2(42, 42)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+	func _draw() -> void :
+		var c: = size * 0.5
+		var r: = minf(size.x, size.y) * 0.46
+		var pts: = PackedVector2Array()
+		for i in 6:
+			var a: = deg_to_rad(60.0 * float(i) - 30.0)
+			pts.append(c + Vector2(cos(a), sin(a)) * r)
+		draw_colored_polygon(pts, UiStyle.PRIMARY)
+		pts.append(pts[0])
+		draw_polyline(pts, Color(1, 1, 1, 0.85), 2.0, true)
+		draw_circle(c, r * 0.56, UiStyle.INK)
+		draw_arc(c, r * 0.56, -0.4, 2.5, 20, UiStyle.SECONDARY, 2.4, true)
+		draw_arc(c, r * 0.56, 2.8, 5.6, 20, Color.WHITE, 2.2, true)
+		draw_line(c + Vector2(-r * 0.36, -r * 0.14), c + Vector2(r * 0.38, r * 0.16), UiStyle.PRIMARY, 2.2, true)
+		draw_line(c + Vector2(-r * 0.18, r * 0.36), c + Vector2(r * 0.24, -r * 0.34), UiStyle.SECONDARY, 1.8, true)
+
+func _build_brand_badge() -> Control:
+	var wrap: = HBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 10)
+	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var crest: = VoloballCrest.new()
+	crest.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wrap.add_child(crest)
+	var col: = VBoxContainer.new()
+	col.add_theme_constant_override("separation", -4)
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title_row: = HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 2)
+	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var v1: = Label.new()
+	v1.text = "VOLO"
+	v1.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+	v1.add_theme_font_size_override("font_size", 24)
+	v1.add_theme_color_override("font_color", Color.WHITE)
+	v1.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_row.add_child(v1)
+	var v2: = Label.new()
+	v2.text = "BALL"
+	v2.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+	v2.add_theme_font_size_override("font_size", 24)
+	v2.add_theme_color_override("font_color", UiStyle.PRIMARY)
+	v2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_row.add_child(v2)
+	col.add_child(title_row)
+	var sub: = Label.new()
+	sub.text = "ARENA CHAMPIONSHIP"
+	sub.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_XBOLD))
+	sub.add_theme_font_size_override("font_size", 9)
+	sub.add_theme_color_override("font_color", UiStyle.SECONDARY)
+	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(sub)
+	wrap.add_child(col)
+	var sep: = Panel.new()
+	sep.custom_minimum_size = Vector2(2, 32)
+	sep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ssb: = StyleBoxFlat.new()
+	ssb.bg_color = Color(UiStyle.SECONDARY, 0.25)
+	ssb.set_corner_radius_all(1)
+	sep.add_theme_stylebox_override("panel", ssb)
+	wrap.add_child(sep)
+	return wrap
 
 func _tab(text: String, active: bool, on_press: Callable, 
-		_icon_name: = "", _icon_w: = 20) -> Button:
+		icon_name: = "", _icon_w: = 18) -> Button:
 	var b: = Button.new()
-	b.text = text
-
-
-
-	b.custom_minimum_size = Vector2(76, 52)
+	b.text = text.to_upper()
+	b.custom_minimum_size = Vector2(82, 42)
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	UiStyle.style_button(b, "primary" if active else "tertiary", 17)
+	if icon_name != "":
+		b.icon = UiStyle.icon(icon_name, true)
+		b.expand_icon = true
+		b.add_theme_constant_override("icon_max_width", 16)
+		b.add_theme_constant_override("h_separation", 6)
+	_paint_nav_tab(b, active)
+	if on_press.is_valid():
+		b.pressed.connect(on_press)
+	_nav_tabs[text] = b
+	return b
 
+func _paint_nav_tab(b: Button, active: bool) -> void :
+	UiStyle.style_button(b, "primary" if active else "tertiary", 14)
 	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var sb: = b.get_theme_stylebox(st) as StyleBoxFlat
 		if sb != null:
 			sb.content_margin_left = 13.0
 			sb.content_margin_right = 13.0
-	if not active:
+			sb.set_corner_radius_all(12)
+	if active:
+		b.remove_meta("bar_text")
+		for st in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color"]:
+			b.add_theme_color_override(st, Color.WHITE)
+	else:
+		var idle: = StyleBoxFlat.new()
+		idle.bg_color = Color(1, 1, 1, 0.04)
+		idle.set_corner_radius_all(12)
+		idle.content_margin_left = 13.0
+		idle.content_margin_right = 13.0
+		b.add_theme_stylebox_override("normal", idle)
 		b.add_theme_color_override("font_color", UiStyle.muted())
 		b.add_theme_color_override("font_hover_color", UiStyle.text())
+		for st in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color"]:
+			b.add_theme_color_override(st, UiStyle.SECONDARY)
 		b.set_meta("bar_text", true)
-	if on_press.is_valid():
-		b.pressed.connect(on_press)
-	return b
+
+func _update_active_nav_tab(page: Control) -> void :
+	var active_key: = "play"
+	if page == _profile or page == _recent:
+		active_key = "profile"
+	elif page == _career:
+		active_key = "career"
+	elif page == _achievements:
+		active_key = "awards"
+	for k in _nav_tabs:
+		var b: = _nav_tabs[k] as Button
+		if is_instance_valid(b):
+			_paint_nav_tab(b, String(k) == active_key)
 
 func _build_bars() -> void :
-
 	var top: = _bar_box(true)
 	_top_bar = top
 
+	var brand: = _build_brand_badge()
+	top.add_child(brand)
+	_logo_rect = brand
 
-	var hole: = Control.new()
-	hole.custom_minimum_size.x = 164
-	top.add_child(hole)
 	top.add_child(_tab("play", true, _on_play_tab, "right"))
 	top.add_child(_tab("locker", false, func():
 		_wipe_to(_locker_scene()), "star"))
-
-
-
 
 	var beta: = LaunchGate.public_beta()
 	if not LaunchGate.economy_off():
 		top.add_child(_tab("shop", false, func():
 			_wipe_to(_shop_scene()), "shoppingCart"))
 
-
 	top.add_child(_tab("profile", false, func(): _show(_profile), "singleplayer"))
-
 
 	if not LaunchGate.is_demo() and ResourceLoader.exists(CAREER_PAGE):
 		top.add_child(_tab("career", false, func(): _show(_career), "medal1"))
@@ -2454,18 +2556,16 @@ func _build_bars() -> void :
 	spring.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spring)
 
-
-
-
-
 	var dock: = PanelContainer.new()
-	var dsb: = UiStyle.flat_box(UiStyle.sunk(), UiStyle.CAPSULE)
-	dsb.content_margin_left = 8.0
-	dsb.content_margin_right = 10.0
-	dsb.content_margin_top = 13.0
-	dsb.content_margin_bottom = 7.0
+	var dsb: = UiStyle.flat_box(Color(0.03, 0.05, 0.11, 0.85), 14)
+	dsb.set_border_width_all(1)
+	dsb.border_color = Color(0.16, 0.26, 0.46, 0.8)
+	dsb.content_margin_left = 10.0
+	dsb.content_margin_right = 12.0
+	dsb.content_margin_top = 6.0
+	dsb.content_margin_bottom = 6.0
 	dock.add_theme_stylebox_override("panel", dsb)
-	dock.custom_minimum_size.x = PARTY_DOCK_W
+	dock.custom_minimum_size.x = 340.0
 	dock.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(dock)
 	_party_strip = HBoxContainer.new()
@@ -2476,7 +2576,6 @@ func _build_bars() -> void :
 	spring_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spring_b)
 
-
 	_friends_btn = UiStyle.icon_button("multiplayer", "secondary", 40)
 	_friends_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_friends_btn.tooltip_text = "friends"
@@ -2484,12 +2583,9 @@ func _build_bars() -> void :
 	_friends_btn.pressed.connect(_toggle_friends_panel)
 	top.add_child(_friends_btn)
 
-
 	var settings: = UiStyle.icon_button("gear", "secondary", 40)
 	settings.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	settings.tooltip_text = "settings"
-
-
 	settings.pressed.connect( func(): _open_settings(SettingsPanel.Scope.SYSTEM))
 	top.add_child(settings)
 	var quit: = UiStyle.icon_button("power", "exit", 40)
@@ -2501,24 +2597,12 @@ func _build_bars() -> void :
 				GameConfig.flush_saves()
 				get_tree().quit(), "quit", "stay", "exit"))
 	top.add_child(quit)
-	var logo: = TextureRect.new()
-	logo.texture = LOGO
-	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	logo.size = Vector2(200, 62)
-	logo.position = Vector2(14, 14)
-	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(logo)
-	_logo_rect = logo
 
 	var bottom: = _bar_box(false)
 	_bottom_bar = bottom
-
-
 	bottom.add_theme_constant_override("separation", 10)
 	_bar_normal.content_margin_right = 18.0
 	_bar_green.content_margin_right = 18.0
-
 
 	bottom.add_child(_build_player_card())
 
@@ -2694,13 +2778,8 @@ func _build_player_card() -> Control:
 	card.add_theme_constant_override("separation", 12)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
-
-
-
-
-
 	var hole: = Control.new()
-	hole.custom_minimum_size.x = 62
+	hole.custom_minimum_size.x = 58
 	card.add_child(hole)
 	var pfp: = TextureRect.new()
 	pfp.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -2708,29 +2787,27 @@ func _build_player_card() -> Control:
 	pfp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(pfp)
 	pfp.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	pfp.offset_left = 20
-	pfp.offset_right = 84
-	pfp.offset_top = -64
-	pfp.offset_bottom = 0
+	pfp.offset_left = 30
+	pfp.offset_right = 88
+	pfp.offset_top = -68
+	pfp.offset_bottom = -10
 	_pc_avatar = pfp
 
-
-
 	_load_card_pfp.call_deferred(pfp)
-
 
 	var col: = VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_pc_name = Label.new()
 	UiStyle.style_label(_pc_name, "body")
+	_pc_name.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
 	_pc_name.add_theme_font_size_override("font_size", 15)
 	col.add_child(_pc_name)
 	var lvrow: = HBoxContainer.new()
 	lvrow.add_theme_constant_override("separation", 8)
 	_pc_level = Label.new()
 
-	UiStyle.style_pill(_pc_level, UiStyle.CHIP, Color.WHITE, 12)
+	UiStyle.style_pill(_pc_level, UiStyle.SECONDARY, UiStyle.INK, 12)
 	var lv_box: = _pc_level.get_theme_stylebox("normal") as StyleBoxFlat
 	lv_box.content_margin_left = 8.0
 	lv_box.content_margin_right = 8.0
@@ -2739,10 +2816,8 @@ func _build_player_card() -> Control:
 	_pc_level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	lvrow.add_child(_pc_level)
 
-
-
-	_pc_xp = LiquidBar.new(UiStyle.sunk(), 15.0)
-	_pc_xp.custom_minimum_size.x = 110
+	_pc_xp = LiquidBar.new(UiStyle.sunk(), 14.0)
+	_pc_xp.custom_minimum_size.x = 104
 	_pc_xp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	lvrow.add_child(_pc_xp)
 	_pc_xp_text = Label.new()
@@ -2751,7 +2826,6 @@ func _build_player_card() -> Control:
 	lvrow.add_child(_pc_xp_text)
 	col.add_child(lvrow)
 	card.add_child(col)
-
 
 	var coinbox: = HBoxContainer.new()
 	coinbox.add_theme_constant_override("separation", 7)
@@ -2764,19 +2838,14 @@ func _build_player_card() -> Control:
 	coinbox.add_child(_pc_coins)
 	card.add_child(coinbox)
 
-
-
-
 	if LaunchGate.economy_off():
 		lvrow.visible = false
 		coinbox.visible = false
 
-
-
 	_pc_div = Panel.new()
 	_pc_div.custom_minimum_size = Vector2(2, 34)
 	var db: = StyleBoxFlat.new()
-	db.bg_color = Color(UiStyle.muted(), 0.25)
+	db.bg_color = Color(UiStyle.SECONDARY, 0.25)
 	db.set_corner_radius_all(1)
 	_pc_div.add_theme_stylebox_override("panel", db)
 	_pc_div.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -2896,12 +2965,9 @@ func _comma(n: int) -> String:
 func _page(carded: = true) -> Control:
 	var holder: = MarginContainer.new()
 	holder.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	holder.position.x = 96
-
-
-
-	holder.add_theme_constant_override("margin_top", 100)
-	holder.add_theme_constant_override("margin_bottom", 92)
+	holder.position.x = 38
+	holder.add_theme_constant_override("margin_top", 84)
+	holder.add_theme_constant_override("margin_bottom", 80)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(holder)
 	var center: = VBoxContainer.new()
@@ -2913,20 +2979,23 @@ func _page(carded: = true) -> Control:
 	center.add_child(panel)
 	var v: = VBoxContainer.new()
 	v.name = "Box"
-	v.add_theme_constant_override("separation", 14)
-	v.custom_minimum_size.x = 340
+	v.add_theme_constant_override("separation", 12)
+	v.custom_minimum_size.x = 360
 	if not carded:
 		panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		panel.add_child(v)
 		return holder
 
-
-
-
-	var fsb: = UiStyle.flat_box(Color("2a2a30") if UiStyle.dark else UiStyle.PRIMARY, 30)
+	var fsb: = UiStyle.flat_box(Color(0.05, 0.08, 0.16, 0.94), 22)
+	fsb.set_border_width_all(2)
+	fsb.border_color = Color(0.18, 0.30, 0.52, 0.9)
+	fsb.border_width_top = 4
+	fsb.shadow_color = Color(0, 0, 0, 0.45)
+	fsb.shadow_size = 16
+	fsb.shadow_offset = Vector2(0, 6)
 	fsb.set_content_margin_all(18)
 	panel.add_theme_stylebox_override("panel", fsb)
-	UiBackdrop.doodles(panel, Color(1, 1, 1, 0.04) if UiStyle.dark else Color(1, 1, 1, 0.32))
+	UiBackdrop.doodles(panel, Color(UiStyle.SECONDARY, 0.05))
 	var outer: = VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 12)
 	panel.add_child(outer)
@@ -2935,7 +3004,9 @@ func _page(carded: = true) -> Control:
 	outer.add_child(head)
 	var card: = PanelContainer.new()
 	card.name = "Card"
-	var csb: = UiStyle.card_box(UiStyle._AUTO, UiStyle.RADIUS_SOFT)
+	var csb: = UiStyle.card_box(Color(0.08, 0.12, 0.22, 0.95), UiStyle.RADIUS_SOFT)
+	csb.set_border_width_all(1)
+	csb.border_color = Color(0.18, 0.28, 0.48, 0.7)
 	csb.set_content_margin_all(16)
 	card.add_theme_stylebox_override("panel", csb)
 	outer.add_child(card)
@@ -2955,23 +3026,22 @@ func _box(page: Control) -> VBoxContainer:
 func _menu_btn(text: String, kind: String, on_press: Callable) -> Button:
 	var b: = Button.new()
 	b.text = text
-	b.custom_minimum_size.y = 62
-	UiStyle.style_button(b, kind, 22)
+	b.custom_minimum_size.y = 58
+	UiStyle.style_button(b, kind, 21)
 	if on_press.is_valid():
 		b.pressed.connect(on_press)
 	return b
 
 func _group(v: VBoxContainer, text: String) -> void :
-
 	var p: = Label.new()
 	p.text = text
 	UiStyle.style_label(p, "title")
 	v.add_child(p)
 	var rule: = Panel.new()
-	rule.custom_minimum_size = Vector2(56, 5)
+	rule.custom_minimum_size = Vector2(56, 4)
 	var rb: = StyleBoxFlat.new()
-	rb.bg_color = UiStyle.PRIMARY
-	rb.set_corner_radius_all(3)
+	rb.bg_color = UiStyle.SECONDARY
+	rb.set_corner_radius_all(2)
 	rule.add_theme_stylebox_override("panel", rb)
 	v.add_child(rule)
 
@@ -2990,130 +3060,273 @@ func _offline() -> void:
 	_go_to_match(1)
 
 func _build_home() -> void :
-
-
-
 	var v: = _box(_home)
+	v.add_theme_constant_override("separation", 10)
+	v.custom_minimum_size.x = 512
 
-	v.add_theme_constant_override("separation", 9)
-	var online_card: = _card_btn("massiveMultiplayer", "online", 
-		MenuCopy.sub("online"), "primary", _open_online)
-	var local_card: = _card_btn("singleplayer", "local", 
-		MenuCopy.sub("local"), "info", _open_local)
+	var hdr: = HBoxContainer.new()
+	hdr.add_theme_constant_override("separation", 10)
+	hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pill_bar: = Panel.new()
+	pill_bar.custom_minimum_size = Vector2(18, 6)
+	pill_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var psb: = StyleBoxFlat.new()
+	psb.bg_color = UiStyle.PRIMARY
+	psb.set_corner_radius_all(3)
+	pill_bar.add_theme_stylebox_override("panel", psb)
+	hdr.add_child(pill_bar)
+	var hlbl: = Label.new()
+	hlbl.text = "STADIUM HUB  •  SELECT MODE"
+	hlbl.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+	hlbl.add_theme_font_size_override("font_size", 12)
+	hlbl.add_theme_color_override("font_color", UiStyle.SECONDARY)
+	hdr.add_child(hlbl)
+	v.add_child(hdr)
+
+	var online_card: = _bento_card("massiveMultiplayer", "online",
+		MenuCopy.sub("online"), "primary", _open_online, Vector2(512, 92), UiStyle.PRIMARY, "WORLDWIDE")
+	v.add_child(online_card)
+
+	var row_modes: = HBoxContainer.new()
+	row_modes.add_theme_constant_override("separation", 12)
+	row_modes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var local_card: = _bento_card("singleplayer", "local",
+		MenuCopy.sub("local"), "info", _open_local, Vector2(250, 108), UiStyle.SECONDARY, "OFFLINE & LAN")
 	_card_local = local_card.get_child(0) as Button
-	var practice_card: = _card_btn("target", "practice", 
-		MenuCopy.sub("practice"), "info", func(): _show(_practice), false, UiStyle.SUCCESS)
+	var practice_card: = _bento_card("target", "practice",
+		MenuCopy.sub("practice"), "info", func(): _show(_practice), Vector2(250, 108), UiStyle.SUCCESS, "TRAINING")
+	row_modes.add_child(local_card)
+	row_modes.add_child(practice_card)
+	v.add_child(row_modes)
 
-
-	var coop_card: = _card_btn("gamepad", "controller config", 
+	var row_tools: = HBoxContainer.new()
+	row_tools.add_theme_constant_override("separation", 12)
+	row_tools.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var coop_card: = _bento_card("gamepad", "controller config",
 		MenuCopy.sub("controllers"), "info", func():
 			if MobileRender.enabled():
 				MobileControls.open_editor()
 			else:
-				_show(_configs), false, UiStyle.HIGHLIGHT)
+				_show(_configs), Vector2(250, 88), UiStyle.HIGHLIGHT, "CONTROLS")
+	var settings_card: = _bento_card("gear", "system settings",
+		"audio, video & display", "quiet",
+		func(): _open_settings(SettingsPanel.Scope.SYSTEM), Vector2(250, 88), Color("38bdf8"), "SYSTEM")
+	row_tools.add_child(coop_card)
+	row_tools.add_child(settings_card)
+	v.add_child(row_tools)
 
+	var row_meta: = HBoxContainer.new()
+	row_meta.add_theme_constant_override("separation", 12)
+	row_meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var feedback_card: = _bento_card("question", "feedback & bugs",
+		"", "quiet", func(): _open_feedback(), Vector2(250, 52), UiStyle.MUTED, "", true)
+	var credits_card: = _bento_card("movie", "credits",
+		"", "info", func(): _open_credits(), Vector2(250, 52), UiStyle.PRIMARY, "", true)
+	row_meta.add_child(feedback_card)
+	row_meta.add_child(credits_card)
+	v.add_child(row_meta)
 
+	var b_online: = online_card.get_child(0) as Button
+	var b_local: = local_card.get_child(0) as Button
+	var b_practice: = practice_card.get_child(0) as Button
+	var b_coop: = coop_card.get_child(0) as Button
+	var b_settings: = settings_card.get_child(0) as Button
+	var b_feedback: = feedback_card.get_child(0) as Button
+	var b_credits: = credits_card.get_child(0) as Button
 
-	var settings_card: = _card_btn("gear", "system settings", 
-		"configure audio, video, display", "quiet", 
-		func(): _open_settings(SettingsPanel.Scope.SYSTEM))
-	var cards: = [online_card, local_card, practice_card, coop_card, settings_card]
+	b_online.focus_neighbor_bottom = b_online.get_path_to(b_local)
 
+	b_local.focus_neighbor_top = b_local.get_path_to(b_online)
+	b_local.focus_neighbor_right = b_local.get_path_to(b_practice)
+	b_local.focus_neighbor_bottom = b_local.get_path_to(b_coop)
 
-	var feedback_card: = _card_btn("question", "feedback & bug reports", 
-		"", "quiet", 
-		func(): _open_feedback())
-	cards.append(feedback_card)
+	b_practice.focus_neighbor_top = b_practice.get_path_to(b_online)
+	b_practice.focus_neighbor_left = b_practice.get_path_to(b_local)
+	b_practice.focus_neighbor_bottom = b_practice.get_path_to(b_settings)
 
+	b_coop.focus_neighbor_top = b_coop.get_path_to(b_local)
+	b_coop.focus_neighbor_right = b_coop.get_path_to(b_settings)
+	b_coop.focus_neighbor_bottom = b_coop.get_path_to(b_feedback)
 
+	b_settings.focus_neighbor_top = b_settings.get_path_to(b_practice)
+	b_settings.focus_neighbor_left = b_settings.get_path_to(b_coop)
+	b_settings.focus_neighbor_bottom = b_settings.get_path_to(b_credits)
 
-	var credits_card: = _card_btn("movie", "credits", "", "primary", 
-		func(): _open_credits(), true)
-	cards.append(credits_card)
-	for card in cards:
-		v.add_child(card)
+	b_feedback.focus_neighbor_top = b_feedback.get_path_to(b_coop)
+	b_feedback.focus_neighbor_right = b_feedback.get_path_to(b_credits)
 
+	b_credits.focus_neighbor_top = b_credits.get_path_to(b_settings)
+	b_credits.focus_neighbor_left = b_credits.get_path_to(b_feedback)
 
-	var btns: Array = []
-	for card in cards:
-		btns.append((card as Control).get_child(0) as Button)
-	for i in btns.size():
-		var b: = btns[i] as Button
-		if b == null:
-			continue
-		if i > 0:
-			b.focus_neighbor_top = b.get_path_to(btns[i - 1] as Button)
-		if i < btns.size() - 1:
-			b.focus_neighbor_bottom = b.get_path_to(btns[i + 1] as Button)
+func _bento_card(icon_name: String, title: String, sub: String,
+		kind: String, on_press: Callable, min_sz: Vector2,
+		accent: Color, badge_text: = "", compact: = false) -> Control:
+	var hero: = kind == "primary" and not compact
+	var b: = Button.new()
+	b.custom_minimum_size = min_sz
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var base_fill: = Color(0.11, 0.16, 0.28, 0.94) if not hero else Color(0.16, 0.12, 0.22, 0.96)
+	if hero:
+		base_fill = Color("18223a").lerp(UiStyle.PRIMARY, 0.26)
+	var radius: = 14 if compact else 18
+	for state in [["normal", base_fill],
+			["hover", base_fill.lightened(0.08).lerp(accent, 0.12)],
+			["pressed", base_fill.darkened(0.08)],
+			["disabled", Color(0.06, 0.09, 0.16, 0.5)]]:
+		var st_name: = String(state[0])
+		var sb: = UiStyle.flat_box(state[1], radius, false)
+		sb.set_border_width_all(2)
+		sb.border_width_left = 5 if not compact else 4
+		if st_name == "disabled":
+			sb.border_color = Color(UiStyle.muted(), 0.2)
+		elif st_name == "hover":
+			sb.border_color = accent.lightened(0.22)
+		else:
+			sb.border_color = accent if hero else accent.lerp(Color("223458"), 0.45)
+		sb.shadow_color = Color(0, 0, 0, 0.36)
+		sb.shadow_size = 10 if not compact else 6
+		sb.shadow_offset = Vector2(0, 3)
+		b.add_theme_stylebox_override(st_name, sb)
 
+	var focus_ring: = UiStyle.flat_box(base_fill.lightened(0.08).lerp(accent, 0.14), radius)
+	focus_ring.set_border_width_all(3)
+	focus_ring.border_width_left = 6
+	focus_ring.border_color = UiStyle.SECONDARY
+	b.add_theme_stylebox_override("focus", focus_ring)
 
+	if hero:
+		UiBackdrop.doodles(b, Color(UiStyle.PRIMARY, 0.12))
 
+	var pad: = MarginContainer.new()
+	pad.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.add_theme_constant_override("margin_left", 16 if not compact else 14)
+	pad.add_theme_constant_override("margin_right", 14 if not compact else 12)
+	pad.add_theme_constant_override("margin_top", 10 if not compact else 6)
+	pad.add_theme_constant_override("margin_bottom", 10 if not compact else 6)
+	b.add_child(pad)
 
+	var is_wide: = min_sz.x > 340.0 or compact
+	if is_wide:
+		var row: = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14 if not compact else 10)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pad.add_child(row)
+		var st: = UiStyle.sticker(icon_name, accent, 32 if compact else 52, 0.0, Color.WHITE)
+		st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(st)
+		var col: = VBoxContainer.new()
+		col.add_theme_constant_override("separation", 1)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(col)
+		var t: = Label.new()
+		t.text = title.to_upper()
+		UiStyle.style_label(t, "title", Color.WHITE)
+		t.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+		t.add_theme_font_size_override("font_size", 16 if compact else 24)
+		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(t)
+		if sub != "":
+			var s: = Label.new()
+			s.text = sub
+			UiStyle.style_label(s, "small", Color(0.75, 0.84, 0.98, 0.85))
+			s.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			col.add_child(s)
+		if badge_text != "":
+			var pill: = Label.new()
+			pill.text = badge_text + " ▸"
+			UiStyle.style_pill(pill, accent, UiStyle.INK if accent == UiStyle.SECONDARY or accent == UiStyle.SUCCESS else Color.WHITE, 11)
+			pill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(pill)
+	else:
+		var vcol: = VBoxContainer.new()
+		vcol.add_theme_constant_override("separation", 4)
+		vcol.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pad.add_child(vcol)
+		var top_row: = HBoxContainer.new()
+		top_row.add_theme_constant_override("separation", 8)
+		top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var st: = UiStyle.sticker(icon_name, accent, 36 if min_sz.y < 96.0 else 42, 0.0, Color.WHITE)
+		st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		top_row.add_child(st)
+		var sp: = Control.new()
+		sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		top_row.add_child(sp)
+		if badge_text != "":
+			var tag: = Label.new()
+			tag.text = badge_text
+			tag.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+			tag.add_theme_font_size_override("font_size", 10)
+			tag.add_theme_color_override("font_color", accent.lightened(0.18))
+			tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			top_row.add_child(tag)
+		vcol.add_child(top_row)
+		var push: = Control.new()
+		push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		push.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vcol.add_child(push)
+		var t: = Label.new()
+		t.text = title.to_upper()
+		UiStyle.style_label(t, "title", Color.WHITE)
+		t.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
+		t.add_theme_font_size_override("font_size", 17 if min_sz.y < 96.0 else 20)
+		t.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		t.clip_text = true
+		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vcol.add_child(t)
+		if sub != "":
+			var s: = Label.new()
+			s.text = sub
+			UiStyle.style_label(s, "small", UiStyle.muted())
+			s.add_theme_font_size_override("font_size", 12)
+			s.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			s.clip_text = true
+			s.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			vcol.add_child(s)
 
+	b.pressed.connect(UiStyle.press_bounce.bind(b))
+	b.pressed.connect(UiStyle.sfx.bind("confirm" if hero else "press"))
+	UiStyle.hover_sound(b)
+	if on_press.is_valid():
+		b.pressed.connect(on_press)
+	var card_wrap: = MarginContainer.new()
+	card_wrap.add_child(b)
+	_tilt.append(b)
+	return card_wrap
 
 
 
 func _tilt_cards(delta: float) -> void :
 	if _freeplay or _tilt.is_empty():
 		return
-	var vp: = get_viewport().get_visible_rect().size
-	if vp.x <= 0.0:
-		return
-	var off: = (ui.get_viewport().get_mouse_position() / vp)\
-	- Vector2(0.5, 0.5)
-	if _tilt_fake != 0.0:
-		off.x = _tilt_fake
-	var k: = clampf(delta * 9.0, 0.0, 1.0)
-	var depth: = 0
+	var k: = clampf(delta * 12.0, 0.0, 1.0)
+	var mouse: = ui.get_viewport().get_mouse_position()
 	for c in _tilt:
 		var card: = c as Button
-		if not is_instance_valid(card):
+		if not is_instance_valid(card) or not card.is_visible_in_tree():
 			continue
-		if not card.is_visible_in_tree():
-			continue
-
-
-
-
 		card.offset_transform_enabled = true
 		card.offset_transform_pivot_ratio = Vector2(0.5, 0.5)
-
-
-		var hovered: = card.has_focus() or card.get_global_rect().has_point(
-			ui.get_viewport().get_mouse_position())
-
-
-
-
-		var recede: = 1.0 - 0.026 * float(depth)
-		var fan: = 0.028 - 0.016 * float(depth)
-		var want_rot: = 0.0 if hovered else fan - off.x * 0.06
-		var want_scale: = 1.07 if hovered else recede - absf(off.x) * 0.012
-		var want_x: = (52.0 if hovered else 8.0 * float(depth))\
-		- off.x * (26.0 + 8.0 * float(depth))
-		card.offset_transform_rotation = lerpf(
-			card.offset_transform_rotation, want_rot, k)
-		card.offset_transform_scale = card.offset_transform_scale.lerp(
-			Vector2.ONE * want_scale, k)
-		card.offset_transform_position.x = lerpf(
-			card.offset_transform_position.x, want_x, k)
-
+		var hovered: = card.has_focus() or card.get_global_rect().has_point(mouse)
+		var want_scale: = 1.028 if hovered else 1.0
+		var want_y: = -3.0 if hovered else 0.0
+		card.offset_transform_rotation = lerpf(card.offset_transform_rotation, 0.0, k)
+		card.offset_transform_scale = card.offset_transform_scale.lerp(Vector2.ONE * want_scale, k)
+		card.offset_transform_position = card.offset_transform_position.lerp(Vector2(0.0, want_y), k)
 		card.z_index = 2 if hovered else 0
-		depth += 1
 
 
 
 func _lean_tiles(delta: float) -> void :
 	if _freeplay or _lean.is_empty():
 		return
-	var vp: = get_viewport().get_visible_rect().size
-	if vp.x <= 0.0:
-		return
 	var mouse: = ui.get_viewport().get_mouse_position()
-	var off: = (mouse / vp) - Vector2(0.5, 0.5)
-	if _tilt_fake != 0.0:
-		off.x = _tilt_fake
-	var k: = clampf(delta * 9.0, 0.0, 1.0)
+	var k: = clampf(delta * 12.0, 0.0, 1.0)
 	for c in _lean:
 		var t: = c as Control
 		if not is_instance_valid(t) or not t.is_visible_in_tree():
@@ -3121,13 +3334,10 @@ func _lean_tiles(delta: float) -> void :
 		t.offset_transform_enabled = true
 		t.offset_transform_pivot_ratio = Vector2(0.5, 0.5)
 		var hovered: = t.get_global_rect().has_point(mouse)
-		var want_rot: = 0.0 if hovered else - off.x * 0.05
-		var want_scale: = 1.08 if hovered else 1.0 - absf(off.x) * 0.01
-		t.offset_transform_rotation = lerpf(t.offset_transform_rotation, want_rot, k)
-		t.offset_transform_scale = t.offset_transform_scale.lerp(
-			Vector2.ONE * want_scale, k)
-		t.offset_transform_position.x = lerpf(
-			t.offset_transform_position.x, - off.x * 14.0, k)
+		var want_scale: = 1.04 if hovered else 1.0
+		t.offset_transform_rotation = lerpf(t.offset_transform_rotation, 0.0, k)
+		t.offset_transform_scale = t.offset_transform_scale.lerp(Vector2.ONE * want_scale, k)
+		t.offset_transform_position = t.offset_transform_position.lerp(Vector2.ZERO, k)
 		t.z_index = 2 if hovered else 0
 
 
@@ -3139,86 +3349,20 @@ func _lean_tiles(delta: float) -> void :
 func _card_btn(icon_name: String, title: String, sub: String, 
 		kind: String, on_press: Callable, slim: = false, 
 		tint: = Color(0, 0, 0, 0)) -> Control:
-	var yellow: = kind == "primary"
-	var disc_c: = Color.WHITE if yellow\
+	var primary: = kind == "primary"
+	var accent: = UiStyle.PRIMARY if primary\
 	else (UiStyle.MUTED if kind == "quiet" else UiStyle.SECONDARY)
-	if tint.a > 0.0 and not yellow:
-		disc_c = tint
-	var b: = Button.new()
-
-	b.custom_minimum_size = Vector2(430, 46 if slim else 74)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var fill: = UiStyle.PRIMARY if yellow else UiStyle.card()
-	var radius: = 18 if slim else 24
-	for state in [["normal", fill], ["hover", fill.lightened(0.06) if yellow else fill.lerp(UiStyle.SECONDARY, 0.06)], 
-		["pressed", fill.darkened(0.06)], 
-		["disabled", Color(UiStyle.muted(), 0.3)]]:
-		b.add_theme_stylebox_override(String(state[0]), UiStyle.flat_box(state[1], radius, 
-			not yellow and String(state[0]) != "disabled"))
-
-
-
-	var focus_ring: = UiStyle.flat_box(fill.lightened(0.06), radius)
-	focus_ring.set_border_width_all(4)
-	focus_ring.border_color = UiStyle.SECONDARY
-	b.add_theme_stylebox_override("focus", focus_ring)
-	if yellow and not slim:
-		UiBackdrop.doodles(b, Color(1, 1, 1, 0.38))
-	var pad: = MarginContainer.new()
-	pad.set_anchors_preset(Control.PRESET_FULL_RECT)
-	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for side in ["left", "right"]:
-		pad.add_theme_constant_override("margin_%s" % side, 14)
-	b.add_child(pad)
-	var row: = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pad.add_child(row)
-
-
-	var disc_px: = 34 if slim else 54
-	var st: = UiStyle.sticker(icon_name, disc_c, disc_px, 
-		-0.08 if _tilt.size() % 2 == 0 else 0.06, 
-		UiStyle.INK if yellow else Color.WHITE)
-	st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(st)
-	var col: = VBoxContainer.new()
-	col.add_theme_constant_override("separation", 0)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(col)
-	var t: = Label.new()
-	t.text = title
-	UiStyle.style_label(t, "title", UiStyle.INK if yellow else UiStyle.text())
-	t.add_theme_font_size_override("font_size", 20 if slim else 27)
-	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(t)
-
-	if sub != "":
-		var s: = Label.new()
-		s.text = sub
-		UiStyle.style_label(s, "small", 
-			Color(UiStyle.INK, 0.66) if yellow else UiStyle.muted())
-		s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(s)
-	b.pressed.connect(UiStyle.press_bounce.bind(b))
-	b.pressed.connect(UiStyle.sfx.bind("confirm" if yellow else "press"))
-	UiStyle.hover_sound(b)
-	if on_press.is_valid():
-		b.pressed.connect(on_press)
-	var card_wrap: = MarginContainer.new()
-	card_wrap.add_theme_constant_override("margin_left", 30)
-	card_wrap.add_child(b)
-	_tilt.append(b)
-	return card_wrap
+	if tint.a > 0.0 and not primary:
+		accent = tint
+	return _bento_card(icon_name, title, sub, kind, on_press,
+		Vector2(450, 48 if slim else 78), accent, "", slim)
 
 func _ribbon_box(fill: Color) -> StyleBoxFlat:
 	var rb: = StyleBoxFlat.new()
 	rb.bg_color = fill
-	rb.set_corner_radius_all(99)
-	rb.content_margin_left = 30.0
-	rb.content_margin_right = 56.0
+	rb.set_corner_radius_all(16)
+	rb.content_margin_left = 26.0
+	rb.content_margin_right = 44.0
 	rb.content_margin_top = 8.0
 	rb.content_margin_bottom = 10.0
 	return rb
@@ -3226,15 +3370,15 @@ func _ribbon_box(fill: Color) -> StyleBoxFlat:
 func _hero_btn(text_in: String, on_press: Callable) -> Button:
 	var b: = Button.new()
 	b.text = text_in
-	b.add_theme_stylebox_override("normal", _ribbon_box(Color(UiStyle.INK, 0.45)))
-	b.add_theme_stylebox_override("hover", _ribbon_box(Color(UiStyle.INK, 0.6)))
-	b.add_theme_stylebox_override("pressed", _ribbon_box(Color(UiStyle.INK, 0.6)))
-	b.add_theme_stylebox_override("focus", _ribbon_box(Color(UiStyle.INK, 0.6)))
-	b.add_theme_stylebox_override("disabled", _ribbon_box(Color(UiStyle.INK, 0.3)))
+	b.add_theme_stylebox_override("normal", _ribbon_box(Color(UiStyle.INK, 0.65)))
+	b.add_theme_stylebox_override("hover", _ribbon_box(Color(UiStyle.INK, 0.8)))
+	b.add_theme_stylebox_override("pressed", _ribbon_box(Color(UiStyle.INK, 0.85)))
+	b.add_theme_stylebox_override("focus", _ribbon_box(Color(UiStyle.INK, 0.8)))
+	b.add_theme_stylebox_override("disabled", _ribbon_box(Color(UiStyle.INK, 0.35)))
 	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
-	b.add_theme_font_size_override("font_size", 46)
+	b.add_theme_font_size_override("font_size", 42)
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", UiStyle.PRIMARY)
 	b.add_theme_color_override("font_pressed_color", 
@@ -3242,7 +3386,7 @@ func _hero_btn(text_in: String, on_press: Callable) -> Button:
 	b.add_theme_color_override("font_hover_pressed_color", UiStyle.PRIMARY)
 	b.add_theme_color_override("font_focus_color", UiStyle.PRIMARY)
 	b.add_theme_color_override("font_outline_color", UiStyle.INK)
-	b.add_theme_constant_override("outline_size", 12)
+	b.add_theme_constant_override("outline_size", 10)
 	b.pressed.connect(UiStyle.press_bounce.bind(b))
 	b.pressed.connect(UiStyle.sfx.bind("press"))
 	UiStyle.hover_sound(b)
@@ -3279,18 +3423,18 @@ func _ribbon_btn(text_in: String, kind: String, on_press: Callable) -> Button:
 	else:
 		var yellow: = kind == "primary"
 		var fill: = Color(UiStyle.PRIMARY, 0.96) if yellow\
-		else Color(UiStyle.INK, 0.45)
-		var hov: = UiStyle.PRIMARY if yellow else Color(UiStyle.INK, 0.62)
+		else Color(UiStyle.INK, 0.65)
+		var hov: = UiStyle.PRIMARY if yellow else Color(UiStyle.INK, 0.8)
 		b.add_theme_stylebox_override("normal", _ribbon_box(fill))
 		b.add_theme_stylebox_override("hover", _ribbon_box(hov))
 		b.add_theme_stylebox_override("pressed", _ribbon_box(hov))
 		b.add_theme_stylebox_override("focus", _ribbon_box(hov))
 		b.add_theme_stylebox_override("disabled", 
-			_ribbon_box(Color(UiStyle.INK, 0.25)))
+			_ribbon_box(Color(UiStyle.INK, 0.3)))
 		b.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
-		b.add_theme_font_size_override("font_size", 26)
-		var tc: = UiStyle.INK if yellow else Color.WHITE
-		var th: = UiStyle.INK if yellow else UiStyle.PRIMARY
+		b.add_theme_font_size_override("font_size", 24)
+		var tc: = Color.WHITE
+		var th: = Color.WHITE if yellow else UiStyle.SECONDARY
 		b.add_theme_color_override("font_color", tc)
 		b.add_theme_color_override("font_hover_color", th)
 		b.add_theme_color_override("font_pressed_color", th)
@@ -3319,11 +3463,11 @@ const HEAD_STICKERS: = {
 	"system settings": ["gear", "grey"], "profile settings": ["wrench", "blue"], 
 }
 
-func _head_sticker(text_in: String, px: = 50) -> Control:
+func _head_sticker(text_in: String, px: = 46) -> Control:
 	var pick: Array = HEAD_STICKERS.get(text_in, ["star", "grey"])
 	var c: Color = {"blue": UiStyle.SECONDARY, "green": UiStyle.SUCCESS, 
-		"pink": UiStyle.HIGHLIGHT}.get(String(pick[1]), UiStyle.MUTED)
-	var st: = UiStyle.sticker(String(pick[0]), c, px, -0.08)
+		"pink": UiStyle.HIGHLIGHT}.get(String(pick[1]), UiStyle.PRIMARY)
+	var st: = UiStyle.sticker(String(pick[0]), c, px, 0.0)
 	st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return st
 
@@ -3332,14 +3476,13 @@ func _head_sticker(text_in: String, px: = 50) -> Control:
 
 func _hero_head(v: VBoxContainer, text_in: String, on_card: = false) -> Label:
 	var row: = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 12)
 	row.add_child(_head_sticker(text_in))
 	var l: = Label.new()
-	l.text = text_in
+	l.text = text_in.to_upper()
 	l.add_theme_font_override("font", UiStyle.font(UiStyle.FONT_BLACK))
-	l.add_theme_font_size_override("font_size", 34)
-	l.add_theme_color_override("font_color", 
-		UiStyle.text() if (UiStyle.dark or not on_card) else UiStyle.INK)
+	l.add_theme_font_size_override("font_size", 28)
+	l.add_theme_color_override("font_color", Color.WHITE)
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(l)
 	if v.has_meta("head"):
@@ -3354,9 +3497,11 @@ func _hero_head(v: VBoxContainer, text_in: String, on_card: = false) -> Label:
 		return l
 
 	var cap: = PanelContainer.new()
-	var csb: = UiStyle.flat_box(UiStyle.card(), UiStyle.CAPSULE, true)
-	csb.content_margin_left = 10.0
-	csb.content_margin_right = 30.0
+	var csb: = UiStyle.flat_box(Color(0.06, 0.10, 0.19, 0.94), 16, true)
+	csb.border_width_left = 4
+	csb.border_color = UiStyle.SECONDARY
+	csb.content_margin_left = 14.0
+	csb.content_margin_right = 24.0
 	csb.content_margin_top = 8.0
 	csb.content_margin_bottom = 8.0
 	cap.add_theme_stylebox_override("panel", csb)
@@ -3374,12 +3519,11 @@ func _back_btn(on_press: Callable, text_in: = "back") -> Button:
 	b.icon = UiStyle.icon("arrowLeft", true)
 	for st in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", 
 			"icon_hover_pressed_color", "icon_focus_color"]:
-		b.add_theme_color_override(st, 
-			UiStyle.SECONDARY.lightened(0.25) if UiStyle.dark else UiStyle.SECONDARY)
-	b.add_theme_constant_override("icon_max_width", 22)
+		b.add_theme_color_override(st, UiStyle.SECONDARY)
+	b.add_theme_constant_override("icon_max_width", 20)
 	b.add_theme_constant_override("h_separation", 10)
-	b.add_theme_font_size_override("font_size", 19)
-	b.custom_minimum_size = Vector2(150, 46)
+	b.add_theme_font_size_override("font_size", 18)
+	b.custom_minimum_size = Vector2(148, 44)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	b.set_meta("page_back", true)
 	return b
@@ -6895,7 +7039,7 @@ func _show(page: Control) -> void :
 		if p != null:
 			p.visible = p == page
 
-
+	_update_active_nav_tab(page)
 	_refresh_player_card()
 
 

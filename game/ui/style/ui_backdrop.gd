@@ -80,38 +80,22 @@ func _draw() -> void :
 	if not bare:
 		var page: = dark_page if (UiStyle.dark and dark_page.a > 0.0) else UiStyle.bg()
 		draw_rect(Rect2(Vector2.ZERO, size), page)
-	var line: = Color(UiStyle.text(), 0.055 if UiStyle.dark else 0.065)
+	var line: = Color(UiStyle.SECONDARY, 0.055)
 	if line_color.a > 0.0:
-		line = line_color
-	if style == "stripes":
-		var band: = Color(UiStyle.text(), 0.03)
-		var w: = size.x * 0.22
-		var drift: = fmod(_t * 12.0, w * 2.0)
-		var x: = - size.y - w * 2.0 + drift
-		while x < size.x + size.y:
-			draw_colored_polygon(PackedVector2Array([
-				Vector2(x, size.y), Vector2(x + w, size.y), 
-				Vector2(x + w + size.y, 0.0), Vector2(x + size.y, 0.0), 
-			]), band)
-			x += w * 2.0
-		_ball(Vector2(size.x * 0.9, size.y * 0.16), size.y * 0.11, 
-			_t * 0.05, line)
-		_ball(Vector2(size.x * 0.08, size.y * 0.86), size.y * 0.08, 
-			- _t * 0.06, line)
+		line = Color(line_color.r, line_color.g, line_color.b, minf(line_color.a, 0.12))
+	if size.x <= 8.0 or size.y <= 8.0:
 		return
-	if calm:
-		var soft: = Color(line, line.a * 0.7)
-		for b in _CALM_BALLS:
-			var drift: = sin(_t * 0.35 + float(b[4])) * size.y * 0.006
-			_ball(Vector2(size.x * float(b[0]), size.y * float(b[1]) + drift), 
-				size.y * float(b[2]), _t * float(b[3]) + float(b[4]), soft)
-		return
-
-	var base: = size.y * (1.6 if size.x > size.y * 3.0 else 1.0)
-	for b in _BALLS:
-		var breathe: = sin(_t * 0.35 + float(b[4])) * size.y * 0.012
-		_ball(Vector2(size.x * float(b[0]), size.y * float(b[1]) + breathe), 
-			base * float(b[2]), _t * float(b[3]) + float(b[4]), line)
+	var band: = Color(line.r, line.g, line.b, line.a * 0.45)
+	var span: = maxf(size.y * 0.36, 64.0)
+	var drift: = fmod(_t * 10.0, span * 2.0) if animated else 0.0
+	var x: = - size.y + drift
+	while x < size.x + size.y:
+		draw_line(Vector2(x, size.y), Vector2(x + size.y * 0.65, 0.0), band, 1.5, true)
+		x += span
+	var r: = minf(size.x, size.y) * 0.34
+	var center: = Vector2(size.x * 0.86, size.y * 0.5)
+	draw_arc(center, r, 0.0, TAU, 36, band, 1.5, true)
+	draw_arc(center, r * 0.58, 0.4, 2.7, 24, Color(UiStyle.PRIMARY, line.a * 0.5), 2.0, true)
 
 
 

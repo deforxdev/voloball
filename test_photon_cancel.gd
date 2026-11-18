@@ -26,7 +26,15 @@ func _run() -> void:
 	if Net.active or Net.is_host or Net.cloud_code != "":
 		_fail("late connection callback revived a canceled room")
 		return
-	print("PHOTON CANCEL PASS: invalid code, cancel host, cancel join, no late revival")
+	if Net.host_cloud_party("Cancel party") != OK or not Net.party:
+		_fail("could not begin party connection")
+		return
+	Net.leave()
+	await get_tree().create_timer(0.3).timeout
+	if Net.active or Net.party or Net.custom_lobby or Net.cloud_code != "":
+		_fail("cancel retained party state")
+		return
+	print("PHOTON CANCEL PASS: invalid code, cancel host/join/party, no late revival")
 	get_tree().quit(0)
 
 func _fail(reason: String) -> void:

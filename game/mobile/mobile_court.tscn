@@ -58,7 +58,6 @@ shader_parameter/wobble = 0.0
 shader_parameter/hit_x = 0.0
 shader_parameter/hit_y = 0.5
 shader_parameter/grid = Vector2(46, 7)
-shader_parameter/sag = 0.34
 shader_parameter/ripple = 0.11
 shader_parameter/tape_top = 0.06
 shader_parameter/tape_bottom = 0.04

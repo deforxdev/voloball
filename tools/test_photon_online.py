@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("build/cloud-tests"))
     parser.add_argument("--rendered", action="store_true")
     parser.add_argument("--quick", action="store_true")
+    parser.add_argument("--party", action="store_true", help="Test menu parties and online freeplay")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     startup = None
@@ -22,7 +23,7 @@ def main():
         startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startup.wShowWindow = 0
     command = [args.godot, "--path", str(Path(__file__).resolve().parents[1]),
-               "--scene", "res://test_cloud_online.tscn"]
+               "--scene", "res://test_cloud_party.tscn" if args.party else "res://test_cloud_online.tscn"]
     if not args.rendered:
         command.append("--headless")
     env = dict(os.environ, VOLOBALL_PHOTON_TEST_QUEUE=uuid.uuid4().hex[:12])
@@ -59,9 +60,10 @@ def main():
         for role, process, path in zip(("HOST", "CLIENT"), processes, paths):
             output = path.read_text(encoding="utf-8", errors="replace")
             assert process.returncode == 0, output[-12000:]
-            assert "CLOUD " + role + " MATCH PASS" in output, output[-12000:]
+            assert "CLOUD " + role + (" PARTY PASS" if args.party else " MATCH PASS") in output, output[-12000:]
             assert not any(error in output for error in ("ERROR:", "SCRIPT ERROR", "Shader Error")), output[-12000:]
-        print("PHOTON ONLINE PASS: original menu, room creation/join, full match, client inputs, host snapshots, clean departure", flush=True)
+        print("PHOTON PARTY PASS: menu party, online freeplay, player/ball sync, menu/reentry, party-to-lobby" if args.party else
+              "PHOTON ONLINE PASS: original menu, room creation/join, full match, client inputs, host snapshots, clean departure", flush=True)
     finally:
         for process in processes:
             if process.poll() is None:

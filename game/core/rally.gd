@@ -348,6 +348,7 @@ func prepare_serve() -> void :
 		court.center_x + 0.35 * court.half_w * serve_side, 0.0, 
 		serve_side * (court.half_l + 0.8))
 	server.velocity = Vector3.ZERO
+	server.serve_style.clear()
 	server.reset_physics_interpolation()
 	serve_done = false
 	serve_launch_z = absf(server.global_position.z)
@@ -364,7 +365,6 @@ func begin_serve(prepare: = true) -> void :
 	bot_toss_delay = randf_range(1.0, 2.2)
 	_ended = false
 
-	_pending_toss_t = 0.0
 	serve_prepared.emit(server)
 
 
@@ -428,58 +428,28 @@ func serve_tick(delta: float) -> void :
 	var may_toss: = practice or in_serve_zone(server, 0.6)
 
 	_call_grace = maxf(_call_grace - delta, 0.0)
-	if input.serve_pressed != _dbg_sp:
-		_dbg_sp = input.serve_pressed
-		print("[serve] pressed=", input.serve_pressed, " may_toss=", may_toss,
-			" grace=", _call_grace, " lvl=", int(server.get("power_level")),
-			" practice=", practice)
-
-
-
-	if input.serve_pressed and may_toss and _call_grace <= 0.0:
-		var lvl: int = GameConfig.power_disp_of(int(server.get("power_level")))
-		if lvl <= 3:
-			if not _minigame_armed:
-				_minigame_armed = true
-				serve_minigame_requested.emit(server)
+	if input.serve_pressed and may_toss and _call_grace <= 0.0 and not _minigame_armed:
+		if not input.charge_attack and GameConfig.power_disp_of(server.power_level, server.input_power_cap()) <= 3:
+			_minigame_armed = true
+			serve_minigame_requested.emit(server)
 		else:
-			_pending_toss_t = 0.0
-			do_toss(Ball.PHYS.serve_toss_min, 2.2)
-			_auto_serve_left = Ball.PHYS.serve_toss_min / Ball.PHYS.gravity
-	elif _pending_toss_t > 0.0:
+			do_toss(Ball.PHYS.serve_toss_min, 0.8)
+			_auto_serve_power = server.serve_button_power() if input.charge_attack else -1.0
+			_auto_serve_left = POWER_SERVE_WINDUP
 
-
-
-
-
-
-
-		_pending_toss_t -= delta
-		if _pending_toss_t <= 0.0:
-
-
-			if practice or in_serve_zone(server, 0.6):
-				do_toss(_pending_toss_u)
-			else:
-				_pending_toss_t = 0.0
-
-
-
-
-var _pending_toss_u: = 7.5
-var _pending_toss_t: = 0.0
+const POWER_SERVE_WINDUP: = 0.36
 var _auto_serve_left: = -1.0
-var _dbg_sp: = false
+var _auto_serve_power: = -1.0
 var _minigame_armed: = false
 
-func request_toss(up_speed: float) -> void :
-	if serve_done:
-		return
-	_pending_toss_u = up_speed
-	_pending_toss_t = 0.35
+func serve_minigame_pending() -> bool:
+	return _minigame_armed
+
+func cancel_serve_minigame() -> void:
+	_minigame_armed = false
 
 func do_toss(up_speed: float, horiz_max: = -1.0) -> void :
-	_pending_toss_t = 0.0
+	_auto_serve_left = -1.0
 	_minigame_armed = false
 	ball.frozen = false
 
@@ -592,7 +562,7 @@ func live_tick(delta: float) -> void :
 	if _auto_serve_left > 0.0 and not bots.has(server):
 		_auto_serve_left -= delta
 		if _auto_serve_left <= 0.0:
-			server.serve_auto_strike()
+			server.serve_auto_strike(_auto_serve_power)
 	_check_crossing()
 	if court.out_of_play(ball.global_position):
 		end_rally( - last_touch_side, "ball out")

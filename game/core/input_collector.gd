@@ -275,6 +275,7 @@ func collect(rig: CameraRig, player: Player) -> PlayerInput:
 		_buf_serve = BUFFER_TIME
 
 	var input: = PlayerInput.new()
+	input.charge_attack = MobileControls.enabled() and _dev.device < 0
 
 
 
@@ -300,9 +301,12 @@ func collect(rig: CameraRig, player: Player) -> PlayerInput:
 	input.block_pressed = _buf_block > 0.0 and player != null and player.block_input_actionable()
 	if input.block_pressed:
 		_buf_block = 0.0
-	input.serve_pressed = _buf_serve > 0.0
-	if input.serve_pressed:
-		_buf_serve = 0.0
+	if input.charge_attack:
+		input.serve_held = not serve_dead and _dev.pressed("serve")
+		input.serve_pressed = not serve_dead and _dev.just_released("serve")
+	else:
+		input.serve_pressed = _buf_serve > 0.0
+	_buf_serve = 0.0
 	input.call_pressed = _dev.just_pressed("ball_spawn")
 	input.strafe_held = _dev.pressed("strafe")
 	var now: = Time.get_ticks_msec() / 1000.0
@@ -343,7 +347,10 @@ func collect(rig: CameraRig, player: Player) -> PlayerInput:
 		_dtap_sprint = false
 	_dtap_moving = moving
 
-	input.sprint_held = (_sprint_toggle or _dtap_sprint) and not input.strafe_held
+	if input.charge_attack:
+		input.sprint_held = raw_move.length() >= 0.95 and not input.strafe_held
+	else:
+		input.sprint_held = (_sprint_toggle or _dtap_sprint) and not input.strafe_held
 	input.aim = _resolve_aim(rig, player)
 
 

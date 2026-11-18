@@ -29,7 +29,12 @@ var block_pressed: = false
 var dive_dir: = Vector2.ZERO
 var dive_side: = -1
 var serve_pressed: = false
+var serve_held: = false
 var call_pressed: = false
 var back_pass_pressed: = false
 var strafe_held: = false
 var sprint_held: = false
+
+var charge_attack: = false
+var power_level: = 0
+var power_cap: = 0

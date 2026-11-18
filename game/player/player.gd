@@ -537,6 +537,15 @@ var hold_time: = 0.0
 var _hold_real: = 0.0
 const POWER_LEVELS: = 16
 var power_level: int = 12
+var _remote_power_cap: int = 0
+const TOUCH_CHARGE_SECONDS: = 0.38
+var attack_charge: = 0.0
+var _set_charge: = 0.0
+var _serve_charge: = 0.0
+var _charge_attack: = false
+
+func input_power_cap() -> int:
+	return _remote_power_cap if _remote_power_cap > 0 else GameConfig.power_cap
 var serve_style: = {}
 var _set_back: = false
 var _prev_q: = false
@@ -548,6 +557,8 @@ const SPIKE_POWER_MAX: = 1.45
 func _spike_overdrive() -> float:
 	if is_bot:
 		return 0.0
+	if _charge_attack:
+		return clampf(inverse_lerp(0.75, 1.0, attack_charge), 0.0, 1.0) * 0.45
 	return clampf((float(power_level) - 12.0) / 4.0, 0.0, 1.0) * 0.45
 
 func _contact_finesse(kind: TouchKind) -> bool:
@@ -913,9 +924,14 @@ func _ready() -> void :
 			rig.queue_free()
 			_model = null
 
-func simulate(input: PlayerInput, delta: float) -> void :
+func simulate(input: PlayerInput, delta: float, remote: = false) -> void :
 
 
+
+	_charge_attack = input.charge_attack and not is_bot
+	attack_charge = _tick_touch_charge(attack_charge, input.contact_pressed, input.contact_released, delta)
+	_set_charge = _tick_touch_charge(_set_charge, input.set_pressed, input.set_released, delta)
+	_serve_charge = _tick_touch_charge(_serve_charge, input.serve_held, input.serve_pressed, delta)
 
 	var _was_contact_held: = _contact_button_held
 	_contact_button_held = input.contact_pressed
@@ -925,7 +941,14 @@ func simulate(input: PlayerInput, delta: float) -> void :
 
 	if not input.contact_pressed:
 		_receive_hold_spent = false
-	_poll_power_keys()
+	if remote:
+		if input.power_level > 0:
+			power_level = input.power_level
+			_remote_power_cap = input.power_cap
+	else:
+		_remote_power_cap = 0
+		if not _charge_attack:
+			_poll_power_keys()
 	_tick_serve_hold(input)
 	aim_point = input.aim
 	_capture_ball_step()
@@ -1317,8 +1340,19 @@ func _present_indicators(delta: float) -> void :
 		if _armed_kind == TouchKind.SET and set_dump_intent(_armed_dump or _dump_push_left > 0.0):
 			queued_kind = TouchKind.DUMP
 		ring_color = RING_COLORS.get(queued_kind, FEEL.ring_jump)
+	if _charge_attack:
+		if serve_charge_ui:
+			fill = _serve_charge
+			ring_color = FEEL.ring_serve
+		elif _set_charge > 0.0:
+			fill = _set_charge
+			ring_color = RING_COLORS[TouchKind.SET]
+		elif attack_charge > 0.0:
+			fill = attack_charge
+			ring_color = RING_COLORS[TouchKind.SPIKE]
 	var jump_fill: = false
-	if contact_state != ContactState.WINDUP and is_on_floor() and _jump_charge > 0.02:
+	if contact_state != ContactState.WINDUP and is_on_floor() and _jump_charge > 0.02\
+	and (not _charge_attack or fill <= 0.02):
 		fill = _jump_charge / FEEL.jump_charge_time
 		jump_fill = true
 	charge_ui.visible = fill > 0.02 and charge_ui_enabled and not cinematic_hidden
@@ -1389,9 +1423,9 @@ func _poll_power_keys() -> void :
 		_prev_e = e
 		return
 	if q and not _prev_q:
-		power_level = clampi(power_level - 1, 1, POWER_LEVELS)
+		power_level = GameConfig.power_disp_level(GameConfig.power_disp_of(power_level) - 1)
 	if e and not _prev_e:
-		power_level = clampi(power_level + 1, 1, POWER_LEVELS)
+		power_level = GameConfig.power_disp_level(GameConfig.power_disp_of(power_level) + 1)
 	_prev_q = q
 	_prev_e = e
 
@@ -1425,12 +1459,13 @@ func _poll_power_hotkeys() -> void :
 				clampi(int(ent.get("pow", 0)), 1, GameConfig.power_cap))
 
 
-func serve_auto_strike() -> void :
+func serve_auto_strike(charged_power := -1.0) -> void :
 	if ball == null or is_bot or not ball.serve_assist:
 		return
 	if serve_style.size() > 0:
 		return
-	_do_touch(TouchKind.SPIKE, clampf(hold_power(), 0.05, 1.0), false, Vector2.ZERO, false)
+	var power: = charged_power if charged_power >= 0.0 else lerpf(0.55, 1.0, hold_power())
+	_do_touch(TouchKind.SPIKE, power, false, Vector2.ZERO, false)
 
 
 
@@ -2978,7 +3013,21 @@ func _spike_turn_bleed() -> void :
 	_charge_yaw = yaw
 	_charge_yaw_frame = frame
 
+func _tick_touch_charge(charge: float, held: bool, released: bool, delta: float) -> float:
+	if not _charge_attack:
+		return 0.0
+	if held:
+		return minf(charge + delta / TOUCH_CHARGE_SECONDS, 1.0)
+	return charge if released else 0.0
+
+func serve_button_power() -> float:
+	return lerpf(0.18, 1.0, _serve_charge)
+
 func hold_power() -> float:
+	if _charge_attack:
+		if serve_charge_ui:
+			return serve_button_power()
+		return lerpf(0.18, 1.0, _set_charge if _armed_set_button or _set_windup else attack_charge)
 	if not is_bot:
 		return (float(power_level) - 1.0) / float(POWER_LEVELS - 1)
 	return clampf(hold_time / FEEL.max_hold, 0.0, 1.0)
@@ -5104,7 +5153,8 @@ func _swing(input: PlayerInput) -> void :
 			if ball != null and ball.serve_assist and serve_style.size() > 0:
 				power = float(serve_style.get("power", 0.5))
 			else:
-				power = 1.0 if last_perfect else minf(hold_power() + _spike_overdrive(), SPIKE_POWER_MAX)
+				var timing_bonus: = 0.1 if last_perfect else 0.0
+				power = minf(hold_power() + _spike_overdrive() + timing_bonus, SPIKE_POWER_MAX)
 
 
 
@@ -5288,7 +5338,7 @@ func _do_touch(kind: TouchKind, power: float, finesse: bool,
 
 	_spike_light = kind == TouchKind.DUMP\
 	or (was_spike and (power < FEEL.spike_light_power\
-	or spike_flat < FEEL.spike_light_dist\
+	or (spike_flat < FEEL.spike_light_dist and power < 0.55)\
 	or (influence.y < - FEEL.float_tilt and power < FEEL.spike_charge_cap)))
 	var kick_clear: = false
 
@@ -5377,7 +5427,7 @@ func _do_touch(kind: TouchKind, power: float, finesse: bool,
 	and String(serve_style.get("type", "")) == "float":
 		float_seed = Ball.float_seed_for(int(serve_style.get("pattern", 7)),
 			float(serve_style.get("charge", 1.0)))
-	elif kind == TouchKind.SPIKE and ball.serve_assist and _float_serve_intent(influence):
+	elif kind == TouchKind.SPIKE and ball.serve_assist and serve_style.is_empty() and _float_serve_intent(influence):
 
 
 
@@ -5399,6 +5449,10 @@ func _do_touch(kind: TouchKind, power: float, finesse: bool,
 
 
 
+
+	var serve_curve: = NAN
+	if kind == TouchKind.SPIKE and ball.serve_assist and String(serve_style.get("type", "")) == "spin":
+		serve_curve = float(serve_style.get("curve", 0.0))
 
 	var serve_hit: = ball != null and ball.serve_assist and not finesse\
 	and kind != TouchKind.BUMP
@@ -5457,13 +5511,10 @@ func _do_touch(kind: TouchKind, power: float, finesse: bool,
 
 		var clears: = kick_clear or is_bot or Rules.touch_clears_net(kind)
 		ball.strike_source = self
-		ball.hit(target, kind, power, finesse, influence, clears, quick, float_seed, 
-			kind == TouchKind.SET and set_is_tower(aim_point))
+		ball.hit(target, kind, power, finesse, influence, clears, quick, float_seed,
+			kind == TouchKind.SET and set_is_tower(aim_point), serve_curve)
 		applied = true
-		if ball.serve_assist and serve_style.size() > 0:
-			if String(serve_style.get("type", "")) == "spin":
-				ball.curve = float(serve_style.get("curve", 0.0))
-			serve_style = {}
+		serve_style.clear()
 	elif not net_puppet and not ball.net_puppet:
 
 
@@ -5475,13 +5526,10 @@ func _do_touch(kind: TouchKind, power: float, finesse: bool,
 
 		var clears2: = kick_clear or Rules.touch_clears_net(kind)
 		ball.strike_source = self
-		ball.hit(target, kind, power, finesse, influence, clears2, quick, float_seed, 
-			kind == TouchKind.SET and set_is_tower(aim_point))
+		ball.hit(target, kind, power, finesse, influence, clears2, quick, float_seed,
+			kind == TouchKind.SET and set_is_tower(aim_point), serve_curve)
 		applied = true
-		if ball.serve_assist and serve_style.size() > 0:
-			if String(serve_style.get("type", "")) == "spin":
-				ball.curve = float(serve_style.get("curve", 0.0))
-			serve_style = {}
+		serve_style.clear()
 	elif not net_puppet:
 
 

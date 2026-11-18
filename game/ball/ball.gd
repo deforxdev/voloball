@@ -102,7 +102,7 @@ const NET_CLEAR_MIN_DIST: = 0.6
 
 
 
-const SERVE_MIN_DEPTH: = 1.5
+const SERVE_MIN_DEPTH: = 1.0
 
 
 const ACTION_TOSS_DEADZONE: = 5.5
@@ -128,8 +128,8 @@ static func action_toss_aim(from_pos: Vector3, aim: Vector3) -> Vector3:
 	return Vector3(from_pos.x + dir.x * nd, aim.y, from_pos.z + dir.y * nd)
 var _float_t: = 0.0
 var _float_prev: = Vector3.ZERO
-const FLOAT_LAT: = 0.34
-const FLOAT_VERT: = 0.16
+const FLOAT_LAT: = 0.13
+const FLOAT_VERT: = 0.035
 const FLOAT_FADE_H: = 1.5
 
 
@@ -158,11 +158,6 @@ const FLOAT_STILL_FADE: = 6.0
 
 
 
-const FLOAT_HANG_G: = 0.15
-const FLOAT_DROP_G: = 4.0
-const FLOAT_DROP_H: = 3.0
-const FLOAT_DROP_BLEND: = 0.35
-const FLOAT_STILL_TIME: = 1.0
 const FLOAT_STILL_WINDOW: = 1.4
 
 
@@ -833,8 +828,7 @@ func _physics_process(delta: float) -> void :
 	_stop_check()
 
 
-	vel.y -= PHYS.gravity * float(ss[2]) * float_gravity(flight_float_charge(), 
-		global_position.y - _float_prev.y, vel.y) * delta
+	vel.y -= PHYS.gravity * float(ss[2]) * delta
 	if curve != 0.0:
 
 
@@ -922,7 +916,7 @@ static func solve_launch(from: Vector3, target: Vector3, kind: int, power: float
 		target.y = PHYS.quick_arrive_h if quick\
 		else lerpf(PHYS.set_arrive_h, PHYS.quick_arrive_h, clampf(power, 0.0, 1.0))
 	else:
-		target.y = 0.0
+		target.y = PHYS.radius
 	var flight: = _flight_time(kind, power, finesse, quick)
 
 
@@ -947,7 +941,7 @@ static func solve_launch(from: Vector3, target: Vector3, kind: int, power: float
 
 
 	if kind == Player.TouchKind.SPIKE:
-		var spike_flat: = Vector2(target.x - from.x, target.z - from.z).length()
+		var spike_dist: = from.distance_to(target)
 		var speed: float
 		var min_flight: float
 		if finesse:
@@ -966,7 +960,7 @@ static func solve_launch(from: Vector3, target: Vector3, kind: int, power: float
 			speed *= over
 			min_flight /= over
 		speed /= lerpf(PHYS.float_time_factor, PHYS.drive_time_factor, (influence.y + 1.0) * 0.5)
-		flight = clampf(spike_flat / maxf(speed, 1.0), min_flight, 3.0)
+		flight = clampf(spike_dist / maxf(speed, 1.0), min_flight, 3.0)
 	var to_target: = target - from
 	var out: = Vector3(to_target.x, 0.0, to_target.z) / flight
 	out.y = (to_target.y + 0.5 * g * flight * flight) / flight
@@ -1049,14 +1043,11 @@ static func solve_launch(from: Vector3, target: Vector3, kind: int, power: float
 
 func hit(target: Vector3, kind: int, power: float, finesse: bool, 
 		influence: = Vector2.ZERO, clearance_assist: = false, quick: = false, 
-		float_seed_in: = 0, tower: = false) -> void :
+		float_seed_in: = 0, tower: = false, serve_curve: = NAN) -> void :
 
-	var dive: = 1.0
 	if is_driven_serve(kind, finesse, float_seed_in, serve_assist):
 		var bot: = strike_source != null and strike_source.is_bot
-		var sv: = solve_serve(global_position, target, minf(power, 1.0) if bot else power)
-		vel = sv[0]
-		dive = float(sv[1])
+		vel = solve_serve(global_position, target, minf(power, 1.0) if bot else power)
 	else:
 		vel = solve_launch(global_position, target, kind, power, finesse, influence, 
 			serve_assist or clearance_assist, quick, serve_assist, tower)
@@ -1072,21 +1063,21 @@ func hit(target: Vector3, kind: int, power: float, finesse: bool,
 	_stop_seen = stop_clock
 	if float_seed_in != 0:
 
-		vel = solve_float(global_position, target, power, float_charge_of(float_seed_in))
+		vel = solve_float(global_position, target, power)
 	var tip: = float_seed_in == 0 and is_tip(kind, finesse, serve_assist)
 	if tip and _pending_tip_rise > 0.0:
 		vel = solve_tip(global_position, target, 
 			tip_rise_over_tape(global_position, target, _pending_tip_rise))
 	_pending_tip_rise = -1.0
 	serve_assist = false
-	curve = - influence.x * PHYS.curve_strength
+	curve = - influence.x * PHYS.curve_strength if is_nan(serve_curve) else serve_curve
 
 
 	stop_float()
 	if float_seed_in != 0:
 		start_float(float_seed_in)
 	tip_drop = tip
-	dive_g = dive
+	dive_g = 1.0
 	last_hit_power = power
 	last_hit_kind = kind
 	last_hit_momentum = _pending_momentum
@@ -1205,37 +1196,24 @@ func floor_squash(impact: float) -> void :
 
 
 
-static func solve_serve(from: Vector3, target: Vector3, power: float) -> Array:
+static func solve_serve(from: Vector3, target: Vector3, power: float) -> Vector3:
+	var k: = clampf(inverse_lerp(PHYS.serve_power_slow, PHYS.serve_power_fast, power), 0.0, 1.0)
+	return _serve_launch(from, target, lerpf(PHYS.serve_time_slow, PHYS.serve_time_fast, k))
 
-
-
-
-
-
-
-	if from.z * target.z < 0.0 and absf(target.z) < SERVE_MIN_DEPTH:
-		target.z = - signf(from.z) * SERVE_MIN_DEPTH
-	var k: = clampf((power - PHYS.serve_power_slow) / (PHYS.serve_power_fast - PHYS.serve_power_slow), 
-		0.0, 1.0)
-	var t: = lerpf(PHYS.serve_time_slow, PHYS.serve_time_fast, k)
-	var to_target: = target - from
+static func _serve_launch(from: Vector3, target: Vector3, flight: float) -> Vector3:
+	target.y = PHYS.radius
 	var g: = PHYS.gravity
-	var mult: = 1.0
 	if from.z * target.z < 0.0:
-		var d: = maxf(absf(from.z), NET_CLEAR_MIN_DIST)
-		var f: = d / (d + absf(target.z))
+		if absf(target.z) < SERVE_MIN_DEPTH:
+			target.z = -signf(from.z) * SERVE_MIN_DEPTH
+		var f: = absf(from.z) / (absf(from.z) + absf(target.z))
 		var clear: = PHYS.net_height + PHYS.serve_clear_tight + PHYS.radius
-		var need: = clear - from.y * (1.0 - f)
-		var shape: = 0.5 * f * (1.0 - f) * t * t
-		if need > 0.0 and shape > 0.0:
-
-			mult = clampf(need / (g * shape), 1.0, PHYS.serve_dive_max)
-
-			var t_min: = sqrt(need / (0.5 * g * mult * f * (1.0 - f)))
-			t = maxf(t, t_min)
-	var out: = Vector3(to_target.x, 0.0, to_target.z) / t
-	out.y = (to_target.y + 0.5 * g * mult * t * t) / t
-	return [out, mult]
+		var need: = clear - lerpf(from.y, target.y, f)
+		if need > 0.0:
+			flight = maxf(flight, sqrt(2.0 * need / (g * f * (1.0 - f))))
+	var out: = (target - from) / flight
+	out.y += 0.5 * g * (flight + 1.0 / Engine.physics_ticks_per_second)
+	return out
 
 static func is_driven_serve(kind: int, finesse: bool, float_seed_in: int, serve: bool) -> bool:
 	return serve and kind == Player.TouchKind.SPIKE and not finesse and float_seed_in == 0
@@ -1257,7 +1235,7 @@ static func solve_tip(from: Vector3, target: Vector3, rise: = -1.0) -> Vector3:
 	var vy: = sqrt(2.0 * PHYS.gravity * (rise if rise > 0.0 else PHYS.tip_rise))
 
 
-	var t: = float_fall_time(from.y, vy, target.y, TIP_CHARGE)
+	var t: = _fall_time(from.y, vy, target.y)
 	var flat: = Vector3(target.x - from.x, 0.0, target.z - from.z) / maxf(t, 0.05)
 	return Vector3(flat.x, vy, flat.z)
 
@@ -1279,7 +1257,7 @@ static func tip_rise_over_tape(from: Vector3, target: Vector3, rise: float) -> f
 		var z: = from.z
 		var over: = true
 		for _s in 600:
-			vy -= PHYS.gravity * float_gravity(TIP_CHARGE, y, vy) * dt
+			vy -= PHYS.gravity * dt
 			y += vy * dt
 			var nz: = z + v.z * dt
 			if signf(nz) != signf(z):
@@ -1298,64 +1276,18 @@ static func tip_rise_over_tape(from: Vector3, target: Vector3, rise: float) -> f
 
 
 
-static func solve_float(from: Vector3, target: Vector3, power: float, 
-		charge: = 1.0) -> Vector3:
-	var t: = lerpf(PHYS.float_serve_time_slow, PHYS.float_serve_time_fast, clampf(power, 0.0, 1.0))
-	t *= lerpf(FLOAT_STILL_TIME, 1.0, clampf(charge, 0.0, 1.0))
-	var to_target: = target - from
-	var vy0: = (to_target.y + 0.5 * PHYS.gravity * t * t) / t
-	var t_real: = float_fall_time(from.y, vy0, target.y, charge)
-	var out: = Vector3(to_target.x, 0.0, to_target.z) / maxf(t_real, 0.05)
-	out.y = vy0
-	return out
+static func solve_float(from: Vector3, target: Vector3, power: float) -> Vector3:
+	var flight: = lerpf(PHYS.float_serve_time_slow, PHYS.float_serve_time_fast, clampf(power, 0.0, 1.0))
+	return _serve_launch(from, target, flight)
 
-
-
-
-static func float_fall_time(y: float, vy: float, floor_y: float, charge: float) -> float:
+static func _fall_time(y: float, vy: float, floor_y: float) -> float:
 	var g: = PHYS.gravity
-	if charge >= 1.0:
-		return (vy + sqrt(maxf(vy * vy + 2.0 * g * (y - floor_y), 0.0))) / g
-	var dt: = 1.0 / 60.0
-	var t: = 0.0
-	for _i in 600:
-		var vy_next: = vy - g * float_gravity(charge, y, vy) * dt
-		var y_next: = y + vy_next * dt
-		if y_next <= floor_y and vy_next < 0.0:
-			return t + dt * clampf((y - floor_y) / maxf(y - y_next, 0.0001), 0.0, 1.0)
-		y = y_next
-		vy = vy_next
-		t += dt
-	return t
-
-
-
-static func float_gravity(charge: float, y: float, vy: float) -> float:
-	if charge <= -1.5:
-		return - charge - 1.0
-	if charge < 0.0:
-
-
-
-		var k: = smoothstep(0.0, PHYS.tip_drop_blend, - vy)
-		return lerpf(1.0, PHYS.tip_drop_gravity, k)
-	if charge >= 1.0 or vy >= 0.0:
-		return 1.0
-	var high: = smoothstep(FLOAT_DROP_H - FLOAT_DROP_BLEND, FLOAT_DROP_H + FLOAT_DROP_BLEND, y)
-	return lerpf(1.0, lerpf(FLOAT_DROP_G, FLOAT_HANG_G, high), 1.0 - clampf(charge, 0.0, 1.0))
-
-
-
+	return (vy + sqrt(maxf(vy * vy + 2.0 * g * (y - floor_y), 0.0))) / g
 
 func _time_to_floor() -> float:
 	if vel.y >= 0.0:
 		return -1.0
-	var charge: = flight_float_charge()
-	if charge >= 1.0:
-		var disc: = vel.y * vel.y + 2.0 * PHYS.gravity * (global_position.y - PHYS.radius)
-		return (vel.y + sqrt(disc)) / PHYS.gravity if disc >= 0.0 else -1.0
-	return float_fall_time(global_position.y - _float_prev.y, vel.y, PHYS.radius, charge)
-
+	return _fall_time(global_position.y - _float_prev.y, vel.y, PHYS.radius)
 
 func flight_float_charge() -> float:
 	if tip_drop:
@@ -1931,7 +1863,7 @@ static func step_flight(pos: Vector3, vel: Vector3, curve_in: float, dt: float,
 	vel = ss[0]
 	stop_in = ss[1]
 
-	vel.y -= PHYS.gravity * float(ss[2]) * float_gravity(float_charge, pos.y, vel.y) * dt
+	vel.y -= PHYS.gravity * float(ss[2]) * dt
 	if curve_in != 0.0:
 
 

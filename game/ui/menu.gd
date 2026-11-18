@@ -1567,6 +1567,8 @@ func _build_player() -> void :
 	ball.wall_min = Vector3( - HALL_X, -1000000.0, - HALL_Z)
 	ball.wall_max = Vector3(HALL_X, 30.0, HALL_Z)
 	ball.struck.connect( func(pos: Vector3, power: float, kind: int):
+		if Net.party and _freeplay:
+			_take_party_ball(_my_party_id())
 		_play_contact_fx(pos, power, kind, ball.vel, ball.combo_tier, ball.dig_weight, 
 			ball.strike_source == player)
 
@@ -3015,6 +3017,13 @@ func _build_home() -> void :
 	var settings_card: = _card_btn("gear", "system settings", 
 		"configure audio, video, display", "quiet", 
 		func(): _open_settings(SettingsPanel.Scope.SYSTEM))
+	if OS.has_feature("android"):
+		var update_button := Button.new()
+		update_button.hide()
+		update_button.custom_minimum_size.y = 48
+		UiStyle.style_button(update_button, "primary")
+		v.add_child(update_button)
+		preload("res://game/mobile/android_update.gd").show_download_if_available(update_button)
 	var cards: = [online_card, local_card, practice_card, coop_card, settings_card]
 
 
@@ -3412,9 +3421,14 @@ func _build_online() -> void :
 
 var _host_cloud_pending := false
 var _cloud_search := false
+var _cloud_party_pending := false
+var _cloud_party_then := Callable()
 
 func _host_cloud() -> void:
 	if _host_cloud_pending:
+		return
+	if Net.cloud_session() and Net.party and Net.is_host:
+		_room_from_party()
 		return
 	_cancel_search()
 	var error := Net.host_cloud(_online_name(), _selected_max_humans())
@@ -3441,6 +3455,14 @@ func _join_cloud(code: String) -> void:
 	_watch_join(code, 95.0)
 
 func _cloud_connected() -> void:
+	if _cloud_party_pending:
+		_cloud_party_pending = false
+		var then := _cloud_party_then
+		_cloud_party_then = Callable()
+		_refresh_party_strip()
+		_flash_notice("Парті створено. Передай друзям код: " + Net.cloud_code)
+		if then.is_valid():
+			then.call()
 	if _cloud_search:
 		_mm_label.text = "Очікуємо гравців…"
 	if _host_cloud_pending:
@@ -4533,6 +4555,17 @@ func _couch_blocks(what: String) -> bool:
 	return true
 
 func _try_freeplay() -> void :
+	if MobileRender.enabled() and Net.cloud_session() and Net.party:
+		if multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+			_flash_notice("Зачекай завершення підключення парті.")
+			return
+		_shared_ball_on = true
+		_enter_freeplay()
+		if Net.is_host:
+			_spawn_practice_ball()
+		else:
+			_despawn_my_ball()
+		return
 
 
 
@@ -4873,6 +4906,10 @@ func _on_practice_closed(_reason: String) -> void :
 
 
 func _tick_practice(delta: float) -> void :
+	# Phone parties share the lightweight menu freeplay world. The desktop
+	# embedded practice court would allocate a second game and take over RPCs.
+	if MobileRender.enabled():
+		return
 	_menu_idle_t += delta
 	_practice_check_t -= delta
 	if _practice_check_t > 0.0:
@@ -6560,8 +6597,8 @@ func _start_real_match(roster: Array) -> void :
 
 
 	if Net.is_host:
-		GameConfig.quick_match = _qp != null\
-		and _qp.state != QuickPlay.State.IDLE
+		GameConfig.quick_match = Net.cloud_quick_session() or (_qp != null\
+		and _qp.state != QuickPlay.State.IDLE)
 
 
 	if _move_cover != null and is_instance_valid(_move_cover):
@@ -7034,7 +7071,7 @@ func _refresh_host_cards() -> void :
 	if _host_party_card != null:
 		_host_party_card.visible = leader
 	if _host_steam_card != null:
-		_host_steam_card.visible = MobileRender.enabled() or (Net.steam_transport_available() and not leader)
+		_host_steam_card.visible = (MobileRender.enabled() or Net.steam_transport_available()) and not leader
 
 func _setup_online() -> void :
 	_steam_up = Net.steam_init()
@@ -7259,6 +7296,12 @@ func _refresh_party_strip() -> void :
 		make.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		make.pressed.connect(_start_party)
 		_party_strip.add_child(make)
+		if MobileRender.enabled():
+			var join := Button.new()
+			join.text = "join party"
+			UiStyle.style_button(join, "secondary", 15)
+			join.pressed.connect(_open_cloud_party_join)
+			_party_strip.add_child(join)
 
 		for i in Net.PARTY_MAX - 1:
 			_party_strip.add_child(_party_empty_slot(_start_party, "start a party with friends"))
@@ -7310,7 +7353,17 @@ func _refresh_party_strip() -> void :
 	_party_strip.add_child(push)
 
 
-	if Net.party and Net.is_host:
+	if Net.party and Net.cloud_session():
+		var code := Button.new()
+		code.text = "connecting…" if _cloud_party_pending else "code: " + Net.cloud_code
+		code.disabled = _cloud_party_pending
+		code.tooltip_text = "Передай цей код друзям: Join Party → код → Join"
+		UiStyle.style_button(code, "tertiary", 13)
+		_slim_button(code)
+		code.set_meta("bar_text", true)
+		code.pressed.connect(_invite_to_party)
+		_party_strip.add_child(code)
+	elif Net.party and Net.is_host:
 		var priv: = Button.new()
 		priv.text = Net.PARTY_PRIV_NAMES[Net.party_privacy]
 		UiStyle.style_button(priv, "tertiary", 12)
@@ -7651,6 +7704,17 @@ func _on_freeplay_pose(peer_id: int, st: PackedFloat32Array) -> void :
 
 	_party_in_freeplay[peer_id] = st.size() > Player.NET_FLOATS\
 	and st[Player.NET_FLOATS] > 0.5
+	if not _party_in_freeplay[peer_id]:
+		# A player returning to the menu stops simulating shared balls. Return
+		# each of those balls to its owner so it cannot freeze on the court.
+		for bid in _ball_driver.keys():
+			if int(_ball_driver[bid]) == peer_id:
+				_ball_driver.erase(bid)
+				var owned := _party_ball_for(int(bid))
+				if owned != null:
+					owned.remote_driven = not _drives(int(bid))
+					if _drives(int(bid)):
+						_party_ball_buf.forget(int(bid))
 	var now: = float(Time.get_ticks_msec())
 	_party_puppets.add(peer_id, st, now)
 	_party_seen[peer_id] = now
@@ -8000,7 +8064,7 @@ func _spawn_practice_ball() -> void :
 	ball.vel = Vector3.ZERO
 	ball.curve = 0.0
 	ball.stop_float()
-	ball.global_position = player.global_position + Vector3(0.0, 5.2, 0.0)
+	ball.global_position = player.global_position + Vector3.UP * PracticeMode.SPAWN_HEIGHT
 	ball.reset_physics_interpolation()
 
 func _despawn_my_ball(announce: = true) -> void :
@@ -8732,8 +8796,20 @@ func _drive_reform(delta: float) -> void :
 
 func _start_party(then: = Callable()) -> void :
 	if MobileRender.enabled():
-		_show(_online)
-		_flash_notice("Створи кімнату Photon та передай код друзям.")
+		if _cloud_party_pending:
+			return
+		_cancel_search()
+		Net.home_party = {}
+		_reform_target = {}
+		var error := Net.host_cloud_party(Net.local_display_name())
+		if error != OK:
+			_flash_notice("Не вдалося створити парті (%d)." % error)
+			return
+		Net.stage = _freeplay_stage
+		_cloud_party_pending = true
+		_cloud_party_then = then
+		_refresh_party_strip()
+		_flash_notice("Створення онлайн-парті…")
 		return
 	if not OnlineTerms.require(_start_party.bind(then)):
 		return
@@ -8785,7 +8861,15 @@ func _on_party_joined() -> void :
 
 	_refresh_party_strip()
 
+func _open_cloud_party_join() -> void:
+	# Reuse the room-code join path, including timeout/cancel/error handling.
+	_show(_browse)
+	_browse_hint.text = "Введи код парті друга з 8 символів і натисни Join."
+	_bw_code.grab_focus()
+
 func _leave_party() -> void :
+	_cloud_party_pending = false
+	_cloud_party_then = Callable()
 	_invited_ids = {}
 
 
@@ -8808,6 +8892,10 @@ func _toggle_party_privacy() -> void :
 	_refresh_party_strip()
 
 func _invite_to_party() -> void :
+	if Net.cloud_session() and Net.party:
+		DisplayServer.clipboard_set(Net.cloud_code)
+		_flash_notice("Код парті: %s · Друг: Join Party → код → Join" % Net.cloud_code)
+		return
 	if not Net.party:
 		_flash_notice("not in a party yet - press create party first")
 		return
@@ -9110,7 +9198,7 @@ func _build_host() -> void :
 
 
 	_host_party_card = _card_btn("multiplayer", "open lobby with party", 
-		"", "primary", _on_host_steam)
+		"", "primary", _host_cloud if MobileRender.enabled() else _on_host_steam)
 	_host_party_card.visible = false
 	v.add_child(_host_party_card)
 
@@ -9502,6 +9590,13 @@ func _on_party_travel_to(host_id: int, code: String) -> void :
 		_browse_hint.text = "taking the party to the lobby..."
 
 func _on_session_ended(reason: String) -> void :
+	if _cloud_party_pending:
+		_cloud_party_pending = false
+		_cloud_party_then = Callable()
+		_refresh_party_strip()
+		if reason not in ["left", "restart"]:
+			_flash_notice(reason)
+		return
 	if _cloud_search:
 		_finish_cloud_search()
 		if reason not in ["left", "restart"]:
@@ -10122,6 +10217,12 @@ func _refresh_room() -> void :
 	if _bw_joining and not Net.players.is_empty():
 		_join_gen += 1
 		_set_browse_joining(false)
+	if MobileRender.enabled() and Net.cloud_session() and Net.party:
+		if _browse.visible:
+			_show(_home)
+		if not Net.is_host and Net.stage != _freeplay_stage and Stage.in_build(Net.stage):
+			_on_party_stage(Net.stage)
+		return
 
 
 
@@ -10279,6 +10380,7 @@ func _dress_lobby_tiles(entries: Dictionary, wanted: Dictionary, can_pick: bool,
 		"alt": int(res.alt), "mode": mode}
 
 func _on_start_online() -> void :
+	GameConfig.quick_match = Net.cloud_quick_session()
 
 
 
@@ -10301,6 +10403,8 @@ func _on_start_online() -> void :
 var _fp_toggle_frame: = -1
 
 func _enter_freeplay() -> void :
+	if not Net.party:
+		_shared_ball_on = SHARED_BALL or "--fp-shared-ball" in LaunchGate.dev_args()
 	_freeplay = true
 	_fp_toggle_frame = Engine.get_process_frames()
 	_dock_chat(false)
@@ -11173,16 +11277,19 @@ func _physics_process(delta: float) -> void :
 
 
 
-				var dup: = Ball.serve_toss_up(player.hold_power())
+				var toss_power: = player.serve_button_power() if input.charge_attack else player.hold_power()
+				var dup: = Ball.serve_toss_up(toss_power)
 				var dhoriz: = Ball.serve_toss_horiz(player.global_position, 
-					_toss_aim(input), player.hold_power(), dup, _toss_deadzone())
-				if input.contact_pressed and player.hold_power() > 0.0:
+					_toss_aim(input), toss_power, dup, _toss_deadzone())
+				var toss_held: = input.serve_held if input.charge_attack else input.contact_pressed
+				if toss_held:
 					_toss_preview.show_arc(player.serve_cradle_point(true), 
 						Vector3(dhoriz.x, dup, dhoriz.z), Ball.PHYS.gravity, 0.0, 
-						TrajectoryPreview.charge_color(player.hold_power()))
+						TrajectoryPreview.charge_color(toss_power))
 				else:
 					_toss_preview.clear()
-				if player.serve_release_counts(input):
+				var toss_released: = input.serve_pressed if input.charge_attack else player.serve_release_counts(input)
+				if toss_released:
 					_serving = false
 					_toss_preview.clear()
 					player.serve_charge_ui = false
@@ -11195,6 +11302,7 @@ func _physics_process(delta: float) -> void :
 		else:
 
 
+			var was_serving: = _serving
 			_tick_my_ball(input)
 			player.touch_barred = _serving or not _has_ball_to_play()
 			player.serve_charge_ui = _serving
@@ -11204,17 +11312,20 @@ func _physics_process(delta: float) -> void :
 				player.serve_charge_ui = true
 				ball.global_position = player.serve_cradle_point()
 				hud.set_serve_prompt(
-					"Утримуй УДАР і відпусти для підкидання; СТІЙКА — скасувати" if MobileControls.enabled()
+					"Утримуй ПОДАЧА й відпусти для підкидання" if MobileControls.enabled()
 					else "hold lmb to charge the toss, release to throw, tap strafe to cancel the charge")
-				var up: = Ball.serve_toss_up(player.hold_power())
+				var toss_power: = player.serve_button_power() if input.charge_attack else player.hold_power()
+				var up: = Ball.serve_toss_up(toss_power)
 
 
 
 				var horiz: = Ball.serve_toss_horiz(player.global_position, 
-					_toss_aim(input), player.hold_power(), up, _toss_deadzone())
+					_toss_aim(input), toss_power, up, _toss_deadzone())
 
 
-				if player.serve_release_counts(input):
+				var toss_released: = (was_serving and input.serve_pressed) if input.charge_attack else player.serve_release_counts(input)
+				var toss_held: = input.serve_held if input.charge_attack else input.contact_pressed
+				if toss_released:
 					_serving = false
 					player.serve_charge_ui = false
 					ball.frozen = false
@@ -11225,13 +11336,13 @@ func _physics_process(delta: float) -> void :
 						Vector3(horiz.x, up, horiz.z))
 					player.present_serve_toss()
 					_toss_preview.clear()
-				elif input.contact_pressed:
+				elif toss_held:
 
 
 
 					_toss_preview.show_arc(player.serve_cradle_point(true), 
 						Vector3(horiz.x, up, horiz.z), Ball.PHYS.gravity, 0.0, 
-						TrajectoryPreview.charge_color(player.hold_power()))
+						TrajectoryPreview.charge_color(toss_power))
 				else:
 					_toss_preview.clear()
 			else:

@@ -10,15 +10,11 @@ import urllib.parse
 import urllib.request
 from zipfile import ZipFile
 
-RELEASE_BODY = """Android {version} (ARM64)
+RELEASE_BODY = """VOLOBALL для Android {version} (ARM64).
 
-Quick Match → Find Match автоматично шукає гравців через Photon на ПК та телефонах. У приватному лобі кнопка «Почати матч» розміщена над командами. Створи кімнату через Online → Custom Lobby → Create Server. Друзі вводять восьмисимвольний код в Online → Server Browser → Join. До 10 гравців у кімнаті. Сумісний із iPhone {version}.
+Завантаж VOLOBALL-Android-{version}-ARM64.apk з Assets. Версії з вбудованою перевіркою оновлень знаходять нові Android-збірки в головному меню.
 
-Власник кімнати обчислює матч і має залишатись у грі. Photon передає дані через інтернет. Збережено редактор сенсорного керування, чітку графіку та обидва горизонтальні положення екрана. Android використовує GLES Compatibility.
-
-Завантаж VOLOBALL-Android-{version}-ARM64.apk безпосередньо з Assets. APK підписаний тестовим ключем.
-
-Перевірки меню, матчу, сенсорного керування, редактора та реального Photon Cloud пройшли. Підпис і структура APK перевірені. На фізичному Android цю версію ще не перевірено.
+APK підписаний тестовим ключем.
 """
 
 
@@ -100,7 +96,7 @@ def main():
         asset = api(upload_url, "POST", data=arguments.apk.read_bytes())
     assert asset["state"] == "uploaded"
     assert asset["size"] == arguments.apk.stat().st_size
-    assert asset["digest"] == digest, "Uploaded IPA checksum mismatch"
+    assert asset["digest"] == digest, "Uploaded APK checksum mismatch"
 
     release = api(base + "/releases/" + str(release["id"]), "PATCH", payload=dict(description, draft=False))
     ref = api(base + "/git/ref/tags/" + tag)

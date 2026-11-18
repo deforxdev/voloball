@@ -25,10 +25,7 @@ var _display_safe_area := Rect2i()
 const LAYOUT_PATH := "user://touch_controls.cfg"
 var _custom_layout: Dictionary = {}
 var _editor: Control
-var _power_center := Vector2.ZERO
 var _move_opacity := 1.0
-var _power_size := 1.0
-var _power_opacity := 1.0
 
 func enabled() -> bool:
 	return MobileRender.enabled()
@@ -101,7 +98,7 @@ func game_scene() -> Node:
 func action_label(action: String) -> String:
 	const LABELS := {"move": "РУХ", "@mouse": "ПРИЦІЛ", "contact": "УДАР", "jump": "СТРИБОК",
 		"set": "ПАС", "dive": "НИРОК", "block": "БЛОК", "serve": "ПОДАЧА", "ball_spawn": "М'ЯЧ",
-		"strafe": "СТІЙКА", "sprint": "БІГ", "camera_toggle": "КАМЕРА"}
+		"strafe": "СТІЙКА", "camera_toggle": "КАМЕРА"}
 	return LABELS.get(action, action)
 
 func _rebuild_layout() -> void:
@@ -126,9 +123,6 @@ func _rebuild_layout() -> void:
 	_stick_radius *= control_scale("move")
 	_move_center = control_position("move", Vector2(left + 135.0 * _scale, bottom - 140.0 * _scale), Vector2.ONE * _stick_radius)
 	_move_opacity = control_opacity("move")
-	_power_size = control_scale("power_display")
-	_power_opacity = control_opacity("power_display")
-	_power_center = control_position("power_display", Vector2(_safe.get_center().x, bottom - 65.0 * _scale), Vector2(55, 22) * _scale * _power_size)
 	_buttons.clear()
 	_button("contact", "УДАР", Vector2(right - 65.0 * _scale, bottom - 165.0 * _scale))
 	_button("jump", "СТРИБОК", Vector2(right - 165.0 * _scale, bottom - 65.0 * _scale))
@@ -137,10 +131,7 @@ func _rebuild_layout() -> void:
 	_button("block", "БЛОК", Vector2(right - 265.0 * _scale, bottom - 165.0 * _scale))
 	_button("serve", "ПОДАЧА", Vector2(right - 65.0 * _scale, bottom - 65.0 * _scale))
 	_button("ball_spawn", "М'ЯЧ", Vector2(left + 65.0 * _scale, top + 80.0 * _scale))
-	_button("sprint", "БІГ", Vector2(left + 285.0 * _scale, bottom - 180.0 * _scale))
 	_button("strafe", "СТІЙКА", Vector2(left + 285.0 * _scale, bottom - 80.0 * _scale))
-	_button("power_down", "−", Vector2(_safe.get_center().x - 85.0 * _scale, bottom - 65.0 * _scale))
-	_button("power_up", "+", Vector2(_safe.get_center().x + 85.0 * _scale, bottom - 65.0 * _scale))
 	_button("camera", "КАМЕРА", Vector2(right - 170.0 * _scale, top + 155.0 * _scale))
 	_button("pause", "МЕНЮ", Vector2(right - 65.0 * _scale, top + 155.0 * _scale))
 	if is_instance_valid(_editor) and (previous_size != _layout_size or previous_safe != _safe):
@@ -188,9 +179,7 @@ func touch_begin(index: int, at: Vector2) -> bool:
 		if at.distance_to(button.center) > button.radius:
 			continue
 		_touches[index] = action
-		if action in ["power_down", "power_up"]:
-			change_power(1 if action == "power_up" else -1)
-		elif action == "pause":
+		if action == "pause":
 			_key_pulse(KEY_ESCAPE)
 		elif action == "camera":
 			var scene := game_scene()
@@ -259,12 +248,6 @@ func _set_strength(action: String, strength: float) -> void:
 		_strengths.erase(action)
 		Input.action_release(action)
 
-func change_power(step: int) -> void:
-	if _player == null or not is_instance_valid(_player):
-		return
-	var current := GameConfig.power_disp_of(int(_player.get("power_level")))
-	_player.set("power_level", GameConfig.power_disp_level(clampi(current + step, 1, GameConfig.power_cap)))
-
 func release_all() -> void:
 	for action in _strengths.keys():
 		Input.action_release(action)
@@ -302,9 +285,6 @@ func draw_controls(surface: Control) -> void:
 		surface.draw_circle(button.center, button.radius, fill)
 		surface.draw_arc(button.center, button.radius, 0, TAU, 40, Color(1, 1, 1, 0.65 * button.opacity), 2.0 * _scale, true)
 		_text(surface, button.center, button.label, roundi(14 * button.size), button.opacity)
-	if _playing and _player != null:
-		var level := GameConfig.power_disp_of(int(_player.get("power_level")))
-		_text(surface, _power_center, "%d / %d" % [level, GameConfig.power_cap], roundi(22 * _power_size), _power_opacity)
 
 func _draw_stick(surface: Control, center: Vector2, value: Vector2, label: String) -> void:
 	surface.draw_circle(center, _stick_radius, Color(0.04, 0.09, 0.16, 0.4 * _move_opacity))
@@ -334,8 +314,6 @@ func control_items() -> Array:
 	var items: Array = _buttons.duplicate(true)
 	items.append({"action": "move", "label": "РУХ", "center": _move_center, "radius": _stick_radius,
 		"size": control_scale("move"), "opacity": _move_opacity})
-	items.append({"action": "power_display", "label": "3 / %d" % GameConfig.power_cap, "center": _power_center,
-		"radius": 35.0 * _scale * _power_size, "size": _power_size, "opacity": _power_opacity})
 	return items
 
 func update_control(id: String, center: Vector2, size_factor: float, opacity: float) -> void:

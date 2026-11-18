@@ -1024,12 +1024,14 @@ func power_disp_level(disp: int) -> int:
 	return clampi(1 + roundi(float(d - 1) * float(POWER_MAX - 1) / float(power_cap - 1)), 
 		1, POWER_MAX)
 
-func power_disp_of(internal: int) -> int:
+func power_disp_of(internal: int, cap: int = 0) -> int:
+	if cap <= 0:
+		cap = power_cap
 	var lvl: int = clampi(internal, 1, POWER_MAX)
-	if power_cap >= POWER_MAX:
+	if cap >= POWER_MAX:
 		return lvl
-	return clampi(1 + roundi((float(lvl) - 1.0) / float(POWER_MAX - 1) * float(power_cap - 1)), 
-		1, power_cap)
+	return clampi(1 + roundi((float(lvl) - 1.0) / float(POWER_MAX - 1) * float(cap - 1)),
+		1, cap)
 
 
 
@@ -1119,7 +1121,7 @@ var show_cam_debug: = false
 var no_cooldowns: = false
 
 
-var spike_hitstop: = true
+var spike_hitstop: = false
 
 
 
@@ -1433,10 +1435,6 @@ func apply_language() -> void :
 
 
 const POWER_BAR_PLAYERS: = "power_bar_players"
-const POWER_FILL: = Color(0.95, 0.8, 0.15, 0.95)
-const POWER_FILL_MAX: = Color(0.25, 0.5, 1.0, 0.95)
-const POWER_EMPTY: = Color(0.0, 0.0, 0.0, 0.4)
-
 var _power_bar_layer: CanvasLayer = null
 var _power_bar_cells: Array = []
 var _power_bar_label: Label = null
@@ -1451,15 +1449,8 @@ func _build_power_bar() -> void :
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	panel.offset_bottom = - 24.0
-	var sb: = StyleBoxFlat.new()
-	sb.bg_color = Color(0.0, 0.0, 0.0, 0.45)
-	sb.set_corner_radius_all(12)
-	sb.content_margin_left = 14.0
-	sb.content_margin_right = 14.0
-	sb.content_margin_top = 8.0
-	sb.content_margin_bottom = 10.0
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.offset_bottom = -16.0
+	UiStyle.style_panel(panel, UiStyle.card(), 12)
 	_power_bar_layer.add_child(panel)
 	var box: = VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1467,15 +1458,16 @@ func _build_power_bar() -> void :
 	panel.add_child(box)
 	_power_bar_label = Label.new()
 	_power_bar_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_power_bar_label.add_theme_font_size_override("font_size", 18)
+	UiStyle.style_label(_power_bar_label, "small", UiStyle.text())
 	box.add_child(_power_bar_label)
 	var row: = HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 5)
+	row.add_theme_constant_override("separation", 3)
 	box.add_child(row)
 	for i in 16:
-		var cell: = ColorRect.new()
-		cell.custom_minimum_size = Vector2(26, 38)
+		var cell: = Panel.new()
+		cell.custom_minimum_size = Vector2(12, 7)
+		cell.add_theme_stylebox_override("panel", UiStyle.flat_box(UiStyle.sunk(), 3))
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(cell)
 		_power_bar_cells.append(cell)
@@ -1484,7 +1476,7 @@ func _active_power_player() -> Node:
 	for p in get_tree().get_nodes_in_group(POWER_BAR_PLAYERS):
 		if p == null or not is_instance_valid(p):
 			continue
-		if bool(p.get("is_bot")) or bool(p.get("net_puppet")):
+		if bool(p.get("is_bot")) or bool(p.get("net_puppet")) or not bool(p.get("charge_ui_enabled")):
 			continue
 		if p.get("ball") != null:
 			return p
@@ -1493,7 +1485,7 @@ func _active_power_player() -> Node:
 func _update_power_bar() -> void :
 	if _power_bar_layer == null:
 		return
-	if menu_open and not menu_practice:
+	if MobileControls.enabled() or (menu_open and not menu_practice):
 		_power_bar_layer.visible = false
 		return
 	var p: = _active_power_player()
@@ -1512,14 +1504,14 @@ func _update_power_bar() -> void :
 		lvl = power_disp_level(disp)
 		p.set("power_level", lvl)
 	for i in 16:
-		var cell: ColorRect = _power_bar_cells[i]
+		var cell: Panel = _power_bar_cells[i]
 		cell.visible = i < power_cap
 		if not cell.visible:
 			continue
 		var on: = i < disp
-		var col: = POWER_FILL_MAX if i == power_cap - 1 else POWER_FILL
-		cell.color = col if on else POWER_EMPTY
-	_power_bar_label.text = "power %d / %d" % [disp, power_cap]
+		var fill: = UiStyle.SECONDARY if disp == power_cap else UiStyle.PRIMARY
+		(cell.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = fill if on else UiStyle.sunk()
+	_power_bar_label.text = ("%s  %d / %d" % ["СИЛА" if language == "uk" else "POWER", disp, power_cap])
 
 
 func apply_display() -> void :

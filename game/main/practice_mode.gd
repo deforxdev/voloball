@@ -15,6 +15,7 @@ extends RefCounted
 
 
 
+const SPAWN_HEIGHT: = 7.5
 const PARK: = Vector3(0.0, -40.0, 0.0)
 const PARK_Y: = -20.0
 const CROSS_DEADBAND: = 0.4
@@ -536,7 +537,7 @@ func spawn_ball(holder: Player) -> void :
 	main._rally.serve_received = true
 	main.ball.serve_assist = false
 	main.ball.serve_held = false
-	main.ball.toss(holder.global_position + Vector3(0.0, 5.2, 0.0), 0.0)
+	main.ball.toss(holder.global_position + Vector3.UP * SPAWN_HEIGHT, 0.0)
 
 func give_ball(holder: Player) -> void :
 	main._close_serve_minigame()

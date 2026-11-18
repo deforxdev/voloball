@@ -195,7 +195,7 @@ extends Resource
 @export var tip_rise: = 1.3
 @export var tip_drop_gravity: = 2.8
 @export var tip_drop_blend: = 4.0
-@export var spike_speed_fast: = 30.0
+@export var spike_speed_fast: = 34.0
 
 
 
@@ -288,8 +288,8 @@ extends Resource
 
 
 
-@export var float_serve_time_slow: = 1.6
-@export var float_serve_time_fast: = 1.3
+@export var float_serve_time_slow: = 1.4
+@export var float_serve_time_fast: = 1.15
 @export var float_time_factor: = 1.25
 
 @export var drive_time_factor: = 0.85

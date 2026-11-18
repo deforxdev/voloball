@@ -150,11 +150,11 @@ func _match_smoke(scene: Node) -> void:
 			_fail("original freeplay did not start")
 			return
 		scene._spawn_practice_ball()
-		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3(0, 5.2, 0)):
-			_fail("G did not spawn at 5.2m")
+		if not scene.ball.global_position.is_equal_approx(scene.player.global_position + Vector3.UP * PracticeMode.SPAWN_HEIGHT):
+			_fail("G did not spawn at the practice height")
 			return
 		_write("passed")
-		printerr("MOBILE MATCH SMOKE PASSED: original menu -> match -> menu -> freeplay and G at 5.2m")
+		printerr("MOBILE MATCH SMOKE PASSED: original menu -> match -> menu -> freeplay and high G spawn")
 		set_process(false)
 		if OS.get_environment("VOLOBALL_BOOT_SMOKE_QUIT") == "1":
 			get_tree().quit()

@@ -48,7 +48,7 @@ static func facial_path(style: int) -> String:
 	var list: = CharacterConfig.facial_hair_meshes()
 	if style <= 0 or style >= list.size():
 		return ""
-	return "%s/%s.blend" % [CharacterConfig.FACIAL_HAIR_DIR, list[style]]
+	return "%s/%s.glb" % [CharacterConfig.FACIAL_HAIR_DIR, list[style]]
 
 
 static func scene(path: String) -> PackedScene:

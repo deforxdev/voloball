@@ -4,10 +4,6 @@ uniform vec2 grid = vec2(46.0, 7.0);
 uniform vec4 tape_color : source_color = vec4(0.97, 0.97, 0.95, 1.0);
 uniform vec4 cord_color : source_color = vec4(0.04, 0.04, 0.04, 1.0);
 uniform float wobble = 0.0;
-uniform float sag = 0.34;
-void vertex() {
-	VERTEX.y -= sin(UV.x * 3.14159) * sag;
-}
 void fragment() {
 	vec2 cells = UV * grid;
 	vec2 cell = fract(cells);

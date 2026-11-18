@@ -55,11 +55,11 @@ extends Resource
 
 
 
-@export var jump_min_velocity: = 7.5
+@export var jump_min_velocity: = 6.4
 
 
 
-@export var jump_max_velocity: = 11.2
+@export var jump_max_velocity: = 9.7
 
 
 
@@ -67,7 +67,7 @@ extends Resource
 
 
 
-@export var jump_charge_time: = 0.75
+@export var jump_charge_time: = 0.46
 
 
 

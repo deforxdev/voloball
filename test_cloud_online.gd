@@ -3,6 +3,7 @@ extends "res://game/ui/menu.gd"
 ## Run host first, then client with --cloud-code=<printed code>.
 
 class CloudProbe extends Node:
+	const MatchScript = preload("res://game/main/main.gd")
 	var elapsed := 0.0
 	var frames := 0
 	var inputs := 0
@@ -10,10 +11,18 @@ class CloudProbe extends Node:
 	var started := false
 	var full_since := 0.0
 	var finishing := false
+	var guest_serves := 0
+	var guest_tosses := 0
+	var host_serves := 0
+	var minigame_seen := false
+	var power_serve_hit := false
 	func _ready() -> void:
 		process_mode = Node.PROCESS_MODE_ALWAYS
 		Net.input_received.connect(func(_peer, _ls, _data): inputs += 1)
 		Net.snapshot_received.connect(func(_data): snapshots += 1)
+		Net.event_received.connect(func(kind, _args):
+			if kind == "toss":
+				guest_tosses += 1)
 		Net.session_ended.connect(func(reason):
 			if not finishing:
 				push_error("CLOUD GAME FAILED: " + reason)
@@ -39,11 +48,66 @@ class CloudProbe extends Node:
 				scene.call("_on_start_online")
 		if scene.scene_file_path == MobileRender.MATCH and scene.get("player") != null:
 			frames += 1
-			if frames > 300 and not Net.is_host and snapshots > 10 and not finishing:
+			if frames == 1 and Net.cloud_quick_session() and not GameConfig.quick_match:
+				push_error("CLOUD QUICK FAILED: quick rules were not enabled")
+				get_tree().quit(1)
+				return
+			if Net.is_host:
+				_drive_host_serve(scene)
+			else:
+				_drive_guest_serve(scene)
+			if frames > 300 and not Net.is_host and snapshots > 10 and not finishing\
+			and minigame_seen and guest_serves == 2 and guest_tosses >= 2:
 				finishing = true
 				print("CLOUD CLIENT MATCH PASS: snapshots=", snapshots)
 				print("CLOUD CLIENT ROLE ", scene.get("_net_role"), " spectator=", scene.get("_spectating"), " peer=", multiplayer.get_unique_id())
 				client_passed.rpc_id(1, snapshots)
+	func _drive_host_serve(scene: Node) -> void:
+		var rally: Rally = scene.get("_rally")
+		var peer_players: Dictionary = scene.get("_peer_players")
+		if peer_players.is_empty() or finishing:
+			return
+		var guest: Player = peer_players.values()[0]
+		if host_serves == 0 and scene.get("_phase") == MatchScript.Phase.SERVE_PREP:
+			host_serves = 1
+			if rally.server != guest:
+				rally.serve_side = guest.team_side
+				scene.call("_begin_serve")
+		elif host_serves == 1 and scene.get("_phase") == MatchScript.Phase.LIVE and rally.server == guest:
+			if guest.input_power_cap() != 8 or GameConfig.power_disp_of(guest.power_level, 8) != 3:
+				push_error("CLOUD SERVE FAILED: the host used a different power level")
+				get_tree().quit(1)
+				return
+			host_serves = 2
+			# Reset only the test fixture so the same guest can serve at full power.
+			scene.call("_begin_serve")
+		elif host_serves == 2 and rally.serve_done and rally.ball.hit_by == guest:
+			power_serve_hit = true
+		if scene.get("_serve_minigame") != null:
+			push_error("CLOUD SERVE FAILED: the guest's minigame opened on the host")
+			get_tree().quit(1)
+
+	func _drive_guest_serve(scene: Node) -> void:
+		var game: Dictionary = scene.get("_np")
+		var player: Player = scene.get("player")
+		var net_ids: Dictionary = scene.get("_net_ids")
+		var minigame: ServeMinigame = scene.get("_serve_minigame")
+		if minigame != null and not minigame_seen:
+			minigame_seen = true
+			var touch := InputEventScreenTouch.new()
+			touch.pressed = true
+			minigame._input(touch)
+			minigame._input(touch)
+		if guest_serves >= 2 or guest_serves != guest_tosses\
+		or int(game.get("ph", -1)) != MatchScript.Phase.SERVE_PREP\
+		or int(game.get("sv", 0)) != int(net_ids.get(player, -1)):
+			return
+		GameConfig.power_cap = 8
+		player.power_level = GameConfig.power_disp_level(3 if guest_serves == 0 else 8)
+		var collector: InputCollector = scene.get("_input_collector")
+		collector.set("_buf_serve", 0.2)
+		guest_serves += 1
+
 	@rpc("any_peer", "reliable")
 	func client_passed(count: int) -> void:
 		if not Net.is_host or multiplayer.get_remote_sender_id() <= 1 or finishing:
@@ -52,7 +116,16 @@ class CloudProbe extends Node:
 			push_error("CLOUD GAME FAILED: inputs=%d frames=%d snapshots=%d" % [inputs, frames, count])
 			get_tree().quit(1)
 			return
+		for _i in range(90):
+			if power_serve_hit:
+				break
+			await get_tree().physics_frame
+		if not power_serve_hit:
+			push_error("CLOUD SERVE FAILED: full-power guest serve did not strike")
+			get_tree().quit(1)
+			return
 		finishing = true
+		print("CLOUD GUEST SERVES PASS: minigame and power serve")
 		finish.rpc_id(multiplayer.get_remote_sender_id())
 		print("CLOUD HOST MATCH PASS: inputs=", inputs, " client snapshots=", count)
 		await get_tree().create_timer(3).timeout

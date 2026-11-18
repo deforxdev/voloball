@@ -105,14 +105,45 @@ func run() -> void:
 	camera_rig.input_frozen = false
 	camera_rig.apply_touch_look(Vector2(0, -10000))
 	check(camera_rig._pitch <= CameraRig.PITCH_MAX, "camera swipe clamps vertical rotation")
-	var old_cap: int = GameConfig.power_cap
-	GameConfig.power_cap = 9
-	player.power_level = GameConfig.power_disp_level(3)
-	MobileControls.change_power(1)
-	check(GameConfig.power_disp_of(player.power_level) == 4, "power button uses displayed nine-step scale")
-	MobileControls.change_power(-1)
-	check(GameConfig.power_disp_of(player.power_level) == 3, "power decrement returns to minigame range")
-	GameConfig.power_cap = old_cap
+	var controls := MobileControls.control_items()
+	check(not controls.any(func(item): return item.action in ["power_up", "power_down", "power_display", "sprint"]),
+		"touch layout has no manual power controls or sprint button")
+	var channel := NetSync.InputChannel.new()
+	var edges := {"jr": 0, "cr": 0, "dv": 0, "sv": 0}
+	var touch_attack := PlayerInput.new()
+	touch_attack.charge_attack = true
+	touch_attack.contact_pressed = true
+	var step := 1.0 / 60.0
+	var packet := channel.encode(touch_attack)
+	player.simulate(NetSync.decode_input_fields(packet, edges), step, true)
+	var tap_power := player.hold_power()
+	check(tap_power < 0.3, "a tap starts with low attack power")
+	for _tick in 24:
+		packet = channel.encode(touch_attack)
+		player.simulate(NetSync.decode_input_fields(packet, edges), step, true)
+	check(is_equal_approx(player.attack_charge, 1.0), "the host charges from held attack packets")
+	touch_attack.contact_pressed = false
+	touch_attack.contact_released = true
+	player.simulate(NetSync.decode_input_fields(channel.encode(touch_attack), edges), step, true)
+	check(player.hold_power() > tap_power and is_equal_approx(player.hold_power(), 1.0),
+		"release uses the accumulated power on the host")
+	touch_attack.contact_released = false
+	player.simulate(NetSync.decode_input_fields(channel.encode(touch_attack), edges), step, true)
+	check(is_zero_approx(player.attack_charge), "charge clears after release")
+	touch_attack.set_pressed = true
+	for _tick in 24:
+		player.simulate(NetSync.decode_input_fields(channel.encode(touch_attack), edges), step, true)
+	player._armed_set_button = true
+	check(is_equal_approx(player.hold_power(), 1.0), "set button charges independently of attack")
+	player._armed_set_button = false
+	touch_attack.set_pressed = false
+	touch_attack.serve_held = true
+	for _tick in 24:
+		player.simulate(NetSync.decode_input_fields(channel.encode(touch_attack), edges), step, true)
+	touch_attack.serve_held = false
+	touch_attack.serve_pressed = true
+	player.simulate(NetSync.decode_input_fields(channel.encode(touch_attack), edges), step, true)
+	check(is_equal_approx(player.serve_button_power(), 1.0), "serve release keeps the held charge on the host")
 	var minigame := ServeMinigame.new()
 	add_child(minigame)
 	var touch := InputEventScreenTouch.new()

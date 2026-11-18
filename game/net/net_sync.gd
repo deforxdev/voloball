@@ -36,7 +36,7 @@ class InputChannel:
 
 
 
-	func encode(input: PlayerInput) -> Dictionary:
+	func encode(input: PlayerInput, power_level: = 0) -> Dictionary:
 		seq += 1
 		if input.jump_released:
 			_counts.jr += 1
@@ -59,7 +59,7 @@ class InputChannel:
 			"sh": input.set_pressed, 
 			"jr": _counts.jr, "cr": _counts.cr, "sr": _counts.sr, 
 			"dv": _counts.dv, "bk": _counts.bk, "sv": _counts.sv, 
-			"cl": _counts.cl}
+			"cl": _counts.cl, "pl": power_level, "pc": GameConfig.power_cap, "ca": input.charge_attack, "vh": input.serve_held}
 		if input.dive_pressed:
 
 
@@ -109,6 +109,9 @@ static func decode_input_fields(msg: Dictionary, seen: Dictionary) -> PlayerInpu
 		input.aim = am
 	else:
 		input.aim = Vector3.ZERO
+	input.charge_attack = msg.get("ca", false) == true
+	input.power_level = clampi(Net.ni(msg.get("pl", 0)), 0, GameConfig.POWER_MAX)
+	input.power_cap = clampi(Net.ni(msg.get("pc", GameConfig.POWER_MAX)), GameConfig.POWER_CAP_MIN, GameConfig.POWER_MAX)
 	input.jump_held = msg.get("jh", false)
 	input.contact_pressed = msg.get("cp", false)
 	input.set_pressed = msg.get("sh", false)
@@ -132,6 +135,7 @@ static func decode_input_fields(msg: Dictionary, seen: Dictionary) -> PlayerInpu
 		input.dive_dir = (dd as Vector2).limit_length(1.0)
 	var ds: = Net.ni(msg.get("ds", -1), -1)
 	input.dive_side = ds if ds >= 0 and ds <= 2 else -1
+	input.serve_held = msg.get("vh", false) == true
 	input.serve_pressed = Net.ni(msg.get("sv", 0)) > int(seen.sv)
 	input.call_pressed = Net.ni(msg.get("cl", 0)) > int(seen.get("cl", 0))
 	seen.jr = msg.get("jr", 0)

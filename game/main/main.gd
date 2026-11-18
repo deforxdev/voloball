@@ -631,10 +631,7 @@ var _ball_grace_seq: = -1.0
 var _pred_touch_seen: = 0
 var _pred_strike_mutes: = 0
 var _pred_thumps: Array = []
-var _toss_pred: = 0.0
 
-var _toss_visual_state: Array = []
-var _toss_unfrozen_snaps: = 0
 
 
 
@@ -3068,7 +3065,7 @@ func _tick_seats(delta: float) -> void :
 			gin = _gate_cinematics(seat.collector.collect(rig, body), body)
 		_tick_inputs[body] = gin
 		body.simulate(gin, delta)
-		_tick_toss_preview_for(seat.get("toss"), body, gin)
+		_tick_toss_preview_for(seat.get("toss"), body)
 		_seat_present(seat, gin)
 
 
@@ -3086,7 +3083,7 @@ func _tick_seats_client(delta: float) -> void :
 			gin = _gate_cinematics(seat.collector.collect(rig, body), body)
 		var chan = seat.get("chan")
 		if chan != null:
-			Net.send_input(chan.encode(gin), int(seat.get("ls", 0)))
+			Net.send_input(chan.encode(gin, body.power_level), int(seat.get("ls", 0)))
 
 		var input_phase: = int(_np.get("ph", Phase.DEAD))
 		var server: Player = _by_net_id.get(int(_np.get("sv", 0)))
@@ -3098,7 +3095,7 @@ func _tick_seats_client(delta: float) -> void :
 		var pred = seat.get("pred")
 		if pred != null and chan != null and not bool(seat.get("benched", false)):
 			body.simulate(gin, delta)
-			_tick_toss_preview_for(seat.get("toss"), body, gin)
+			_tick_toss_preview_for(seat.get("toss"), body)
 			pred.hard_snap = HARD_SNAP_DIST
 			pred.tick(body, chan.seq, delta)
 		_seat_present(seat, gin)
@@ -3705,14 +3702,14 @@ func _quick_set_ready(aim: Vector3, hitter: Player) -> bool:
 
 
 
-func _tick_toss_preview(input: PlayerInput) -> void :
+func _tick_toss_preview() -> void :
 	if _spectating:
 		if _toss_preview != null:
 			_toss_preview.clear()
 		return
-	_tick_toss_preview_for(_toss_preview, player, input)
+	_tick_toss_preview_for(_toss_preview, player)
 
-func _tick_toss_preview_for(preview: TrajectoryPreview, body: Player, input: PlayerInput) -> void :
+func _tick_toss_preview_for(preview: TrajectoryPreview, body: Player) -> void :
 	if preview == null:
 		return
 
@@ -3724,22 +3721,7 @@ func _tick_toss_preview_for(preview: TrajectoryPreview, body: Player, input: Pla
 	if body != null and body.charging_set():
 		preview.show_set(body)
 		return
-	if body == null or not body.serve_charge_ui or not input.contact_pressed:
-		preview.clear()
-		return
-	var up: = Ball.serve_toss_up(body.hold_power())
-
-
-
-
-
-
-	var horiz: = Ball.serve_toss_horiz(body.global_position, body.aim_point, 
-		body.hold_power(), up)
-	preview.show_arc(body.serve_cradle_point(true), 
-		Vector3(horiz.x, up, horiz.z), Ball.PHYS.gravity, 0.0, 
-		TrajectoryPreview.charge_color(body.hold_power()))
-
+	preview.clear()
 
 
 func _physics_process(delta: float) -> void :
@@ -3825,14 +3807,14 @@ func _physics_process(delta: float) -> void :
 			input = PlayerInput.new()
 		_tick_inputs[player] = input
 		player.simulate(input, delta)
-		_tick_toss_preview(input)
+		_tick_toss_preview()
 
 	_tick_seats(delta)
 	for peer_id in _peer_players:
 		var remote: Player = _peer_players[peer_id]
 		var rin: = _decode_peer_input(peer_id)
 		_tick_inputs[remote] = rin
-		remote.simulate(rin, delta)
+		remote.simulate(rin, delta, true)
 		_remember_peer_touch_input(peer_id, remote, rin)
 	var cine: = _phase == Phase.INTRO or _phase == Phase.COUNTDOWN\
 	or _phase == Phase.WIN or _phase == Phase.STATS
@@ -5158,7 +5140,7 @@ func _build_snapshot() -> Dictionary:
 		"ph": _phase, "sc": _serve_clock, "rt": _rally_time, 
 		"tc": _touch_count, "sv": _net_ids.get(_server, 0), 
 		"lt": _net_ids.get(_last_toucher, 0), 
-		"sd": _serve_done, 
+		"sd": _serve_done, "sa": ball.serve_assist,
 		"s1": _scores[1], "s2": _scores[-1], 
 		"w1": _set_wins[1], "w2": _set_wins[-1], "sn": _set_number, 
 
@@ -5737,19 +5719,16 @@ func _on_up_event(peer_id: int, kind: String, args: Dictionary) -> void :
 			pid = _pid_for(peer_id, ls)
 		request_seat(pid, clampi(Net.ev_i(args, "s"), -1, 1))
 		return
-	if kind == "toss":
-
-
-
-
-
-		if _phase == Phase.SERVE_PREP and _rally.server != null\
-		and not _rally.serve_done and ball.frozen\
-		and _peer_players.get(peer_id) == _rally.server\
-		and (_practice != null or _rally.in_serve_zone(_rally.server, 0.8)):
-
-
-			_rally.request_toss(clampf(Net.ev_f(args, "u", 7.5), Ball.PHYS.serve_toss_min, Ball.PHYS.serve_toss_max))
+	if kind == "serve_minigame_result":
+		var ls: = Net.ev_i(args, "ls", 0)
+		if ls < 0 or ls >= LocalPlayers.MAX_LOCAL:
+			return
+		var server_body: Player = _peer_players.get(_pid_for(peer_id, ls))
+		var offset: Variant = args.get("offset")
+		if server_body != null and Net.ev_i(args, "ticket", -1) == _serve_minigame_ticket\
+		and offset is Vector2 and offset.is_finite()\
+		and absf(offset.x) <= 1.0 and absf(offset.y) <= 1.0:
+			_apply_serve_style(offset, server_body)
 		return
 	if kind == "touch_try":
 		if not _lag_touch:
@@ -6110,6 +6089,7 @@ func _client_tick(delta: float) -> void :
 
 
 	ball.serve_held = input_phase == Phase.SERVE_PREP and ball.frozen
+	ball.serve_assist = input_phase == Phase.LIVE and bool(_np.get("sa", false))
 	player.contact_enabled = input_phase == Phase.LIVE\
 	or (input_phase == Phase.SERVE_PREP and input_server == player)
 	var input: = PlayerInput.new()
@@ -6121,14 +6101,15 @@ func _client_tick(delta: float) -> void :
 
 
 			input = PlayerInput.new()
-		_send_client_input(input)
-		if _practice != null and input.serve_pressed and not (input_phase == Phase.SERVE_PREP and input_server == player):
+		if _practice != null and (input.call_pressed
+		or (input.serve_pressed and not (input_phase == Phase.SERVE_PREP and input_server == player))):
 			_practice.call_pressed()
 
 
 		player.free_actions = true
 		player.simulate(input, delta)
-		_tick_toss_preview(input)
+		_send_client_input(input)
+		_tick_toss_preview()
 
 
 
@@ -6159,30 +6140,9 @@ func _client_tick(delta: float) -> void :
 
 
 
-	_toss_pred = maxf(_toss_pred - delta, 0.0)
-	if _np.has("b"):
-		var _b_arr: PackedFloat32Array = _np.b
-		if _b_arr.size() > 6:
-			var host_frozen: = _b_arr[6] > 0.5
-
-
-
-
-
-
-
-
-			if _toss_visual_state.is_empty() or _toss_pred <= 0.0:
-				ball.frozen = host_frozen
-	if _toss_pred <= 0.0 and not _toss_visual_state.is_empty():
-		_toss_visual_state.clear()
-		_toss_unfrozen_snaps = 0
-
-
-
-		_ball_offset_armed = true
-
-
+	var ball_state: PackedFloat32Array = _np.get("b", PackedFloat32Array())
+	if ball_state.size() > 6:
+		ball.frozen = ball_state[6] > 0.5
 
 	var velsync: = _velsync_on() and not ball.frozen
 	ball.net_puppet = not ball.frozen and not velsync
@@ -6193,44 +6153,6 @@ func _client_tick(delta: float) -> void :
 		if holder != null:
 			ball.global_position = holder.serve_cradle_point()
 			ball.vel = Vector3.ZERO
-
-
-
-
-
-
-		if not _spectating and holder == player\
-		and ((input.serve_pressed and _practice == null)\
-		or player.serve_release_counts(input))\
-		and (_practice != null or _rally.in_serve_zone(player)):
-			var up: = 7.5 if input.serve_pressed\
-			else Ball.serve_toss_up(player.hold_power())
-			ball.frozen = false
-
-			ball.serve_assist = _practice == null or _rally.in_serve_zone(player, 0.6)
-
-
-			var toss_charge: = Ball.serve_toss_charge(up)
-			ball.toss(player.serve_cradle_point(), up, 
-				Ball.serve_toss_horiz(player.global_position, player.aim_point, 
-					toss_charge, up))
-			player.present_serve_toss(true)
-
-
-
-
-
-			Net.send_up("toss", {"u": up})
-			if not _velsync_on():
-				ball.net_puppet = true
-				_toss_visual_state = [ball.global_position, ball.vel, ball.curve]
-				_toss_unfrozen_snaps = 0
-
-
-
-
-
-			_toss_pred = Net.peer_rtt_ms(1) * 0.001 + 1.1
 	elif not velsync and not (_ball_interp and ball.net_puppet):
 
 
@@ -6245,15 +6167,6 @@ func _client_tick(delta: float) -> void :
 			var bfix: = excess * minf(1.0, delta * rate)
 			ball.global_position += bfix
 			_ball_err -= bfix
-	if not _toss_visual_state.is_empty():
-
-
-		_toss_visual_state = Ball.step_flight(_toss_visual_state[0], 
-			_toss_visual_state[1], _toss_visual_state[2], delta, 
-			ball.net_half_width, ball.court_center_x, ball.wall_min, ball.wall_max)
-		ball.global_position = _toss_visual_state[0]
-		ball.vel = _toss_visual_state[1]
-		ball.curve = _toss_visual_state[2]
 	_client_interp()
 	for p in _all_players:
 		var member: Player = p
@@ -6337,7 +6250,7 @@ func _client_new_rally() -> void :
 	_sand_new_rally()
 
 func _send_client_input(input: PlayerInput) -> void :
-	Net.send_input(_in_chan.encode(input))
+	Net.send_input(_in_chan.encode(input, player.power_level))
 
 func _velsync_on() -> bool:
 	return _velsync
@@ -6529,9 +6442,6 @@ func _on_snapshot(data: Dictionary) -> void :
 		_snap_gap_max = maxf(gap, _snap_gap_max * INTERP_GAP_DECAY)
 	_last_snap_at = now
 	_snap_buf.append({"at": now, "hm": float(seq) * SNAP_MS, "d": data})
-	if not _toss_visual_state.is_empty() and data.b.size() > 6\
-	and data.b[6] < 0.5:
-		_toss_unfrozen_snaps += 1
 	while _snap_buf.size() > 40:
 		_snap_buf.pop_front()
 
@@ -6570,17 +6480,6 @@ func _adopt_strike_flight(args: Dictionary, remote: = false) -> void :
 
 		_ball_host_strikes = n
 		ball.strike_seq = int(n)
-
-
-
-
-		if not _toss_visual_state.is_empty():
-			_toss_visual_state.clear()
-			_toss_unfrozen_snaps = 0
-			_toss_pred = 0.0
-			_ball_offset_armed = true
-
-
 
 
 
@@ -7038,7 +6937,7 @@ func _client_interp() -> void :
 		EXTRAPOLATE_MAX, _interp_hard)
 
 
-	if _ball_interp and ball.net_puppet and _toss_visual_state.is_empty():
+	if _ball_interp and ball.net_puppet:
 		_interp_ball(render_at)
 	if _interp_hard:
 		ball.reset_physics_interpolation()
@@ -7167,13 +7066,23 @@ func _on_net_event(kind: String, args: Dictionary) -> void :
 				Net.ev_v3(args, "bv").length() / maxf(Ball.PHYS.floor_bounce, 0.1))
 			ball.floor_squash(impact)
 			_bounce_fx(Net.ev_v3(args, "p"), impact)
+		"serve_minigame":
+			var server_body: Player = _by_net_id.get(Net.ev_i(args, "id", 0))
+			if not _spectating and _is_local_human(server_body):
+				var ticket: = Net.ev_i(args, "ticket", -1)
+				var ls: = _pid_ls(int(_seat_owner.get(server_body, 0)))
+				_open_serve_minigame(func(offset: Vector2):
+					_close_serve_minigame()
+					Net.send_up("serve_minigame_result", {"ticket": ticket, "ls": ls, "offset": offset}))
 		"toss":
+			_close_serve_minigame()
 
 
 			if _ball_dead or not _client_rally_fresh:
 				_client_new_rally()
 			var tossing_body: Player = _by_net_id.get(Net.ev_i(args, "id", 0))
 			if tossing_body != null:
+				tossing_body.serve_style = args.get("style", {})
 				tossing_body.present_serve_toss()
 			hud.rally_fade(true)
 		"servestrike":
@@ -7194,6 +7103,7 @@ func _on_net_event(kind: String, args: Dictionary) -> void :
 			_bob_antenna(Net.ev_i(args, "s", 0))
 			_antenna_call(Net.ev_i(args, "s", 0))
 		"whistle":
+			_close_serve_minigame()
 			sfx.play("whistle", Net.ev_v3(args, "p"))
 		"intro":
 
@@ -10012,8 +9922,6 @@ func _prepare_serve() -> void :
 	_lag_touch_requests.clear()
 	_lag_history.clear()
 	_ball_event_flight.clear()
-	_toss_visual_state.clear()
-	_toss_unfrozen_snaps = 0
 	_ball_offset_armed = false
 	_ball_vis_offset = Vector3.ZERO
 	for member in _all_players:
@@ -10238,6 +10146,7 @@ func _on_rally_verdict(pos: Vector3, text: String, winner: int) -> void :
 	_net_event("verdict", {"p": pos, "t": text, "w": winner})
 
 func _on_rally_tossed(server_body: Player) -> void :
+	_close_serve_minigame()
 	_phase = Phase.LIVE
 	_ach_tossed = true
 	server_body.present_serve_toss(true)
@@ -10246,23 +10155,32 @@ func _on_rally_tossed(server_body: Player) -> void :
 
 
 
-	_net_event("toss", {"id": int(_net_ids.get(server_body, 0))})
+	_net_event("toss", {"id": int(_net_ids.get(server_body, 0)), "style": server_body.serve_style.duplicate()})
 
 var _serve_minigame: ServeMinigame = null
+var _serve_minigame_ticket: = 0
 
 func _spawn_serve_minigame(server_body: Player) -> void :
-	if _serve_minigame != null:
-		_serve_minigame.queue_free()
-		_serve_minigame = null
+	_serve_minigame_ticket += 1
+	if _is_local_human(server_body):
+		_open_serve_minigame(_apply_serve_style.bind(server_body))
+	elif _net_role == NetRole.HOST:
+		_net_event("serve_minigame", {"id": int(_net_ids[server_body]), "ticket": _serve_minigame_ticket})
+
+func _open_serve_minigame(on_finished: Callable) -> void :
+	_close_serve_minigame()
 	_serve_minigame = ServeMinigame.new()
 	add_child(_serve_minigame)
-	_serve_minigame.finished.connect( func(off: Vector2):
-		_apply_serve_style(server_body, off))
+	_serve_minigame.finished.connect(on_finished)
 
-func _apply_serve_style(server_body: Player, off: Vector2) -> void :
-	_close_serve_minigame()
-	if _phase != Phase.SERVE_PREP or _server != server_body:
+func _apply_serve_style(off: Vector2, server_body: Player) -> void :
+	if _phase != Phase.SERVE_PREP or _server != server_body or not _rally.serve_minigame_pending():
 		return
+	if not _rally.practice and not _rally.in_serve_zone(server_body, 0.6):
+		_rally.cancel_serve_minigame()
+		_close_serve_minigame()
+		return
+	_close_serve_minigame()
 	var m: = maxf(absf(off.x), absf(off.y))
 	var acc: = clampf(1.0 - m / 0.256, 0.0, 1.0)
 	if m <= 0.256:
@@ -10274,7 +10192,7 @@ func _apply_serve_style(server_body: Player, off: Vector2) -> void :
 		server_body.set("serve_style", {"type": "spin",
 			"power": 0.45 + 0.25 * clampf((m - 0.256) / 0.744, 0.0, 1.0)
 			+ 0.1 * maxf(0.0, off.y), "curve": - off.x * 4.0})
-	_rally.do_toss(Ball.serve_toss_up(0.667), 2.2)
+	_rally.do_toss(Ball.PHYS.serve_toss_min, 1.2)
 
 func _close_serve_minigame() -> void :
 	if _serve_minigame != null:
@@ -11772,7 +11690,7 @@ func _client_serve_prompt(phase: int, server: Player) -> String:
 		return "%s serving   %0.0f" % [_names[server], clock]
 	if not _in_serve_zone(player):
 		return "return to serve zone   %0.0f" % clock
-	return "your serve   hold to toss   %0.0f" % clock
+	return ("hold and release serve   %0.0f" if MobileControls.enabled() else "your serve   press serve   %0.0f") % clock
 
 func _serve_prompt() -> String:
 	if _phase != Phase.SERVE_PREP or _practice != null:
@@ -11781,7 +11699,7 @@ func _serve_prompt() -> String:
 		return "%s serving   %0.0f" % [_names[_server], _serve_clock]
 	if not _in_serve_zone(player):
 		return "return to serve zone   %0.0f" % _serve_clock
-	return "your serve   hold to toss   %0.0f" % _serve_clock
+	return ("hold and release serve   %0.0f" if MobileControls.enabled() else "your serve   press serve   %0.0f") % _serve_clock
 
 func _poll_stats_input() -> void :
 

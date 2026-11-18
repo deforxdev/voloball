@@ -55,7 +55,8 @@ static func encode_snapshot(d: Dictionary) -> PackedByteArray:
 		buf.put_u8(int(d.get("tc", 0)))
 		buf.put_u16(int(d.get("sv", 0)))
 		buf.put_u16(int(d.get("lt", 0)))
-		buf.put_u8(1 if bool(d.get("sd", false)) else 0)
+		var serve_flags: = (1 if bool(d.get("sd", false)) else 0) | (2 if bool(d.get("sa", false)) else 0)
+		buf.put_u8(serve_flags)
 	if flags & F_BALL:
 		var b: PackedFloat32Array = d.b
 		for i in 8:
@@ -109,7 +110,9 @@ static func decode_snapshot(bytes: PackedByteArray) -> Dictionary:
 		d["tc"] = buf.get_u8()
 		d["sv"] = buf.get_u16()
 		d["lt"] = buf.get_u16()
-		d["sd"] = buf.get_u8() == 1
+		var serve_flags: = buf.get_u8()
+		d["sd"] = (serve_flags & 1) != 0
+		d["sa"] = (serve_flags & 2) != 0
 	if flags & F_BALL:
 		var b: = PackedFloat32Array()
 		b.resize(10)

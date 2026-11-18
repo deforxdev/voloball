@@ -51,6 +51,15 @@ func find_cloud_match(player_name: String, modes: Array) -> Error:
 func host_cloud(player_name: String, capacity := PhotonPeer.Cloud.MAX_PLAYERS) -> Error:
 	return _connect_cloud(true, _new_cloud_code(), player_name, capacity)
 
+func host_cloud_party(player_name: String) -> Error:
+	var error := host_cloud(player_name, PARTY_MAX)
+	if error == OK:
+		party = true
+		custom_lobby = false
+		party_privacy = PartyPriv.OPEN
+		_lobby_kind = "party"
+	return error
+
 static func _new_cloud_code() -> String:
 	var alphabet := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 	var code := ""
@@ -133,7 +142,7 @@ const MAX_PLAYERS: = 14
 
 
 
-const PROTO: = 61
+const PROTO: = 62
 
 
 
@@ -3926,6 +3935,9 @@ func _on_steam_lobby_chat_update(lobby_id: = 0, changed_id: = 0,
 func _party_door_refusal(steam_id: int, pw: = "") -> String:
 	if not party:
 		return ""
+	# Photon parties use their private room code, independently of Steam IDs.
+	if cloud_session():
+		return ""
 	var enforce: = (_steam != null and not party_lan) or _party_door_test()
 	if not enforce:
 		return ""
@@ -4281,7 +4293,7 @@ func send_freeplay_pose(st: PackedFloat32Array) -> void :
 
 
 
-	if not active or not party or multiplayer.multiplayer_peer == null:
+	if not party or not _can_send():
 		return
 	if is_host:
 		_s_freeplay_pose.rpc(1, st)
@@ -4327,7 +4339,7 @@ static func pose_ok(st: PackedFloat32Array, need: int) -> bool:
 signal ball_pose(peer_id: int, st: PackedFloat32Array, bid: int)
 
 func send_ball_pose(st: PackedFloat32Array, bid: int) -> void :
-	if not active or not party or multiplayer.multiplayer_peer == null:
+	if not party or not _can_send():
 		return
 	if is_host:
 		_s_ball_pose.rpc(1, st, bid)
@@ -4357,7 +4369,7 @@ func _s_ball_pose(peer_id: int, st: PackedFloat32Array, bid: int) -> void :
 signal freeplay_fx(peer_id: int, kind: int, pos: Vector3, power: float, vel: Vector3)
 
 func send_freeplay_fx(kind: int, pos: Vector3, power: float, vel: Vector3) -> void :
-	if not active or not party:
+	if not party or not _can_send():
 		return
 	if is_host:
 		_s_freeplay_fx.rpc(1, kind, pos, power, vel)
@@ -4395,7 +4407,7 @@ func send_party_look(outfit: String) -> void :
 
 
 
-	if not active:
+	if not _can_send():
 		return
 
 
@@ -4470,7 +4482,7 @@ signal party_ball(peer_id: int, skin: String)
 func send_party_ball(skin: String) -> void :
 
 
-	if not active or not party or not multiplayer.has_multiplayer_peer():
+	if not party or not _can_send():
 		return
 	if is_host:
 		if players.has(1):
@@ -4504,7 +4516,7 @@ func _s_party_ball(peer_id: int, skin: String) -> void :
 signal party_stage(stage_id: String)
 
 func send_party_stage(stage_id: String) -> void :
-	if not active or not party:
+	if not party or not _can_send():
 		return
 	if is_host:
 		_s_party_stage.rpc(stage_id)
@@ -4834,7 +4846,7 @@ func send_up(kind: String, args: Dictionary) -> void :
 
 const UP_BUDGET: = {"gcast?": [1, 2000], "gstats?": [2, 1000], "skip_vote": [2, 1000], 
 	"pa": [2, 1000], "callout": [3, 1000], "cgest": [8, 1000], "gco": [8, 1000], "seat": [2, 1000], 
-	"toss": [6, 1000], "touch_try": [24, 1000], "gleave": [2, 2000], 
+	"serve_minigame_result": [4, 1000], "touch_try": [24, 1000], "gleave": [2, 2000],
 	"vk_start": [2, 10000], "vk_vote": [3, 10000], "pinv": [8, 4000], 
 	"jprac": [1, 3000], "pstam": [4, 1000], "pact": [6, 1000], 
 	"dev?": [8, 4000], "dev!": [8, 4000]}

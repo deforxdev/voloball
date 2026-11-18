@@ -12,7 +12,7 @@ from zipfile import ZipFile
 
 RELEASE_BODY = """VOLOBALL для Android {version} (ARM64).
 
-Завантаж VOLOBALL-Android-{version}-ARM64.apk з Assets. Версії з вбудованою перевіркою оновлень знаходять нові Android-збірки в головному меню.
+Завантаж VOLOBALL-Android-{version}-ARM64.apk з Assets. Гра перевіряє оновлення під час запуску й відкриває системне підтвердження встановлення.
 
 APK підписаний тестовим ключем.
 """

@@ -3017,13 +3017,6 @@ func _build_home() -> void :
 	var settings_card: = _card_btn("gear", "system settings", 
 		"configure audio, video, display", "quiet", 
 		func(): _open_settings(SettingsPanel.Scope.SYSTEM))
-	if OS.has_feature("android"):
-		var update_button := Button.new()
-		update_button.hide()
-		update_button.custom_minimum_size.y = 48
-		UiStyle.style_button(update_button, "primary")
-		v.add_child(update_button)
-		preload("res://game/mobile/android_update.gd").show_download_if_available(update_button)
 	var cards: = [online_card, local_card, practice_card, coop_card, settings_card]
 
 

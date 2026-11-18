@@ -4,6 +4,7 @@ extends Control
 # and eager portrait/court preparation. Existing profiles and settings are kept.
 @export var destination := "res://game/mobile/mobile_menu.tscn"
 const LOAD_TIMEOUT_MS := 60000
+const AndroidUpdate = preload("res://game/mobile/android_update.gd")
 var _started := 0
 var _opening := false
 var _status: Label
@@ -18,7 +19,28 @@ func _ready() -> void:
 	MobileControls.release_all()
 	GameConfig.onboarding_active = false
 	_build()
-	start_loading()
+	if destination.ends_with("mobile_menu.tscn") and AndroidUpdate.should_check():
+		_check_android_update()
+	else:
+		start_loading()
+
+func _check_android_update() -> void:
+	set_process(false)
+	_retry.hide()
+	var update := AndroidUpdate.new()
+	add_child(update)
+	var skip := Button.new()
+	skip.text = "Пропустити" if GameConfig.language == "uk" else "Skip"
+	skip.custom_minimum_size.y = 56
+	_retry.get_parent().add_child(skip)
+	skip.pressed.connect(update.skip)
+	update.progress_changed.connect(func(message: String, percent: float):
+		_status.text = message
+		_progress.value = percent)
+	update.finished.connect(func():
+		skip.queue_free()
+		start_loading())
+	update.start()
 
 func _build() -> void:
 	var background := ColorRect.new()
